@@ -34,8 +34,8 @@ const menuItemSchema = z.object({
 const menuSchema = z.object({
   location: z.string().min(1, 'Location là bắt buộc'),
   name: z.string().min(1, 'Name là bắt buộc'),
-  items: z.array(menuItemSchema).default([]),
-  isActive: z.boolean().default(true),
+  items: z.array(menuItemSchema),
+  isActive: z.boolean(),
 });
 
 type MenuFormData = z.infer<typeof menuSchema>;
@@ -143,7 +143,7 @@ export default function MenuManager({
     if (index > 0) {
       swapItems(index, index - 1);
       // Update order values
-      const items = watch('items');
+      const items = watch('items') || [];
       items.forEach((item, idx) => {
         setValue(`items.${idx}.order`, idx);
       });
@@ -154,7 +154,7 @@ export default function MenuManager({
     if (index < itemFields.length - 1) {
       swapItems(index, index + 1);
       // Update order values
-      const items = watch('items');
+      const items = watch('items') || [];
       items.forEach((item, idx) => {
         setValue(`items.${idx}.order`, idx);
       });
@@ -229,7 +229,7 @@ export default function MenuManager({
                   Label <span className="text-red-500">*</span>
                 </label>
                 <Input
-                  {...register(`${fieldPath}.label` as const)}
+                  {...register(`${fieldPath}.label` as any)}
                   placeholder="Menu label"
                   className="text-sm"
                 />
@@ -241,7 +241,7 @@ export default function MenuManager({
                   URL <span className="text-red-500">*</span>
                 </label>
                 <Input
-                  {...register(`${fieldPath}.url` as const)}
+                  {...register(`${fieldPath}.url` as any)}
                   placeholder="/products or https://..."
                   className="text-sm"
                 />
@@ -253,7 +253,7 @@ export default function MenuManager({
                   Type
                 </label>
                 <Select
-                  {...register(`${fieldPath}.type` as const)}
+                  {...register(`${fieldPath}.type` as any)}
                   className="text-sm"
                 >
                   <option value="internal_page">Trang nội bộ</option>

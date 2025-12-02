@@ -70,7 +70,7 @@ export default function PostEditor({
     setValue,
     formState: { errors },
   } = useForm<PostFormInput>({
-    resolver: zodResolver(postSchema),
+    resolver: zodResolver(postSchema) as any,
     defaultValues: post
       ? {
           title: post.title,
@@ -176,7 +176,7 @@ export default function PostEditor({
   }
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(handleFormSubmit as any)} className="space-y-6">
       {/* Basic Information */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">Thông tin cơ bản</h2>
