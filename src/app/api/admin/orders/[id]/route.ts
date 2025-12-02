@@ -7,7 +7,7 @@ import { mockOrders } from '@/lib/data/orders';
 // GET - Get single order by orderId
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check authentication
@@ -19,7 +19,8 @@ export async function GET(
       );
     }
 
-    const order = mockOrders.find((o) => o.orderId === params.id);
+    const { id } = await params;
+    const order = mockOrders.find((o) => o.orderId === id);
 
     if (!order) {
       return NextResponse.json(
@@ -41,7 +42,7 @@ export async function GET(
 // PUT - Update order status
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check authentication
@@ -53,10 +54,11 @@ export async function PUT(
       );
     }
 
+    const { id } = await params;
     const body = await request.json();
     const { orderStatus, trackingNumber } = body;
 
-    const orderIndex = mockOrders.findIndex((o) => o.orderId === params.id);
+    const orderIndex = mockOrders.findIndex((o) => o.orderId === id);
 
     if (orderIndex === -1) {
       return NextResponse.json(

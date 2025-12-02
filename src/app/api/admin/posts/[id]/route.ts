@@ -7,7 +7,7 @@ import { mockPosts } from '@/lib/data/posts';
 // GET - Get single post by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check authentication
@@ -19,7 +19,8 @@ export async function GET(
       );
     }
 
-    const post = mockPosts.find((p) => p.id === params.id);
+    const { id } = await params;
+    const post = mockPosts.find((p) => p.id === id);
 
     if (!post) {
       return NextResponse.json(
@@ -41,7 +42,7 @@ export async function GET(
 // PUT - Update post
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check authentication
@@ -53,6 +54,7 @@ export async function PUT(
       );
     }
 
+    const { id } = await params;
     const body = await request.json();
     const {
       title,
@@ -68,7 +70,7 @@ export async function PUT(
       status,
     } = body;
 
-    const postIndex = mockPosts.findIndex((p) => p.id === params.id);
+    const postIndex = mockPosts.findIndex((p) => p.id === id);
 
     if (postIndex === -1) {
       return NextResponse.json(
@@ -81,7 +83,7 @@ export async function PUT(
 
     // Check if slug is being changed and if it conflicts
     if (slug && slug !== existingPost.slug) {
-      const slugExists = mockPosts.some((p) => p.slug === slug && p.id !== params.id);
+      const slugExists = mockPosts.some((p) => p.slug === slug && p.id !== id);
       if (slugExists) {
         return NextResponse.json(
           { error: 'Slug already exists' },
@@ -128,7 +130,7 @@ export async function PUT(
 // DELETE - Delete post
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check authentication
@@ -140,7 +142,8 @@ export async function DELETE(
       );
     }
 
-    const postIndex = mockPosts.findIndex((p) => p.id === params.id);
+    const { id } = await params;
+    const postIndex = mockPosts.findIndex((p) => p.id === id);
 
     if (postIndex === -1) {
       return NextResponse.json(

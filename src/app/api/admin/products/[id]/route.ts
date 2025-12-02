@@ -14,7 +14,7 @@ function generateVariantId(): string {
 // GET - Get single product by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check authentication
@@ -26,7 +26,8 @@ export async function GET(
       );
     }
 
-    const product = mockProducts.find((p) => p.id === params.id);
+    const { id } = await params;
+    const product = mockProducts.find((p) => p.id === id);
 
     if (!product) {
       return NextResponse.json(
@@ -48,7 +49,7 @@ export async function GET(
 // PUT - Update product
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check authentication
@@ -60,6 +61,7 @@ export async function PUT(
       );
     }
 
+    const { id } = await params;
     const body = await request.json();
     const {
       name,
@@ -75,7 +77,7 @@ export async function PUT(
       metaDescription,
     } = body;
 
-    const productIndex = mockProducts.findIndex((p) => p.id === params.id);
+    const productIndex = mockProducts.findIndex((p) => p.id === id);
 
     if (productIndex === -1) {
       return NextResponse.json(
@@ -160,7 +162,7 @@ export async function PUT(
 // DELETE - Delete product
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check authentication
@@ -172,7 +174,8 @@ export async function DELETE(
       );
     }
 
-    const productIndex = mockProducts.findIndex((p) => p.id === params.id);
+    const { id } = await params;
+    const productIndex = mockProducts.findIndex((p) => p.id === id);
 
     if (productIndex === -1) {
       return NextResponse.json(

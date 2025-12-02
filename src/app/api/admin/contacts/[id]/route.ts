@@ -7,7 +7,7 @@ import { mockContacts } from '@/lib/data/contacts';
 // GET - Get single contact message by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check authentication
@@ -19,7 +19,8 @@ export async function GET(
       );
     }
 
-    const contact = mockContacts.find((c) => c.id === params.id);
+    const { id } = await params;
+    const contact = mockContacts.find((c) => c.id === id);
 
     if (!contact) {
       return NextResponse.json(
@@ -41,7 +42,7 @@ export async function GET(
 // PUT - Update contact message (mark as read, update status, add notes)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check authentication
@@ -53,10 +54,11 @@ export async function PUT(
       );
     }
 
+    const { id } = await params;
     const body = await request.json();
     const { isRead, status, adminNotes, isReplied } = body;
 
-    const contactIndex = mockContacts.findIndex((c) => c.id === params.id);
+    const contactIndex = mockContacts.findIndex((c) => c.id === id);
 
     if (contactIndex === -1) {
       return NextResponse.json(
@@ -118,7 +120,7 @@ export async function PUT(
 // DELETE - Delete contact message
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check authentication
@@ -130,7 +132,8 @@ export async function DELETE(
       );
     }
 
-    const contactIndex = mockContacts.findIndex((c) => c.id === params.id);
+    const { id } = await params;
+    const contactIndex = mockContacts.findIndex((c) => c.id === id);
 
     if (contactIndex === -1) {
       return NextResponse.json(
