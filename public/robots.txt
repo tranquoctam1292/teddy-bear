@@ -1,0 +1,5 @@
+# Cấu hình SEO
+User-agent: *
+Allow: /
+
+
