@@ -6,20 +6,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import PostEditor from '@/components/admin/PostEditor';
 import type { Post } from '@/lib/schemas/post';
-
-type PostFormData = {
-  title: string;
-  slug: string;
-  excerpt?: string;
-  content: string;
-  metaTitle?: string;
-  metaDescription?: string;
-  keywords?: string[];
-  featuredImage?: string;
-  category?: string;
-  tags: string[];
-  status: 'draft' | 'published' | 'archived';
-};
+import type { PostFormData } from '@/types/post';
 
 export default function AdminPostEditPage() {
   const { data: session, status } = useSession();

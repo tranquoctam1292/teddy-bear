@@ -23,25 +23,27 @@ import {
   X,
 } from 'lucide-react';
 import type { Post } from '@/lib/schemas/post';
+import type { PostFormData } from '@/types/post';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Select } from './ui/select';
 
-// Validation Schema
+// Validation Schema for form input (keywords and tags are strings in form)
 const postSchema = z.object({
   title: z.string().min(1, 'Tiêu đề là bắt buộc'),
   slug: z.string().min(1, 'Slug là bắt buộc'),
   excerpt: z.string().optional(),
   metaTitle: z.string().optional(),
   metaDescription: z.string().optional(),
-  keywords: z.string().optional(),
+  keywords: z.string().optional(), // String in form, converted to array on submit
   featuredImage: z.string().optional(),
   category: z.string().optional(),
-  tags: z.string().optional(),
+  tags: z.string().optional(), // String in form, converted to array on submit
   status: z.enum(['draft', 'published', 'archived']),
 });
 
-type PostFormData = z.infer<typeof postSchema> & {
+// Form input type (what the form uses)
+type PostFormInput = z.infer<typeof postSchema> & {
   content: string;
 };
 
@@ -67,7 +69,7 @@ export default function PostEditor({
     watch,
     setValue,
     formState: { errors },
-  } = useForm<PostFormData>({
+  } = useForm<PostFormInput>({
     resolver: zodResolver(postSchema),
     defaultValues: post
       ? {
@@ -156,11 +158,15 @@ export default function PostEditor({
     setValue('tags', newTags.join(', '));
   };
 
-  const handleFormSubmit = async (data: PostFormData) => {
-    const submitData = {
+  const handleFormSubmit = async (data: PostFormInput) => {
+    const keywordsArray = data.keywords 
+      ? data.keywords.split(',').map((k) => k.trim()).filter(k => k.length > 0)
+      : [];
+    
+    const submitData: PostFormData = {
       ...data,
       tags: tags,
-      keywords: data.keywords ? data.keywords.split(',').map((k) => k.trim()) : [],
+      keywords: keywordsArray.length > 0 ? keywordsArray : undefined,
     };
     await onSubmit(submitData);
   };
