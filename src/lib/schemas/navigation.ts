@@ -44,3 +44,4 @@ export const MENU_LOCATIONS = {
 export type MenuLocation = typeof MENU_LOCATIONS[keyof typeof MENU_LOCATIONS];
 
 
+

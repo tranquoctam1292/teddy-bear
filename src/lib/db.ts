@@ -1,38 +1,39 @@
 // MongoDB Connection Helper
 import { MongoClient, Db } from 'mongodb';
 
-if (!process.env.MONGODB_URI) {
-  throw new Error('Please add your Mongo URI to .env.local');
-}
-
-const uri = process.env.MONGODB_URI;
+const uri = process.env.MONGODB_URI || '';
 const options = {};
 
-let client: MongoClient;
-let clientPromise: Promise<MongoClient>;
+let client: MongoClient | undefined;
+let clientPromise: Promise<MongoClient> | undefined;
 
-if (process.env.NODE_ENV === 'development') {
-  // In development mode, use a global variable so that the value
-  // is preserved across module reloads caused by HMR (Hot Module Replacement).
-  const globalWithMongo = global as typeof globalThis & {
-    _mongoClientPromise?: Promise<MongoClient>;
-  };
+if (uri) {
+  if (process.env.NODE_ENV === 'development') {
+    // In development mode, use a global variable so that the value
+    // is preserved across module reloads caused by HMR (Hot Module Replacement).
+    const globalWithMongo = global as typeof globalThis & {
+      _mongoClientPromise?: Promise<MongoClient>;
+    };
 
-  if (!globalWithMongo._mongoClientPromise) {
+    if (!globalWithMongo._mongoClientPromise) {
+      client = new MongoClient(uri, options);
+      globalWithMongo._mongoClientPromise = client.connect();
+    }
+    clientPromise = globalWithMongo._mongoClientPromise;
+  } else {
+    // In production mode, it's best to not use a global variable.
     client = new MongoClient(uri, options);
-    globalWithMongo._mongoClientPromise = client.connect();
+    clientPromise = client.connect();
   }
-  clientPromise = globalWithMongo._mongoClientPromise;
-} else {
-  // In production mode, it's best to not use a global variable.
-  client = new MongoClient(uri, options);
-  clientPromise = client.connect();
 }
 
 /**
  * Get MongoDB database instance
  */
 export async function getDatabase(dbName: string = 'teddy-shop'): Promise<Db> {
+  if (!clientPromise) {
+    throw new Error('MongoDB URI is not configured. Please add MONGODB_URI to your environment variables.');
+  }
   const client = await clientPromise;
   return client.db(dbName);
 }
@@ -54,6 +55,9 @@ export async function getCollections() {
  * Connect to MongoDB (for initialization)
  */
 export async function connectDB(): Promise<void> {
+  if (!clientPromise) {
+    throw new Error('MongoDB URI is not configured. Please add MONGODB_URI to your environment variables.');
+  }
   try {
     await clientPromise;
     console.log('✅ Connected to MongoDB');

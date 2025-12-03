@@ -2,6 +2,9 @@
 import type { ObjectId } from 'mongodb';
 import type { CartItem, UpsellServices } from '@/types';
 
+// Re-export CartItem for backward compatibility
+export type { CartItem } from '@/types';
+
 /**
  * Cart Schema
  * User's shopping cart (can be persisted or session-based)
@@ -29,18 +32,5 @@ export interface Cart {
   expiresAt?: Date; // For session-based carts
 }
 
-/**
- * Cart Item Schema
- * Individual item in the cart, linked to a specific variant
- */
-export interface CartItem {
-  productId: string; // Reference to Product.id
-  variantId: string; // Reference to ProductVariant.id - CRITICAL for variant selection
-  name: string; // Product name (denormalized for display)
-  size: string; // Variant size (denormalized)
-  price: number; // Variant price at time of adding (snapshot)
-  quantity: number;
-  image: string; // Variant or product image
-}
 
 
