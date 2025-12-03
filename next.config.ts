@@ -59,8 +59,17 @@ const nextConfig: NextConfig = {
         config.externals = ['mongodb'];
       } else if (Array.isArray(config.externals)) {
         config.externals.push('mongodb');
+      } else if (typeof config.externals === 'function') {
+        // Preserve function behavior by wrapping in new function
+        const originalExternals = config.externals;
+        config.externals = (context, request, callback) => {
+          if (request === 'mongodb') {
+            return callback(null, 'commonjs ' + request);
+          }
+          return originalExternals(context, request, callback);
+        };
       } else {
-        // If externals is object/function/RegExp, convert to array
+        // For object/RegExp, wrap in array (safe for these types)
         config.externals = [config.externals, 'mongodb'];
       }
     }

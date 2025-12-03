@@ -92,9 +92,9 @@ npm run dev
 
 Visit: `http://localhost:3000/admin/login`
 
-**Default Admin:**
-- Email: `admin@teddyshop.com`
-- Password: `admin123`
+**Admin Login:**
+- Use the ADMIN_EMAIL and ADMIN_PASSWORD from your `.env.local` file
+- Set strong credentials in production (see ENV_SETUP.md)
 
 ---
 

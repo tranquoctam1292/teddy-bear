@@ -53,7 +53,7 @@ openssl rand -base64 32
 ### Step 5: Access Your Site
 - Visit: `https://your-project.vercel.app`
 - Admin: `https://your-project.vercel.app/admin/login`
-- Login: `admin@teddyshop.com` / `admin123`
+- Login: Use credentials from your `.env.local` (ADMIN_EMAIL / ADMIN_PASSWORD)
 
 ---
 
@@ -78,8 +78,7 @@ Test everything, then deploy to Vercel when ready!
 
 ### 1. Login to Admin
 - URL: `https://your-domain.vercel.app/admin/login`
-- Email: `admin@teddyshop.com`
-- Password: `admin123`
+- Use the ADMIN_EMAIL and ADMIN_PASSWORD you set in Environment Variables
 
 ### 2. Change Admin Password
 - Go to Settings → Security
