@@ -29,7 +29,7 @@ export default function CommentReplyModal({
   const [formData, setFormData] = useState({
     content: '',
     authorName: 'Admin',
-    authorEmail: 'admin@teddyshop.com',
+    authorEmail: '', // Will be set from session
   });
 
   const handleSubmit = async (e: React.FormEvent) => {

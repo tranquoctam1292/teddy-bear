@@ -113,7 +113,7 @@ export default function AdminSidebarV2() {
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-white truncate">Admin</p>
             <p className="text-xs text-gray-400 truncate">
-              {session?.user?.email || 'admin@emotionalhouse.vn'}
+              {session?.user?.email || 'Not logged in'}
             </p>
           </div>
         </div>

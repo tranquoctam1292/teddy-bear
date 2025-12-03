@@ -84,7 +84,7 @@ export default function AdminLoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="appearance-none relative block w-full px-4 py-2.5 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm"
-                placeholder="admin@emotionalhouse.vn"
+                placeholder="admin@yourdomain.com"
                 disabled={isLoading}
               />
             </div>
@@ -155,14 +155,15 @@ export default function AdminLoginPage() {
         </form>
 
         {/* Demo Credentials (Remove in production) */}
-        <div className="bg-gray-100 border border-gray-200 rounded-md p-4">
-          <p className="text-xs text-gray-700 font-medium mb-1">Admin Credentials:</p>
-          <p className="text-xs text-gray-600">
-            Email: admin@emotionalhouse.vn
+        <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+          <p className="text-xs text-blue-900 font-medium mb-1">🔐 Admin Login:</p>
+          <p className="text-xs text-blue-700">
+            Use the <strong>ADMIN_EMAIL</strong> and <strong>ADMIN_PASSWORD</strong> from your <code className="bg-blue-100 px-1 rounded">.env.local</code> file.
             <br />
-            Password: Admin@123!ChangeMe
             <br />
-            <span className="text-gray-500 italic">(Check .env.local for actual password)</span>
+            <span className="text-blue-600">
+              📝 Don't have .env.local? Copy from <code className="bg-blue-100 px-1 rounded">.env.example</code> and set your credentials.
+            </span>
           </p>
         </div>
       </div>
