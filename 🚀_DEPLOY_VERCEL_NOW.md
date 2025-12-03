@@ -102,7 +102,11 @@ BLOB_READ_WRITE_TOKEN=vercel_blob_rw_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
    **Result:**
 
    ```
-   mongodb+srv://teddyadmin:YourPassword123@cluster0.xxxxx.mongodb.net/teddy-shop
+   # ⚠️ EXAMPLE ONLY - Replace with YOUR actual values!
+   mongodb+srv://[YOUR_USERNAME]:[YOUR_PASSWORD]@[YOUR_CLUSTER].mongodb.net/teddy-shop
+
+   # Real example format (replace placeholders):
+   # mongodb+srv://teddyadmin:YourPassword123@cluster0.xxxxx.mongodb.net/teddy-shop
    ```
 
 ---
@@ -193,7 +197,8 @@ https://teddy-bear-abc123xyz.vercel.app
 3. Connect
 
 # Cách 2: Từ local machine (nếu có MongoDB client)
-mongosh "mongodb+srv://teddyadmin:password@cluster0.xxxxx.mongodb.net/teddy-shop"
+# ⚠️ Replace [USERNAME], [PASSWORD], [CLUSTER] with YOUR actual values
+mongosh "mongodb+srv://[USERNAME]:[PASSWORD]@[CLUSTER].mongodb.net/teddy-shop"
 ```
 
 ### **6.2. Admin user sẽ tự động tạo:**
