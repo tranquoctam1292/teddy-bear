@@ -1,6 +1,3 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
-
 # Check if ignoreBuildErrors is enabled in next.config.ts
 if grep -q "ignoreBuildErrors: true" next.config.ts; then
   echo "⚠️  Note: ignoreBuildErrors is enabled"
