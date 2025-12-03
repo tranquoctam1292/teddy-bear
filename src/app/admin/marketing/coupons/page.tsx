@@ -160,7 +160,7 @@ export default function CouponsPage() {
             <p className="text-gray-600 mt-1">Tạo và quản lý mã giảm giá</p>
           </div>
           <div className="flex items-center gap-3">
-            <Button onClick={loadCoupons} variant="outline">
+            <Button onClick={loadCoupons} variant="secondary">
               <RefreshCw className="h-4 w-4 mr-2" />
               Làm mới
             </Button>
@@ -247,11 +247,11 @@ export default function CouponsPage() {
               </div>
 
               <div className="flex gap-2">
-                <Button onClick={() => handleEdit(coupon)} size="sm" variant="outline" className="flex-1">
+                <Button onClick={() => handleEdit(coupon)} size="sm" variant="secondary" className="flex-1">
                   <Edit className="h-4 w-4 mr-1" />
                   Sửa
                 </Button>
-                <Button onClick={() => handleDelete(coupon._id || '')} size="sm" variant="outline" className="text-red-600">
+                <Button onClick={() => handleDelete(coupon._id || '')} size="sm" variant="secondary" className="text-red-600">
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
@@ -370,7 +370,7 @@ export default function CouponsPage() {
             </div>
 
             <div className="flex justify-end gap-3">
-              <Button type="button" onClick={() => { setIsFormOpen(false); resetForm(); }} variant="outline">
+              <Button type="button" onClick={() => { setIsFormOpen(false); resetForm(); }} variant="secondary">
                 Hủy
               </Button>
               <Button type="submit">

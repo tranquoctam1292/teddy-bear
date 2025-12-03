@@ -140,7 +140,7 @@ export default function AdminNavigationPage() {
         <div>
           {currentMenu && (
             <Button
-              variant="destructive"
+              variant="error"
               onClick={handleDelete}
               disabled={deleteLoading === selectedLocation}
             >

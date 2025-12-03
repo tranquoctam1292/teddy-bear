@@ -127,7 +127,6 @@ export default function AdminPostsPageV2() {
 
       setSelectedPosts(new Set());
       fetchPosts();
-      fetchStatusCounts();
     } catch (error) {
       console.error('Bulk action error:', error);
       alert('Có lỗi xảy ra');

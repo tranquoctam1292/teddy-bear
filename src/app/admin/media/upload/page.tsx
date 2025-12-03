@@ -14,7 +14,7 @@ export default function MediaUploadPage() {
       <div className="mb-6">
         <div className="flex items-center gap-4 mb-4">
           <Link href="/admin/media">
-            <Button variant="outline" size="sm">
+            <Button variant="secondary" size="sm">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Quay lại
             </Button>

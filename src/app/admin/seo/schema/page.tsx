@@ -71,7 +71,7 @@ export default function SchemaBuilderPage() {
             </p>
             <div className="mt-4">
               <Button
-                variant="outline"
+                variant="secondary"
                 onClick={() => window.open('https://schema.org', '_blank')}
               >
                 <Code className="h-4 w-4 mr-2" />

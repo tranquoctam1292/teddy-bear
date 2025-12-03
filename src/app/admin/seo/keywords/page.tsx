@@ -112,7 +112,7 @@ export default function SEOKeywordsPage() {
         </div>
         <div className="flex gap-2">
           <Button
-            variant="outline"
+            variant="secondary"
             onClick={() => setViewMode(viewMode === 'list' ? 'grouped' : 'list')}
           >
             {viewMode === 'list' ? (
@@ -198,7 +198,7 @@ export default function SEOKeywordsPage() {
               </CardDescription>
             </div>
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               onClick={fetchKeywords}
               disabled={loading}
@@ -284,7 +284,7 @@ export default function SEOKeywordsPage() {
                         </div>
                       </div>
                       <Button
-                        variant="outline"
+                        variant="secondary"
                         size="sm"
                         onClick={() => router.push(`/admin/seo/keywords/${keyword.id}`)}
                       >
@@ -305,7 +305,7 @@ export default function SEOKeywordsPage() {
               </div>
               <div className="flex gap-2">
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
                   onClick={() => setPagination({ ...pagination, page: pagination.page - 1 })}
                   disabled={pagination.page === 1}
@@ -313,7 +313,7 @@ export default function SEOKeywordsPage() {
                   Trước
                 </Button>
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
                   onClick={() => setPagination({ ...pagination, page: pagination.page + 1 })}
                   disabled={pagination.page >= pagination.totalPages}

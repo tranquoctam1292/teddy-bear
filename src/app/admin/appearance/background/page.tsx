@@ -25,7 +25,7 @@ export default function BackgroundPage() {
           <div className="aspect-video bg-gray-100 rounded-lg mb-4 flex items-center justify-center">
             <p className="text-gray-500 text-sm">Preview</p>
           </div>
-          <Button className="w-full" variant="outline">Upload Background</Button>
+          <Button className="w-full" variant="secondary">Upload Background</Button>
         </div>
 
         <div className="bg-white rounded-lg border p-6">
@@ -35,7 +35,7 @@ export default function BackgroundPage() {
           </h3>
           <div className="space-y-3">
             <input type="color" className="w-full h-12 rounded-lg" />
-            <Button className="w-full" variant="outline">Apply Color</Button>
+            <Button className="w-full" variant="secondary">Apply Color</Button>
           </div>
         </div>
       </div>

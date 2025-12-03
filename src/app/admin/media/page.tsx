@@ -170,7 +170,7 @@ export default function MediaPage() {
           <div className="flex items-center gap-3">
             <Button
               onClick={loadMedia}
-              variant="outline"
+              variant="secondary"
               size="sm"
             >
               <RefreshCw className="h-4 w-4 mr-2" />
@@ -224,7 +224,7 @@ export default function MediaPage() {
                 </span>
                 <Button
                   onClick={handleBulkDelete}
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
                   className="text-red-600 hover:text-red-700 hover:bg-red-50"
                 >

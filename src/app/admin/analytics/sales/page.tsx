@@ -58,7 +58,7 @@ export default function SalesAnalyticsPage() {
           <li>• Sử dụng discount codes</li>
           <li>• Export Excel/PDF</li>
         </ul>
-        <Button variant="outline" onClick={() => window.location.href = '/admin/analytics'}>
+        <Button variant="secondary" onClick={() => window.location.href = '/admin/analytics'}>
           Xem Analytics Tổng quan
         </Button>
       </div>

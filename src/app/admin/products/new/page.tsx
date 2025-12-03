@@ -35,13 +35,9 @@ export default function AdminProductNewPage() {
       }
 
       const result = await response.json();
-      const product = result.product;
-
-      // Return response for ProductForm to extract ID and save analysis
-      // Note: SEO analysis will be saved by ProductForm component
-      // Redirect after analysis save is initiated (non-blocking)
+      
+      // Redirect to products list after successful creation
       router.push('/admin/products');
-      return { product };
     } catch (error) {
       console.error('Error creating product:', error);
       alert(error instanceof Error ? error.message : 'Có lỗi xảy ra khi tạo sản phẩm');

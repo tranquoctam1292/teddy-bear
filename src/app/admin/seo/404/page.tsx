@@ -338,11 +338,11 @@ export default function SEO404Page() {
 
       {/* Actions */}
       <div className="mb-6 flex flex-wrap gap-3">
-        <Button onClick={() => setShowStatistics(!showStatistics)} variant="outline">
+        <Button onClick={() => setShowStatistics(!showStatistics)} variant="secondary">
           <BarChart3 className="h-4 w-4 mr-2" />
           {showStatistics ? 'Ẩn' : 'Hiển thị'} Thống kê
         </Button>
-        <Button onClick={fetchErrors} variant="outline">
+        <Button onClick={fetchErrors} variant="secondary">
           <RefreshCw className="h-4 w-4 mr-2" />
           Làm mới
         </Button>
@@ -515,7 +515,7 @@ export default function SEO404Page() {
                               <>
                                 <Button
                                   size="sm"
-                                  variant="outline"
+                                  variant="secondary"
                                   onClick={() => handleCreateRedirect(error.id, error.url)}
                                 >
                                   <ArrowRight className="h-4 w-4 mr-1" />
@@ -523,14 +523,14 @@ export default function SEO404Page() {
                                 </Button>
                                 <Button
                                   size="sm"
-                                  variant="outline"
+                                  variant="secondary"
                                   onClick={() => handleMarkResolved(error.id)}
                                 >
                                   <CheckCircle2 className="h-4 w-4" />
                                 </Button>
                                 <Button
                                   size="sm"
-                                  variant="outline"
+                                  variant="secondary"
                                   onClick={() => handleIgnore(error.id)}
                                 >
                                   <Eye className="h-4 w-4" />
@@ -553,14 +553,14 @@ export default function SEO404Page() {
                   </div>
                   <div className="flex gap-2">
                     <Button
-                      variant="outline"
+                      variant="secondary"
                       disabled={pagination.page === 1}
                       onClick={() => setPagination({ ...pagination, page: pagination.page - 1 })}
                     >
                       Trước
                     </Button>
                     <Button
-                      variant="outline"
+                      variant="secondary"
                       disabled={pagination.page >= pagination.totalPages}
                       onClick={() => setPagination({ ...pagination, page: pagination.page + 1 })}
                     >

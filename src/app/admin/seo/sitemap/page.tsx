@@ -44,7 +44,7 @@ export default function SitemapPage() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button onClick={handleView} variant="outline">
+            <Button onClick={handleView} variant="secondary">
               <ExternalLink className="h-4 w-4 mr-2" />
               Xem
             </Button>

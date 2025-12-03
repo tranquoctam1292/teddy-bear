@@ -187,7 +187,7 @@ export default function PagesPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Button onClick={loadPages} variant="outline" size="sm">
+            <Button onClick={loadPages} variant="secondary" size="sm">
               <RefreshCw className="h-4 w-4 mr-2" />
               Làm mới
             </Button>

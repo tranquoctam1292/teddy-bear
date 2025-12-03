@@ -23,7 +23,7 @@ export default function AppearanceCustomizePage() {
             <div className="p-4 bg-gray-50 rounded-lg text-center text-gray-600">
               Color pickers, typography settings, spacing controls...
             </div>
-            <Button className="w-full" variant="outline" onClick={() => window.location.href = '/admin/settings/appearance'}>
+            <Button className="w-full" variant="secondary" onClick={() => window.location.href = '/admin/settings/appearance'}>
               Đến Theme Settings hiện tại
             </Button>
           </div>

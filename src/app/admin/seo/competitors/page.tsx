@@ -72,7 +72,7 @@ export default function CompetitorsPage() {
         </div>
         <div className="flex gap-2">
           <Button
-            variant="outline"
+            variant="secondary"
             onClick={() => setView(view === 'list' ? 'analysis' : 'list')}
           >
             {view === 'list' ? (
@@ -139,7 +139,7 @@ export default function CompetitorsPage() {
                         </div>
                       </div>
                       <Button
-                        variant="outline"
+                        variant="secondary"
                         size="sm"
                         onClick={() => {
                           setView('analysis');

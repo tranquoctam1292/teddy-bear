@@ -63,13 +63,9 @@ export default function AdminProductEditPage() {
       }
 
       const result = await response.json();
-      const product = result.product;
-
-      // Return response for ProductForm to extract ID and save analysis
-      // Note: SEO analysis will be saved by ProductForm component
-      // Redirect after analysis save is initiated (non-blocking)
+      
+      // Redirect to products list after successful update
       router.push('/admin/products');
-      return { product };
     } catch (error) {
       console.error('Error updating product:', error);
       alert(error instanceof Error ? error.message : 'Có lỗi xảy ra khi cập nhật sản phẩm');

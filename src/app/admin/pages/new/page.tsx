@@ -96,7 +96,7 @@ export default function NewPagePage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Link href="/admin/pages">
-                <Button variant="outline" size="sm">
+                <Button variant="secondary" size="sm">
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Quay lại
                 </Button>
@@ -114,7 +114,7 @@ export default function NewPagePage() {
             <div className="flex items-center gap-3">
               <Button
                 onClick={() => handleSave('draft')}
-                variant="outline"
+                variant="secondary"
                 disabled={isSaving}
               >
                 <Save className="h-4 w-4 mr-2" />

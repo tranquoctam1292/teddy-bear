@@ -192,7 +192,7 @@ export default function SEORedirectsPage() {
       regex: 'Regex',
       prefix: 'Tiền tố',
     };
-    return <Badge variant="outline">{labels[matchType] || matchType}</Badge>;
+    return <Badge variant="secondary">{labels[matchType] || matchType}</Badge>;
   };
 
   if (status === 'loading' || loading) {
@@ -244,15 +244,15 @@ export default function SEORedirectsPage() {
           <Plus className="h-4 w-4 mr-2" />
           Thêm Redirect
         </Button>
-        <Button onClick={handleExport} variant="outline">
+        <Button onClick={handleExport} variant="secondary">
           <Download className="h-4 w-4 mr-2" />
           Xuất CSV
         </Button>
-        <Button onClick={handleDetectChains} variant="outline">
+        <Button onClick={handleDetectChains} variant="secondary">
           <AlertTriangle className="h-4 w-4 mr-2" />
           Kiểm tra Chains
         </Button>
-        <Button onClick={fetchRedirects} variant="outline">
+        <Button onClick={fetchRedirects} variant="secondary">
           <RefreshCw className="h-4 w-4 mr-2" />
           Làm mới
         </Button>
@@ -380,14 +380,14 @@ export default function SEORedirectsPage() {
                           <div className="flex justify-end gap-2">
                             <Button
                               size="sm"
-                              variant="outline"
+                              variant="secondary"
                               onClick={() => setEditingRedirect(redirect)}
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
                             <Button
                               size="sm"
-                              variant="outline"
+                              variant="secondary"
                               onClick={() => handleDelete(redirect.id)}
                             >
                               <Trash2 className="h-4 w-4 text-red-600" />
@@ -408,14 +408,14 @@ export default function SEORedirectsPage() {
                   </div>
                   <div className="flex gap-2">
                     <Button
-                      variant="outline"
+                      variant="secondary"
                       disabled={pagination.page === 1}
                       onClick={() => setPagination({ ...pagination, page: pagination.page - 1 })}
                     >
                       Trước
                     </Button>
                     <Button
-                      variant="outline"
+                      variant="secondary"
                       disabled={pagination.page >= pagination.totalPages}
                       onClick={() => setPagination({ ...pagination, page: pagination.page + 1 })}
                     >

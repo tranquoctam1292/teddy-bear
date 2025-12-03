@@ -37,7 +37,7 @@ export default function ProductBrandsPage() {
         <p className="text-gray-600 mb-6">
           Tính năng đang được phát triển. Tạm thời quản lý brands qua Settings → Products
         </p>
-        <Button variant="outline" onClick={() => window.location.href = '/admin/settings/products'}>
+        <Button variant="secondary" onClick={() => window.location.href = '/admin/settings/products'}>
           Đến Settings
         </Button>
       </div>

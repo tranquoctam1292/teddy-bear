@@ -1,28 +1,22 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, RefreshCw, FolderOpen } from 'lucide-react';
-import { Button } from '@/components/admin/ui/button';
-import CategoryManager from '@/components/admin/CategoryManager';
+import { useRouter } from 'next/navigation';
 
 export default function PostCategoriesPage() {
-  return (
-    <div className="p-6 max-w-[1400px] mx-auto">
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <FolderOpen className="h-7 w-7" />
-              Danh mục Bài viết
-            </h1>
-            <p className="text-gray-600 mt-1">
-              Quản lý categories cho blog posts
-            </p>
-          </div>
-        </div>
-      </div>
+  const router = useRouter();
+  
+  useEffect(() => {
+    // Redirect to main products settings where CategoryManager is properly configured
+    router.replace('/admin/settings/products');
+  }, [router]);
 
-      <CategoryManager />
+  return (
+    <div className="flex items-center justify-center h-screen">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4" />
+        <p className="text-gray-600">Redirecting to Product Settings...</p>
+      </div>
     </div>
   );
 }

@@ -404,7 +404,7 @@ export default function AdminContactsPage() {
               </div>
               <div className="flex items-center gap-2">
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
@@ -415,7 +415,7 @@ export default function AdminContactsPage() {
                   Trang {currentPage} / {pagination.totalPages}
                 </span>
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
                   onClick={() =>
                     setCurrentPage((p) => Math.min(pagination.totalPages, p + 1))

@@ -24,7 +24,7 @@ export default function ProductReviewsPage() {
         <p className="text-gray-600 mb-6">
           Tính năng sẽ được thêm trong phiên bản tiếp theo. Hiện tại reviews được quản lý qua Comments.
         </p>
-        <Button variant="outline" onClick={() => window.location.href = '/admin/comments'}>
+        <Button variant="secondary" onClick={() => window.location.href = '/admin/comments'}>
           Xem Comments
         </Button>
       </div>

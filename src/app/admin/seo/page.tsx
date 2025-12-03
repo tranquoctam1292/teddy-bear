@@ -232,7 +232,7 @@ export default function SEODashboardPage() {
               </CardDescription>
             </div>
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               onClick={fetchStats}
               disabled={loading}

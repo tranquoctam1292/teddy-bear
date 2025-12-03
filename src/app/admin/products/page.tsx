@@ -120,7 +120,6 @@ export default function AdminProductsPageV2() {
 
       setSelectedProducts(new Set());
       fetchProducts();
-      fetchStatusCounts();
     } catch (error) {
       console.error('Bulk action error:', error);
       alert('Có lỗi xảy ra');
@@ -271,7 +270,7 @@ export default function AdminProductsPageV2() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="secondary" className="text-xs">
                       {product.category}
                     </Badge>
                   </TableCell>
@@ -303,7 +302,7 @@ export default function AdminProductsPageV2() {
                         )}
                       </Badge>
                       {product.isHot && (
-                        <Badge variant="destructive" className="text-xs">
+                        <Badge variant="error" className="text-xs">
                           Hot
                         </Badge>
                       )}

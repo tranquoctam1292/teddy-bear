@@ -55,7 +55,7 @@ export default function NewKeywordPage() {
   return (
     <div className="p-8">
       <Button
-        variant="outline"
+        variant="secondary"
         onClick={() => router.push('/admin/seo/keywords')}
         className="mb-6"
       >

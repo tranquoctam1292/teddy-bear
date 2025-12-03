@@ -99,7 +99,7 @@ export default function SEOToolsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={generateSitemap} className="w-full" variant="outline">
+            <Button onClick={generateSitemap} className="w-full" variant="secondary">
               <FileText className="h-4 w-4 mr-2" />
               Xem Sitemap
             </Button>

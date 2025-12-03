@@ -48,7 +48,7 @@ export default function CustomersAnalyticsPage() {
           <li>• Customer lifetime value</li>
           <li>• Churn rate analysis</li>
         </ul>
-        <Button variant="outline" onClick={() => window.location.href = '/admin/analytics'}>
+        <Button variant="secondary" onClick={() => window.location.href = '/admin/analytics'}>
           Xem Analytics Tổng quan
         </Button>
       </div>

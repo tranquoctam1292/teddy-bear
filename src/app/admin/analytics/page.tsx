@@ -88,11 +88,11 @@ export default function AnalyticsPage() {
               onChange={(e) => setDateRange({ ...dateRange, to: e.target.value })}
               className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
             />
-            <Button onClick={loadData} variant="outline">
+            <Button onClick={loadData} variant="secondary">
               <RefreshCw className="h-4 w-4 mr-2" />
               Làm mới
             </Button>
-            <Button onClick={exportData} variant="outline">
+            <Button onClick={exportData} variant="secondary">
               <Download className="h-4 w-4 mr-2" />
               Export
             </Button>

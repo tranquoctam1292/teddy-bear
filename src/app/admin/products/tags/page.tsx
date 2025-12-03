@@ -24,7 +24,7 @@ export default function ProductTagsPage() {
         <p className="text-gray-600 mb-6">
           Quản lý tags qua Settings → Products
         </p>
-        <Button variant="outline" onClick={() => window.location.href = '/admin/settings/products'}>
+        <Button variant="secondary" onClick={() => window.location.href = '/admin/settings/products'}>
           Đến Settings
         </Button>
       </div>

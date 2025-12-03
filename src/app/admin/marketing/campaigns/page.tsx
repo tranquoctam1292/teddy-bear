@@ -57,7 +57,7 @@ export default function EmailCampaignsPage() {
             <p className="text-gray-600 mt-1">Quản lý các chiến dịch email marketing</p>
           </div>
           <div className="flex items-center gap-3">
-            <Button onClick={loadCampaigns} variant="outline">
+            <Button onClick={loadCampaigns} variant="secondary">
               <RefreshCw className="h-4 w-4 mr-2" />
               Làm mới
             </Button>
@@ -131,7 +131,7 @@ export default function EmailCampaignsPage() {
                 </div>
 
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline">
+                  <Button size="sm" variant="secondary">
                     <Eye className="h-4 w-4 mr-1" />
                     Xem
                   </Button>
@@ -141,7 +141,7 @@ export default function EmailCampaignsPage() {
                       Gửi
                     </Button>
                   )}
-                  <Button size="sm" variant="outline" className="text-red-600">
+                  <Button size="sm" variant="secondary" className="text-red-600">
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>

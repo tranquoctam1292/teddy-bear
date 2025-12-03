@@ -241,7 +241,7 @@ export default function CommentsPage() {
               Kiểm duyệt và quản lý bình luận từ khách hàng
             </p>
           </div>
-          <Button onClick={loadComments} variant="outline">
+          <Button onClick={loadComments} variant="secondary">
             <RefreshCw className="h-4 w-4 mr-2" />
             Làm mới
           </Button>

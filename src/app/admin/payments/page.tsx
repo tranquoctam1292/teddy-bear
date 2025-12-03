@@ -138,11 +138,11 @@ export default function PaymentsPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Button onClick={loadTransactions} variant="outline">
+            <Button onClick={loadTransactions} variant="secondary">
               <RefreshCw className="h-4 w-4 mr-2" />
               Làm mới
             </Button>
-            <Button variant="outline">
+            <Button variant="secondary">
               <Download className="h-4 w-4 mr-2" />
               Xuất Excel
             </Button>

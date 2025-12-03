@@ -176,7 +176,7 @@ export default function SEOAnalysisPage() {
               </CardDescription>
             </div>
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               onClick={fetchAnalyses}
               disabled={loading}
@@ -226,7 +226,7 @@ export default function SEOAnalysisPage() {
                       </div>
                     </div>
                     <Button
-                      variant="outline"
+                      variant="secondary"
                       size="sm"
                       onClick={() => router.push(`/admin/seo/analysis/${analysis.id}`)}
                     >
@@ -246,7 +246,7 @@ export default function SEOAnalysisPage() {
               </div>
               <div className="flex gap-2">
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
                   onClick={() => setPagination({ ...pagination, page: pagination.page - 1 })}
                   disabled={pagination.page === 1}
@@ -254,7 +254,7 @@ export default function SEOAnalysisPage() {
                   Trước
                 </Button>
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
                   onClick={() => setPagination({ ...pagination, page: pagination.page + 1 })}
                   disabled={pagination.page >= pagination.totalPages}
