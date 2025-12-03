@@ -52,8 +52,15 @@ const nextConfig: NextConfig = {
       };
       
       // Exclude mongodb package from client bundle
-      config.externals = config.externals || [];
-      config.externals.push('mongodb');
+      // Safely handle externals which can be array, object, function, or RegExp
+      if (!config.externals) {
+        config.externals = ['mongodb'];
+      } else if (Array.isArray(config.externals)) {
+        config.externals.push('mongodb');
+      } else {
+        // If externals is object/function/RegExp, convert to array
+        config.externals = [config.externals, 'mongodb'];
+      }
     }
     
     return config;
