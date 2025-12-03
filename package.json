@@ -17,6 +17,7 @@
     "migrate:seo": "tsx scripts/migrate-seo-collections.ts",
     "setup:indexes": "node scripts/setup-mongodb-indexes.js",
     "verify:indexes": "node scripts/verify-mongodb-indexes.js",
+    "test:connections": "node scripts/test-cms-connections.js",
     "prepare": "husky"
   },
   "lint-staged": {

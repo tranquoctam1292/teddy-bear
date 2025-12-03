@@ -15,12 +15,14 @@
 ### 🛍️ Frontend (Shop)
 
 #### Trang Chủ
+
 - ✅ Hero section với CTA
 - ✅ Sản phẩm nổi bật
 - ✅ Sản phẩm hot
 - ✅ Responsive design
 
 #### Trang Sản Phẩm
+
 - ✅ Danh sách sản phẩm với filter
 - ✅ Chi tiết sản phẩm
 - ✅ Gallery ảnh
@@ -29,12 +31,14 @@
 - ✅ Size guide modal
 
 #### Giỏ Hàng & Thanh Toán
+
 - ✅ Shopping cart với Zustand store
 - ✅ Upsell services (gói quà, thẻ chúc mừng)
 - ✅ Checkout page
 - ✅ Payment integration (MoMo, VietQR)
 
 #### Layout & Navigation
+
 - ✅ Header với dynamic navigation
 - ✅ Footer
 - ✅ Mobile menu
@@ -42,6 +46,7 @@
 - ✅ Cart icon với badge
 
 #### Theme & Appearance
+
 - ✅ Theme provider (light/dark/auto)
 - ✅ Dynamic colors (primary/secondary)
 - ✅ Logo & favicon từ database
@@ -51,16 +56,19 @@
 ### 🔐 Admin Panel
 
 #### Authentication
+
 - ✅ NextAuth.js integration
 - ✅ Admin login page
 - ✅ Session management
 - ✅ Protected routes
 
 #### Dashboard
+
 - ✅ Admin dashboard
 - ✅ Statistics overview
 
 #### Quản Lý Sản Phẩm
+
 - ✅ CRUD products
 - ✅ Product categories
 - ✅ Product tags
@@ -69,6 +77,7 @@
 - ✅ Stock management
 
 #### Quản Lý Đơn Hàng
+
 - ✅ Order list
 - ✅ Order details
 - ✅ Order statuses management
@@ -76,6 +85,7 @@
 - ✅ Payment methods management
 
 #### Quản Lý Nội Dung
+
 - ✅ Blog posts (CRUD)
 - ✅ Rich text editor (Tiptap)
 - ✅ Post categories
@@ -84,6 +94,7 @@
 #### Settings (100% Hoàn Thành)
 
 **Phase 1: Products & Orders Settings** ✅
+
 - ✅ Product Categories management
 - ✅ Product Tags management
 - ✅ Product Attributes management
@@ -92,6 +103,7 @@
 - ✅ Payment Methods management
 
 **Phase 2: Notifications & Security Settings** ✅
+
 - ✅ Email Templates (CRUD với rich text editor)
 - ✅ SMTP Configuration
 - ✅ SMTP Test Connection
@@ -101,6 +113,7 @@
 - ✅ Security Configuration (password policy, session, rate limiting, CORS)
 
 **Phase 3: Appearance Settings** ✅
+
 - ✅ Theme Selection (light/dark/auto)
 - ✅ Color Customization (primary/secondary)
 - ✅ Border Radius settings
@@ -109,6 +122,7 @@
 - ✅ Theme Integration (ThemeProvider)
 
 #### Navigation Settings
+
 - ✅ Dynamic menu management
 - ✅ Menu items CRUD
 - ✅ Menu locations
@@ -118,6 +132,7 @@
 ## 🗄️ Database & Backend
 
 ### MongoDB Collections
+
 - ✅ Products
 - ✅ Orders
 - ✅ Carts
@@ -141,6 +156,7 @@
 - ✅ Appearance Config
 
 ### API Routes
+
 - ✅ RESTful API cho tất cả entities
 - ✅ Authentication middleware
 - ✅ Error handling
@@ -151,6 +167,7 @@
 ## 🛠️ Công Nghệ Sử Dụng
 
 ### Frontend
+
 - **Framework:** Next.js 16 (App Router)
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS
@@ -159,12 +176,14 @@
 - **Rich Text Editor:** Tiptap
 
 ### Backend
+
 - **Runtime:** Node.js
 - **Database:** MongoDB
 - **Authentication:** NextAuth.js
 - **API:** Next.js API Routes
 
 ### Development Tools
+
 - **Package Manager:** npm
 - **Linting:** ESLint
 - **Type Checking:** TypeScript
@@ -222,6 +241,7 @@ npm run lint             # Run ESLint
 ## 📚 Tài Liệu
 
 ### Guides
+
 - `README.md` - Getting started
 - `ENV_SETUP.md` - Environment variables setup
 - `MONGODB_CONNECTION_GUIDE.md` - MongoDB connection guide
@@ -230,6 +250,7 @@ npm run lint             # Run ESLint
 - `SETTINGS_USAGE_GUIDE.md` - Settings usage guide
 
 ### Development
+
 - `SETTINGS_DEVELOPMENT_PLAN.md` - Development plan (completed)
 - `SETTINGS_ROADMAP.md` - Roadmap
 - `DATABASE_SCHEMA.md` - Database schema
@@ -239,6 +260,7 @@ npm run lint             # Run ESLint
 ## 🎯 Trạng Thái Tính Năng
 
 ### ✅ Hoàn Thành 100%
+
 - [x] Shop frontend
 - [x] Admin panel
 - [x] Product management
@@ -251,6 +273,7 @@ npm run lint             # Run ESLint
 - [x] Contact management
 
 ### 🔄 Đang Phát Triển
+
 - [ ] Payment gateway integration (partial)
 - [ ] Email sending functionality
 - [ ] Advanced search
@@ -258,6 +281,7 @@ npm run lint             # Run ESLint
 - [ ] Wishlist functionality
 
 ### 📋 Kế Hoạch Tương Lai
+
 - [ ] Multi-language support
 - [ ] Advanced analytics
 - [ ] Inventory management
@@ -271,14 +295,19 @@ npm run lint             # Run ESLint
 ## 🔧 Cấu Hình Cần Thiết
 
 ### Environment Variables
+
 Xem `ENV_SETUP.md` để biết chi tiết.
 
 **Bắt buộc:**
+
 - `MONGODB_URI` - MongoDB connection string
-- `NEXTAUTH_SECRET` - NextAuth secret key
+- `AUTH_SECRET` - Authentication secret key (required)
+- `ADMIN_EMAIL` - Admin user email (required)
+- `ADMIN_PASSWORD` - Admin user password (required)
 - `NEXTAUTH_URL` - Application URL
 
 **Tùy chọn:**
+
 - `ADMIN_EMAIL` - Admin email
 - `ADMIN_PASSWORD` - Admin password
 
@@ -302,5 +331,3 @@ Dự án đã hoàn thành các tính năng cốt lõi và sẵn sàng cho produ
 
 **Maintained by:** Development Team  
 **Last Updated:** 2024
-
-

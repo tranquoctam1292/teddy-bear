@@ -9,6 +9,7 @@ Your project is ready to deploy!
 ## 🎯 OPTION 1: Deploy to Vercel (Recommended - 5 minutes)
 
 ### Step 1: Push to GitHub
+
 ```bash
 git add .
 git commit -m "Production ready - All features complete"
@@ -16,6 +17,7 @@ git push origin main
 ```
 
 ### Step 2: Deploy to Vercel
+
 1. Go to https://vercel.com/new
 2. Click "Import Project"
 3. Select your GitHub repository
@@ -26,31 +28,41 @@ git push origin main
    - **Output Directory:** .next
 
 ### Step 3: Add Environment Variables
+
 Click "Environment Variables" and add:
 
 ```env
+# Database (Required)
 MONGODB_URI=mongodb+srv://your-username:password@cluster.mongodb.net/teddy-shop
 
-NEXTAUTH_URL=https://your-project.vercel.app
-NEXTAUTH_SECRET=generate-new-secret-here
+# Authentication (Required)
+AUTH_SECRET=generate-new-secret-here-use-openssl-rand-base64-32
 
+# Admin Credentials (Required)
+ADMIN_EMAIL=admin@yourdomain.com
+ADMIN_PASSWORD=your-strong-password-here
+
+# Vercel Blob Storage (Required)
 BLOB_READ_WRITE_TOKEN=vercel-will-provide-this
 
+# Site Configuration (Required)
 NEXT_PUBLIC_SITE_URL=https://your-project.vercel.app
-NEXT_PUBLIC_SITE_NAME=Teddy Shop
 ```
 
-**Generate NEXTAUTH_SECRET:**
+**Generate AUTH_SECRET:**
+
 ```bash
 openssl rand -base64 32
 ```
 
 ### Step 4: Deploy!
+
 - Click "Deploy"
 - Wait 2-3 minutes
 - ✅ DONE!
 
 ### Step 5: Access Your Site
+
 - Visit: `https://your-project.vercel.app`
 - Admin: `https://your-project.vercel.app/admin/login`
 - Login: Use credentials from your `.env.local` (ADMIN_EMAIL / ADMIN_PASSWORD)
@@ -60,6 +72,7 @@ openssl rand -base64 32
 ## 🎯 OPTION 2: Test Production Locally First
 
 ### Build & Start
+
 ```bash
 # Build
 npm run build
@@ -77,41 +90,49 @@ Test everything, then deploy to Vercel when ready!
 ## ⚙️ POST-DEPLOYMENT CONFIGURATION
 
 ### 1. Login to Admin
+
 - URL: `https://your-domain.vercel.app/admin/login`
 - Use the ADMIN_EMAIL and ADMIN_PASSWORD you set in Environment Variables
 
 ### 2. Change Admin Password
+
 - Go to Settings → Security
 - Change password immediately!
 
 ### 3. Configure Services
 
 **Payment Gateways:**
+
 - Go to `/admin/payments/gateways`
 - Configure VNPay, MoMo, etc.
 - Test in test mode first
 
 **SMTP Email:**
+
 - Go to `/admin/settings/notifications`
 - Configure SMTP settings
 - Send test email
 
 **Site Settings:**
+
 - Go to `/admin/settings/appearance`
 - Upload logo
 - Upload favicon
 - Set brand colors
 
 **Navigation:**
+
 - Go to `/admin/settings/navigation`
 - Configure menus
 
 ### 4. SEO Setup
+
 - Generate sitemap: `/api/admin/seo/sitemap`
 - Submit to Google Search Console
 - Configure Google Analytics (optional)
 
 ### 5. Add Content
+
 - Upload products
 - Create blog posts
 - Create landing pages
@@ -122,13 +143,13 @@ Test everything, then deploy to Vercel when ready!
 ## 🎯 CUSTOM DOMAIN (Optional)
 
 ### Add Your Domain to Vercel
+
 1. Go to Project Settings → Domains
 2. Add your domain (e.g., teddyshop.com)
 3. Configure DNS:
    - Type: A
    - Name: @
    - Value: 76.76.21.21
-   
    - Type: CNAME
    - Name: www
    - Value: cname.vercel-dns.com
@@ -141,6 +162,7 @@ Test everything, then deploy to Vercel when ready!
 ## 📊 DEPLOYMENT CHECKLIST
 
 ### Before Deploy
+
 - [x] Build succeeds ✅
 - [x] All features working ✅
 - [x] Documentation complete ✅
@@ -148,6 +170,7 @@ Test everything, then deploy to Vercel when ready!
 - [ ] Domain configured (optional)
 
 ### After Deploy
+
 - [ ] Site loads correctly
 - [ ] Admin login works
 - [ ] Can upload media
@@ -156,6 +179,7 @@ Test everything, then deploy to Vercel when ready!
 - [ ] No console errors
 
 ### Configuration
+
 - [ ] Admin password changed
 - [ ] Payment gateways configured
 - [ ] SMTP configured
@@ -167,6 +191,7 @@ Test everything, then deploy to Vercel when ready!
 ## 💰 COST BREAKDOWN
 
 ### Vercel Hosting
+
 - **Free Tier:** Good for testing
 - **Pro Tier:** $20/month (recommended for production)
   - Unlimited bandwidth
@@ -175,14 +200,17 @@ Test everything, then deploy to Vercel when ready!
   - Teams
 
 ### MongoDB Atlas
+
 - **Free Tier:** 512MB (good for MVP)
 - **Paid:** $9+/month (more storage)
 
 ### Vercel Blob (Media Storage)
+
 - **Free:** 1GB
 - **Paid:** $0.15/GB after free tier
 
 ### Total Monthly Cost
+
 - **Minimum:** $0 (free tiers)
 - **Recommended:** $30-35/month (pro tiers)
 
@@ -195,6 +223,7 @@ After deployment:
 **Your Admin Panel:** `https://your-domain.vercel.app/admin`
 
 **Features Ready:**
+
 - ✅ Media management
 - ✅ Pages management
 - ✅ Blog posts
@@ -211,16 +240,19 @@ After deployment:
 ## 🚨 TROUBLESHOOTING
 
 ### Build Fails on Vercel
+
 - Check environment variables
 - Verify MongoDB URI
 - Check Node.js version (18+)
 
 ### Site Loads but Admin Can't Login
+
 - Check NEXTAUTH_URL matches your domain
-- Verify NEXTAUTH_SECRET is set
+- Verify AUTH_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD are set
 - Clear browser cookies
 
 ### Images Don't Upload
+
 - Check BLOB_READ_WRITE_TOKEN
 - Vercel Blob is enabled
 - Check file size limits
@@ -230,11 +262,13 @@ After deployment:
 ## 📞 SUPPORT
 
 ### Vercel Support
+
 - Docs: https://vercel.com/docs
 - Discord: https://vercel.com/discord
 - GitHub: https://github.com/vercel/next.js
 
 ### MongoDB Support
+
 - Docs: https://docs.mongodb.com
 - Support: https://www.mongodb.com/support
 
@@ -243,6 +277,7 @@ After deployment:
 ## 🎯 SUCCESS!
 
 **Your Teddy Shop is now:**
+
 - ✅ Built successfully
 - ✅ Ready to deploy
 - ✅ Production-ready
@@ -256,4 +291,3 @@ After deployment:
 **Time to first sale:** Your call! 💰
 
 **🎊 GOOD LUCK WITH YOUR LAUNCH! 🎊**
-

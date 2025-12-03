@@ -43,6 +43,10 @@
 *.db binary
 
 # Prevent .env files from being committed (extra safety)
-.env* filter=git-crypt diff=git-crypt
-!.env.example filter= diff=
+# Note: .gitattributes does NOT support negation (!), so we handle .env.example separately
+.env.local filter=git-crypt diff=git-crypt
+.env.development.local filter=git-crypt diff=git-crypt
+.env.test.local filter=git-crypt diff=git-crypt
+.env.production.local filter=git-crypt diff=git-crypt
+# .env.example is NOT filtered (safe to commit)
 

@@ -1,10 +1,67 @@
-# Full build check before push
-echo "🏗️  Running production build check..."
-npm run build || {
+# Run validation checks before push
+echo "🔍 Running pre-push validation..."
+echo ""
+
+# Check if ignoreBuildErrors is enabled
+if grep -q "ignoreBuildErrors: true" next.config.ts; then
+  echo "ℹ️  Note: ignoreBuildErrors is enabled (documented)"
+  echo "🔍 Running: Lint + Build (skipping type-check for existing errors)"
   echo ""
-  echo "❌ Build failed!"
-  echo "🔧 Fix the build errors before pushing."
+  
+  # Check 1: Lint (always run)
+  echo "1️⃣  ESLint check..."
+  npm run lint || {
+    echo ""
+    echo "❌ Lint failed!"
+    echo "🔧 Fix ESLint errors before pushing."
+    exit 1
+  }
+  
+  # Check 2: Build (always run)
   echo ""
-  exit 1
-}
+  echo "2️⃣  Production build..."
+  npm run build || {
+    echo ""
+    echo "❌ Build failed!"
+    echo "🔧 Fix build errors before pushing."
+    exit 1
+  }
+  
+else
+  # Full validation when ignoreBuildErrors is false
+  echo "🔍 Running: Type check + Lint + Build (full validation)"
+  echo ""
+  
+  # Check 1: Type check
+  echo "1️⃣  Type check..."
+  npm run type-check || {
+    echo ""
+    echo "❌ Type check failed!"
+    echo "🔧 Fix TypeScript errors before pushing."
+    exit 1
+  }
+  
+  # Check 2: Lint
+  echo ""
+  echo "2️⃣  ESLint check..."
+  npm run lint || {
+    echo ""
+    echo "❌ Lint failed!"
+    echo "🔧 Fix ESLint errors before pushing."
+    exit 1
+  }
+  
+  # Check 3: Build
+  echo ""
+  echo "3️⃣  Production build..."
+  npm run build || {
+    echo ""
+    echo "❌ Build failed!"
+    echo "🔧 Fix build errors before pushing."
+    exit 1
+  }
+fi
+
+echo ""
+echo "✅ All checks passed! Safe to push."
 

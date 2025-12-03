@@ -13,6 +13,7 @@
 ## 🚀 Quick Start (5 minutes)
 
 ### 1. Clone & Install
+
 ```bash
 git clone <your-repo-url>
 cd teddy-shop
@@ -20,18 +21,29 @@ npm install
 ```
 
 ### 2. Setup Environment
+
 ```bash
 cp .env.example .env.local
-# Edit .env.local with your values (see ENV_SETUP.md)
 ```
 
+**⚠️ CRITICAL: Edit `.env.local` IMMEDIATELY and replace ALL placeholder values:**
+
+- Generate `AUTH_SECRET`: `openssl rand -base64 32`
+- Set strong `ADMIN_PASSWORD` (will be hashed)
+- Update `MONGODB_URI` with your database
+- Get `BLOB_READ_WRITE_TOKEN` from Vercel
+
+See `ENV_SETUP.md` for detailed instructions.
+
 ### 3. Setup Database & Admin
+
 ```bash
 npm run test:db      # Test MongoDB connection
 npm run reset:admin  # Create admin user (shows credentials in output)
 ```
 
 ### 4. Run Development Server
+
 ```bash
 npm run dev
 ```
@@ -42,6 +54,7 @@ Admin: `http://localhost:3000/admin/login`
 **🔒 Admin Access:**
 
 Create an admin user:
+
 ```bash
 npm run reset:admin
 ```
@@ -49,6 +62,7 @@ npm run reset:admin
 This will create an admin account with credentials shown in the terminal output.
 
 **⚠️ CRITICAL SECURITY WARNING:**
+
 - **NEVER commit credentials to git!**
 - **ALWAYS use strong, unique passwords in production!**
 - **Change default passwords immediately after first login!**
@@ -61,6 +75,7 @@ This will create an admin account with credentials shown in the terminal output.
 ## ✨ Features (100% Complete!)
 
 ### 🛍️ E-commerce
+
 - Product management with variants (size, color)
 - Shopping cart & checkout
 - Order management
@@ -69,12 +84,14 @@ This will create an admin account with credentials shown in the terminal output.
 - Transaction management
 
 ### 📝 Content Management System
+
 - Blog posts with rich text editor (Tiptap)
 - Landing pages (hierarchical structure)
 - Media library (drag & drop upload)
 - Comments system with moderation
 
 ### 📊 Analytics & Marketing
+
 - Sales analytics with charts (Recharts)
 - Customer insights & metrics
 - Coupon management (3 types)
@@ -82,6 +99,7 @@ This will create an admin account with credentials shown in the terminal output.
 - Performance tracking
 
 ### 🔍 SEO Tools Suite
+
 - Keyword tracking
 - SEO analysis
 - XML Sitemap generator
@@ -91,6 +109,7 @@ This will create an admin account with credentials shown in the terminal output.
 - Schema markup builder
 
 ### 🎨 Customization
+
 - Theme settings (light/dark/auto)
 - Color customization
 - Navigation builder
@@ -124,9 +143,11 @@ teddy-shop/
 ## 🗄️ Database
 
 ### MongoDB Collections (25+)
+
 Core, Content, Settings, SEO, Payments, Marketing, and more
 
 ### Backup
+
 ```bash
 mongodump --uri="<MONGODB_URI>" --out=./backup
 ```
@@ -136,6 +157,7 @@ mongodump --uri="<MONGODB_URI>" --out=./backup
 ## 🛠️ Development
 
 ### Commands
+
 ```bash
 npm run dev              # Development server
 npm run build            # Production build
@@ -152,6 +174,7 @@ npm run reset:admin      # Reset admin password
 ### Vercel (Recommended)
 
 **Quick Deploy:**
+
 ```bash
 git push origin main
 # Then visit: https://vercel.com/new
@@ -160,6 +183,7 @@ git push origin main
 **See `DEPLOYMENT_GUIDE.md` for detailed instructions**
 
 ### Environment Variables
+
 See `ENV_SETUP.md` for complete list
 
 ---
@@ -169,6 +193,7 @@ See `ENV_SETUP.md` for complete list
 **🌟 START HERE:** `📚_START_HERE.md`
 
 ### Essential Docs
+
 - **MASTER_DOCUMENTATION.md** - Complete guide
 - **DEPLOYMENT_GUIDE.md** - Deploy instructions
 - **TESTING_CHECKLIST.md** - Testing guide
@@ -176,6 +201,7 @@ See `ENV_SETUP.md` for complete list
 - **DATABASE_SCHEMA.md** - Database structure
 
 ### Quick Reference
+
 - **Build issues?** → `BUILD_FIXES_NEEDED.md`
 - **Security?** → `SECURITY_FIXES_APPLIED.md`
 - **Deployment?** → `🚀_READY_TO_DEPLOY.md`
@@ -185,7 +211,9 @@ See `ENV_SETUP.md` for complete list
 ## 🎯 Features Status
 
 ### ✅ Completed (100%)
+
 All 13 phases from roadmap:
+
 - Phase 1-5: Core features ✅
 - Phase 6: Media Management ✅
 - Phase 7: Pages Management ✅
@@ -197,6 +225,7 @@ All 13 phases from roadmap:
 - Phase 13: Appearance ✅
 
 ### 📊 Statistics
+
 - **80+ files** created
 - **60+ pages** functional
 - **40+ APIs** working
@@ -221,6 +250,7 @@ All 13 phases from roadmap:
 ## 💰 Value
 
 If built from scratch:
+
 - CMS: $20,000
 - E-commerce: $25,000
 - Analytics: $10,000
@@ -261,6 +291,7 @@ MIT License - See LICENSE file
 **Read:** `🚀_READY_TO_DEPLOY.md`
 
 **Then:**
+
 ```bash
 git push origin main
 ```

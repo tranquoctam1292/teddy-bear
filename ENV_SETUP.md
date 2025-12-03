@@ -1,6 +1,19 @@
 # Hướng Dẫn Cấu Hình Environment Variables
 
-Tạo file `.env.local` trong thư mục gốc với nội dung sau:
+## ⚠️ CRITICAL SECURITY WARNING
+
+**NEVER use placeholder values from `.env.example` directly!**  
+All values in `.env.example` are PUBLIC and MUST be replaced with your own secure values.
+
+## Setup Instructions
+
+1. Copy the example file:
+
+```bash
+cp .env.example .env.local
+```
+
+2. **IMMEDIATELY** edit `.env.local` and replace ALL values below:
 
 ```env
 # Database
@@ -31,17 +44,19 @@ BLOB_READ_WRITE_TOKEN=vercel_blob_rw_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ## Cách tạo AUTH_SECRET mạnh:
 
 ### Windows (PowerShell):
+
 ```powershell
 [Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Maximum 256 }))
 ```
 
 ### Linux/Mac:
+
 ```bash
 openssl rand -base64 32
 ```
 
 ## Lưu ý:
+
 - **KHÔNG** commit file `.env.local` vào git
 - File `.env.local` đã được thêm vào `.gitignore`
 - Trên Vercel, thêm các biến này vào Settings > Environment Variables
-

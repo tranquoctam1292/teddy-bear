@@ -1,9 +1,13 @@
 # Check if ignoreBuildErrors is enabled in next.config.ts
 if grep -q "ignoreBuildErrors: true" next.config.ts; then
   echo "⚠️  Note: ignoreBuildErrors is enabled"
-  echo "🔍 Checking for NEW TypeScript errors in staged files only..."
+  echo "🔍 Running: ESLint + Prettier on staged files..."
+  echo "ℹ️  (TypeScript check skipped - existing errors documented)"
+  echo "📝  82 known errors tracked in TYPESCRIPT_ERRORS_ANALYSIS.md"
   
-  # Only check staged .ts/.tsx files (incremental check)
+  # Run linting and formatting on staged files
+  # NOTE: lint-staged runs ESLint + Prettier, NOT TypeScript type-check
+  # This prevents new syntax/style errors while allowing tracked type errors
   npx lint-staged
   
 else
