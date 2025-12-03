@@ -77,9 +77,22 @@ npm run dev
 Visit: `http://localhost:3000`  
 Admin: `http://localhost:3000/admin/login`
 
-**Default credentials:**
-- Email: `admin@teddyshop.com`
-- Password: `admin123`
+**🔒 Admin Access:**
+
+Create an admin user:
+```bash
+npm run reset:admin
+```
+
+This will create an admin account with credentials shown in the terminal output.
+
+**⚠️ CRITICAL SECURITY WARNING:**
+- **NEVER commit credentials to git!**
+- **ALWAYS use strong, unique passwords in production!**
+- **Change default passwords immediately after first login!**
+- Admin credentials should only be in `.env.local` (git-ignored)
+- For production: Use password manager and enable 2FA
+- See `ENV_SETUP.md` for secure configuration
 
 ---
 

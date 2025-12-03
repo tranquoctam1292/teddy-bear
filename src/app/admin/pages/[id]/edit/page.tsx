@@ -273,13 +273,12 @@ export default function EditPagePage() {
           <div className="space-y-6">
             {/* Publish Box */}
             <PublishBox
-              status={(page.status === 'trash' ? 'draft' : page.status) as any || 'draft'}
+              status={(page.status === 'trash' ? 'draft' : page.status || 'draft') as 'draft' | 'published' | 'archived'}
               onStatusChange={(status) => updatePage('status', status)}
               publishDate=""
-              onDateChange={() => {}}
               onSave={() => handleSave()}
               onPublish={() => handleSave('published')}
-              isLoading={isSaving}
+              isSaving={isSaving}
             />
 
             {/* Featured Image */}

@@ -217,7 +217,6 @@ export default function PagesPage() {
               selectedCount={selectedPages.size}
               actions={bulkActions}
               onAction={handleBulkAction}
-              onClearSelection={() => setSelectedPages(new Set())}
             />
           )}
 

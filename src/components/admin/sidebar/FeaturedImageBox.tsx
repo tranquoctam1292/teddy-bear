@@ -6,15 +6,21 @@ import FeaturedImageUploader from '../FeaturedImageUploader';
 
 interface FeaturedImageBoxProps {
   value?: string;
-  onChange: (url: string) => void;
+  imageUrl?: string; // Alias for value
+  onChange?: (url: string) => void;
+  onImageChange?: (url: string) => void; // Alias for onChange
   onRemove?: () => void;
 }
 
 export default function FeaturedImageBox({
   value,
+  imageUrl,
   onChange,
+  onImageChange,
   onRemove,
 }: FeaturedImageBoxProps) {
+  const currentImage = value || imageUrl;
+  const handleChange = onChange || onImageChange || (() => {});
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -25,8 +31,8 @@ export default function FeaturedImageBox({
       </CardHeader>
       <CardContent>
         <FeaturedImageUploader
-          value={value}
-          onChange={onChange}
+          value={currentImage}
+          onChange={handleChange}
           onRemove={onRemove}
         />
       </CardContent>

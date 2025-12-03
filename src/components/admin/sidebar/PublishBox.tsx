@@ -10,11 +10,12 @@ interface PublishBoxProps {
   status: 'draft' | 'published' | 'archived';
   onStatusChange: (status: string) => void;
   publishDate?: string;
-  onDateChange: (date: string) => void;
+  onDateChange?: (date: string) => void;
   onSave: () => void;
   onPublish: () => void;
   onPreview?: () => void;
   isLoading?: boolean;
+  isSaving?: boolean; // Alias for isLoading
   isDirty?: boolean;
   lastSaved?: Date | null;
 }
