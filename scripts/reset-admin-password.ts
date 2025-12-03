@@ -20,8 +20,21 @@ async function resetAdminPassword() {
   try {
     console.log('🔄 Resetting admin password...');
     
-    const adminEmail = process.env.ADMIN_EMAIL || 'admin@emotionalhouse.vn';
-    const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+    // ✅ SECURITY: No fallback credentials - MUST be set in .env.local
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const adminPassword = process.env.ADMIN_PASSWORD;
+    
+    if (!adminEmail || !adminPassword) {
+      console.error('');
+      console.error('❌ ERROR: ADMIN_EMAIL and ADMIN_PASSWORD must be set in .env.local');
+      console.error('');
+      console.error('🔧 Fix:');
+      console.error('   1. Create .env.local file (copy from .env.example)');
+      console.error('   2. Set ADMIN_EMAIL and ADMIN_PASSWORD');
+      console.error('   3. Run this script again');
+      console.error('');
+      process.exit(1);
+    }
     
     console.log(`📧 Admin Email: ${adminEmail}`);
     console.log(`🔑 Admin Password: ${adminPassword.substring(0, 3)}***`);

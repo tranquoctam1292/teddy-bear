@@ -30,9 +30,15 @@ async function initializeAdminUser() {
     const existingAdmin = await users.findOne({ email: adminEmail, role: 'admin' });
     
     if (!existingAdmin) {
+      // ✅ SECURITY: Require ADMIN_PASSWORD, no fallback
+      if (!process.env.ADMIN_PASSWORD) {
+        console.warn('⚠️  ADMIN_PASSWORD not set, skipping admin user creation');
+        return;
+      }
+      
       // Create admin user with hashed password
       const hashedPassword = await bcrypt.hash(
-        process.env.ADMIN_PASSWORD || 'admin123',
+        process.env.ADMIN_PASSWORD,
         10
       );
 
@@ -97,10 +103,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             }
           }
 
-          // Fallback: Check against environment variables (for backward compatibility)
-          // This allows login even if database is not set up yet
-          const adminEmail = process.env.ADMIN_EMAIL || 'admin@emotionalhouse.vn';
-          const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+          // ✅ SECURITY: Only use env vars if explicitly set (no hardcoded fallback)
+          // This allows first-time setup but requires env vars to be configured
+          const adminEmail = process.env.ADMIN_EMAIL;
+          const adminPassword = process.env.ADMIN_PASSWORD;
+
+          if (!adminEmail || !adminPassword) {
+            console.error('❌ ADMIN_EMAIL and ADMIN_PASSWORD not set in .env.local');
+            return null;
+          }
 
           if (credentials.email === adminEmail) {
             // For first-time setup, compare plain password
@@ -143,9 +154,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null;
         } catch (error) {
           console.error('Auth error:', error);
-          // If database is not available, fall back to env vars
-          const adminEmail = process.env.ADMIN_EMAIL || 'admin@emotionalhouse.vn';
-          const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+          // ✅ SECURITY: If database fails, still require env vars (no hardcoded fallback)
+          const adminEmail = process.env.ADMIN_EMAIL;
+          const adminPassword = process.env.ADMIN_PASSWORD;
+
+          if (!adminEmail || !adminPassword) {
+            console.error('❌ Auth failed: env vars not set and database unavailable');
+            return null;
+          }
 
           if (
             credentials.email === adminEmail &&
