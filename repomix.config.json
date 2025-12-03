@@ -1,0 +1,25 @@
+{
+  "output": {
+    "filePath": "full-codebase.md",
+    "style": "markdown",
+    "removeComments": false,
+    "removeEmptyLines": false,
+    "showLineNumbers": true,
+    "topFilesLength": 10
+  },
+  "ignore": {
+    "useGitignore": true,
+    "useDefaultPatterns": true,
+    "customPatterns": [
+      "*.log",
+      "tmp/**",
+      ".next/**",
+      "node_modules/**",
+      ".git/**",
+      "*.md",
+      "!full-codebase.md",
+      "tsconfig.tsbuildinfo",
+      "package-lock.json"
+    ]
+  }
+}

@@ -2,7 +2,7 @@
 
 // Admin Order Listing Page
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import {
   Search,
@@ -15,6 +15,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import type { Order } from '@/lib/schemas/order';
+import { StatusTabs } from '@/components/admin/list';
 
 interface OrdersResponse {
   orders: Order[];
@@ -38,10 +39,11 @@ const ORDER_STATUSES: { value: Order['orderStatus']; label: string; color: strin
 export default function AdminOrdersPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<Order['orderStatus'] | ''>('');
+  const [statusFilter, setStatusFilter] = useState<Order['orderStatus'] | ''>(searchParams.get('status') as Order['orderStatus'] || '');
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState({
     page: 1,
@@ -50,6 +52,17 @@ export default function AdminOrdersPage() {
     totalPages: 0,
   });
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
+  
+  // Status counts
+  const [statusCounts, setStatusCounts] = useState({
+    all: 0,
+    pending: 0,
+    confirmed: 0,
+    processing: 0,
+    shipping: 0,
+    delivered: 0,
+    cancelled: 0,
+  });
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -57,10 +70,18 @@ export default function AdminOrdersPage() {
     }
   }, [status, router]);
 
+  // Sync statusFilter with URL params
+  useEffect(() => {
+    const newStatus = searchParams.get('status') as Order['orderStatus'] || '';
+    setStatusFilter(newStatus);
+    setCurrentPage(1);
+  }, [searchParams]);
+
   useEffect(() => {
     if (status === 'authenticated') {
       fetchOrders();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, currentPage, searchQuery, statusFilter]);
 
   const fetchOrders = async () => {

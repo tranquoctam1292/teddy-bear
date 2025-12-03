@@ -1,13 +1,25 @@
 // MongoDB Connection Helper
 import { MongoClient, Db } from 'mongodb';
 
-const uri = process.env.MONGODB_URI || '';
 const options = {};
 
 let client: MongoClient | undefined;
 let clientPromise: Promise<MongoClient> | undefined;
 
-if (uri) {
+/**
+ * Get or create MongoDB client promise (lazy initialization)
+ */
+function getClientPromise(): Promise<MongoClient> {
+  if (clientPromise) {
+    return clientPromise;
+  }
+
+  const uri = process.env.MONGODB_URI || '';
+  
+  if (!uri) {
+    throw new Error('MongoDB URI is not configured. Please add MONGODB_URI to your environment variables.');
+  }
+
   if (process.env.NODE_ENV === 'development') {
     // In development mode, use a global variable so that the value
     // is preserved across module reloads caused by HMR (Hot Module Replacement).
@@ -25,16 +37,15 @@ if (uri) {
     client = new MongoClient(uri, options);
     clientPromise = client.connect();
   }
+
+  return clientPromise;
 }
 
 /**
  * Get MongoDB database instance
  */
 export async function getDatabase(dbName: string = 'teddy-shop'): Promise<Db> {
-  if (!clientPromise) {
-    throw new Error('MongoDB URI is not configured. Please add MONGODB_URI to your environment variables.');
-  }
-  const client = await clientPromise;
+  const client = await getClientPromise();
   return client.db(dbName);
 }
 
@@ -48,6 +59,59 @@ export async function getCollections() {
     orders: db.collection('orders'),
     carts: db.collection('carts'),
     users: db.collection('users'),
+    contacts: db.collection('contacts'),
+    posts: db.collection('posts'),
+    navigation: db.collection('navigation'),
+    stockReservations: db.collection('stockReservations'),
+    // Product Settings collections
+    productCategories: db.collection('productCategories'),
+    productTags: db.collection('productTags'),
+    productAttributes: db.collection('productAttributes'),
+    // Order Settings collections
+    orderStatuses: db.collection('orderStatuses'),
+    orderNotifications: db.collection('orderNotifications'),
+    paymentMethods: db.collection('paymentMethods'),
+    // Notification Settings collections
+    emailTemplates: db.collection('emailTemplates'),
+    smtpConfig: db.collection('smtpConfig'),
+    systemNotifications: db.collection('systemNotifications'),
+    // Security Settings collections
+    adminUsers: db.collection('adminUsers'),
+    securityConfig: db.collection('securityConfig'),
+    userActivityLogs: db.collection('userActivityLogs'),
+    apiKeys: db.collection('apiKeys'),
+    // Appearance Settings collections
+    appearanceConfig: db.collection('appearanceConfig'),
+    // SEO Management Center collections
+    seoAnalysis: db.collection('seoAnalysis'),
+    keywordTracking: db.collection('keywordTracking'),
+    seoSettings: db.collection('seoSettings'),
+    redirectRules: db.collection('redirectRules'),
+    error404Log: db.collection('error404Log'),
+    scheduledReports: db.collection('scheduledReports'),
+    // Competitor Analysis collections
+    competitors: db.collection('competitors'),
+    competitorKeywords: db.collection('competitorKeywords'),
+    competitorContent: db.collection('competitorContent'),
+    // Backlink Monitoring collections
+    backlinks: db.collection('backlinks'),
+    // A/B Testing collections
+    abTests: db.collection('abTests'),
+    // Media Management collections
+    media: db.collection('media'),
+    // Pages Management collections
+    pages: db.collection('pages'),
+    // Comments System collections
+    comments: db.collection('comments'),
+    // Payments & Transactions collections
+    transactions: db.collection('transactions'),
+    paymentGateways: db.collection('paymentGateways'),
+    // Marketing collections
+    coupons: db.collection('coupons'),
+    couponUsage: db.collection('couponUsage'),
+    emailCampaigns: db.collection('emailCampaigns'),
+    campaigns: db.collection('campaigns'),
+    promotions: db.collection('promotions'),
   };
 }
 
@@ -55,11 +119,8 @@ export async function getCollections() {
  * Connect to MongoDB (for initialization)
  */
 export async function connectDB(): Promise<void> {
-  if (!clientPromise) {
-    throw new Error('MongoDB URI is not configured. Please add MONGODB_URI to your environment variables.');
-  }
   try {
-    await clientPromise;
+    await getClientPromise();
     console.log('✅ Connected to MongoDB');
   } catch (error) {
     console.error('❌ MongoDB connection error:', error);
@@ -67,5 +128,5 @@ export async function connectDB(): Promise<void> {
   }
 }
 
-// Export the client promise for use in API routes
-export default clientPromise;
+// Export the client promise getter for use in API routes
+export default getClientPromise;

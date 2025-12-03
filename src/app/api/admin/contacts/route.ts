@@ -1,8 +1,8 @@
-// Admin Contact API Routes
+// Admin Contact API Routes - MongoDB Integration
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { getCollections } from '@/lib/db';
 import type { ContactMessage } from '@/lib/schemas/contact';
-import { mockContacts } from '@/lib/data/contacts';
 
 // GET - List all contact messages with pagination and filtering
 export async function GET(request: NextRequest) {
@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const { contacts } = await getCollections();
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
@@ -23,52 +24,64 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status') || '';
     const search = searchParams.get('search') || '';
 
-    // Filter contacts
-    let filteredContacts = [...mockContacts];
+    // Build query
+    const query: any = {};
 
     if (isRead !== null && isRead !== '') {
-      const readFilter = isRead === 'true';
-      filteredContacts = filteredContacts.filter((c) => c.isRead === readFilter);
+      query.isRead = isRead === 'true';
     }
 
     if (status) {
-      filteredContacts = filteredContacts.filter((c) => c.status === status);
+      query.status = status;
     }
 
     if (search) {
       const searchLower = search.toLowerCase();
-      filteredContacts = filteredContacts.filter(
-        (c) =>
-          c.name.toLowerCase().includes(searchLower) ||
-          c.email.toLowerCase().includes(searchLower) ||
-          c.subject.toLowerCase().includes(searchLower) ||
-          c.message.toLowerCase().includes(searchLower)
-      );
+      query.$or = [
+        { name: { $regex: searchLower, $options: 'i' } },
+        { email: { $regex: searchLower, $options: 'i' } },
+        { subject: { $regex: searchLower, $options: 'i' } },
+        { message: { $regex: searchLower, $options: 'i' } },
+      ];
     }
 
-    // Sort by createdAt (newest first)
-    filteredContacts.sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    // Get total count
+    const total = await contacts.countDocuments(query);
 
-    // Pagination
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const paginatedContacts = filteredContacts.slice(startIndex, endIndex);
+    // Fetch contacts with pagination
+    const contactsList = await contacts
+      .find(query)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .toArray();
+
+    // Format contacts
+    const formattedContacts = contactsList.map((doc: any) => {
+      const { _id, ...contact } = doc;
+      return {
+        ...contact,
+        id: contact.id || _id.toString(),
+      };
+    });
+
+    // Get stats
+    const totalContacts = await contacts.countDocuments({});
+    const unreadContacts = await contacts.countDocuments({ isRead: false });
+    const readContacts = await contacts.countDocuments({ isRead: true });
 
     return NextResponse.json({
-      contacts: paginatedContacts,
+      contacts: formattedContacts,
       pagination: {
         page,
         limit,
-        total: filteredContacts.length,
-        totalPages: Math.ceil(filteredContacts.length / limit),
+        total,
+        totalPages: Math.ceil(total / limit),
       },
       stats: {
-        total: mockContacts.length,
-        unread: mockContacts.filter((c) => !c.isRead).length,
-        read: mockContacts.filter((c) => c.isRead).length,
+        total: totalContacts,
+        unread: unreadContacts,
+        read: readContacts,
       },
     });
   } catch (error) {
@@ -79,6 +92,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-
-
-

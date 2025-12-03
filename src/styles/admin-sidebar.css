@@ -1,0 +1,221 @@
+/* WordPress-Style Admin Sidebar Animations */
+
+/* Menu Item Hover */
+.menu-item {
+  position: relative;
+  transition: all 200ms ease-in-out;
+}
+
+.menu-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.5), transparent);
+  transition: width 200ms ease-in-out;
+}
+
+.menu-item:hover::before {
+  width: 4px;
+}
+
+.menu-item.active {
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.1), transparent);
+}
+
+.menu-item.active::before {
+  width: 4px;
+  background: #3b82f6;
+}
+
+/* Chevron Rotation */
+.menu-chevron {
+  transition: transform 200ms ease-in-out;
+}
+
+.menu-chevron.rotated {
+  transform: rotate(90deg);
+}
+
+/* Submenu Flyout Animation */
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.submenu-flyout {
+  animation: slideInRight 200ms ease-out;
+}
+
+/* Submenu Vertical Expand */
+@keyframes expandDown {
+  from {
+    max-height: 0;
+    opacity: 0;
+  }
+  to {
+    max-height: 500px;
+    opacity: 1;
+  }
+}
+
+.submenu-vertical {
+  animation: expandDown 200ms ease-out;
+  overflow: hidden;
+}
+
+/* Badge Pulse Animation */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.badge-pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* Badge Pop-in */
+@keyframes popIn {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.badge-new {
+  animation: popIn 300ms ease-out;
+}
+
+/* Hover Glow Effect */
+.menu-item-glow {
+  position: relative;
+}
+
+.menu-item-glow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(59, 130, 246, 0.2), transparent);
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+
+.menu-item-glow:hover::after {
+  opacity: 1;
+}
+
+/* Submenu Item Hover */
+.submenu-item {
+  position: relative;
+  transition: all 150ms ease-in-out;
+}
+
+.submenu-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 2px;
+  background: #3b82f6;
+  transition: width 150ms ease-in-out;
+}
+
+.submenu-item:hover::before {
+  width: 20px;
+}
+
+/* Active Indicator Slide */
+.active-indicator {
+  position: absolute;
+  left: 0;
+  height: 100%;
+  width: 4px;
+  background: #3b82f6;
+  transition: top 300ms ease-in-out;
+}
+
+/* Mobile Sidebar Slide */
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.mobile-sidebar {
+  animation: slideInLeft 300ms ease-out;
+}
+
+/* Overlay Fade */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.overlay-fade {
+  animation: fadeIn 200ms ease-out;
+}
+
+/* Badge Number Change */
+@keyframes numberChange {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.badge-change {
+  animation: numberChange 300ms ease-out;
+}
+
+/* Tooltip Appear */
+@keyframes tooltipAppear {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tooltip {
+  animation: tooltipAppear 150ms ease-out;
+}
+
+/* Smooth Collapse */
+.collapsing {
+  transition: max-height 200ms ease-in-out, opacity 200ms ease-in-out;
+}
+

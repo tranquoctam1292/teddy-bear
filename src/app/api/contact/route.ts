@@ -1,7 +1,7 @@
-// Public Contact API Route
+// Public Contact API Route - MongoDB Integration
 import { NextRequest, NextResponse } from 'next/server';
+import { getCollections } from '@/lib/db';
 import type { ContactMessage } from '@/lib/schemas/contact';
-import { mockContacts } from '@/lib/data/contacts';
 
 // Helper to generate unique ID
 function generateId(): string {
@@ -46,7 +46,14 @@ export async function POST(request: NextRequest) {
       updatedAt: new Date(),
     };
 
-    mockContacts.push(newContact);
+    // Save to MongoDB
+    try {
+      const { contacts } = await getCollections();
+      await contacts.insertOne(newContact);
+    } catch (dbError) {
+      console.error('Error saving contact to database:', dbError);
+      // Continue even if database fails (for backward compatibility)
+    }
 
     return NextResponse.json(
       {
@@ -64,5 +71,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
-

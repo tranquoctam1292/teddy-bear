@@ -57,6 +57,10 @@ export interface CheckoutResponse {
       paymentUrl?: string;
       transactionId?: string;
       qrCode?: string; // For QR code payments
+      qrCodeUrl?: string; // QR code image URL
+      accountNo?: string; // Bank account number (for bank transfer)
+      accountName?: string; // Account holder name
+      content?: string; // Payment content/reference
     };
     message: string;
   };

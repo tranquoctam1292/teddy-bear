@@ -2,6 +2,7 @@
 
 // Slider ảnh sản phẩm
 // Image MUST update automatically when variant changes
+// Optimized with next/image for performance and layout shift prevention
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -17,6 +18,8 @@ export default function ProductGallery({
   selectedVariant,
 }: ProductGalleryProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [imageLoading, setImageLoading] = useState<Record<number, boolean>>({});
+  const [imageError, setImageError] = useState<Record<number, boolean>>({});
   
   // Compute display images based on variant
   const displayImages = (() => {
@@ -44,6 +47,11 @@ export default function ProductGallery({
     }
   }, [selectedVariant?.id]);
 
+  // Set loading state when image changes
+  useEffect(() => {
+    setImageLoading((prev) => ({ ...prev, [currentIndex]: true }));
+  }, [currentIndex, displayImages]);
+
   const goToPrevious = () => {
     setCurrentIndex((prev) => (prev === 0 ? displayImages.length - 1 : prev - 1));
   };
@@ -56,26 +64,69 @@ export default function ProductGallery({
     setCurrentIndex(index);
   };
 
+  const handleImageLoad = (index: number) => {
+    setImageLoading((prev) => ({ ...prev, [index]: false }));
+  };
+
+  const handleImageError = (index: number) => {
+    setImageError((prev) => ({ ...prev, [index]: true }));
+    setImageLoading((prev) => ({ ...prev, [index]: false }));
+  };
+
   if (displayImages.length === 0) {
     return (
-      <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center">
+      <div className="aspect-square bg-gradient-to-br from-pink-100 to-pink-200 rounded-lg flex items-center justify-center">
         <p className="text-gray-400">Không có ảnh</p>
       </div>
     );
   }
 
+  const currentImage = displayImages[currentIndex];
+  const isFirstImage = currentIndex === 0;
+  const isLoading = imageLoading[currentIndex];
+  const hasError = imageError[currentIndex];
+
   return (
     <div className="space-y-4">
       {/* Main Image */}
-      <div className="relative aspect-square bg-gray-50 rounded-lg overflow-hidden group">
-        <Image
-          src={displayImages[currentIndex]}
-          alt={`Product image ${currentIndex + 1}`}
-          fill
-          className="object-cover"
-          priority={currentIndex === 0}
-          sizes="(max-width: 768px) 100vw, 50vw"
-        />
+      <div className="relative aspect-square bg-gradient-to-br from-pink-100 to-pink-200 rounded-lg overflow-hidden group">
+        {/* Loading Skeleton */}
+        {isLoading && !hasError && (
+          <div className="absolute inset-0 bg-gradient-to-br from-pink-100 via-pink-50 to-pink-100 animate-pulse flex items-center justify-center">
+            <div className="w-16 h-16 border-4 border-pink-300 border-t-pink-500 rounded-full animate-spin" />
+          </div>
+        )}
+
+        {/* Error Placeholder */}
+        {hasError && (
+          <div className="absolute inset-0 bg-gradient-to-br from-pink-100 to-pink-200 flex items-center justify-center">
+            <div className="text-center">
+              <span className="text-6xl mb-2 block">🐻</span>
+              <p className="text-sm text-gray-500">Không thể tải ảnh</p>
+            </div>
+          </div>
+        )}
+
+        {/* Main Product Image */}
+        {!hasError && (
+          <Image
+            src={currentImage}
+            alt={`${selectedVariant ? `${selectedVariant.size} - ` : ''}${currentIndex + 1} of ${displayImages.length}`}
+            fill
+            className={`object-cover transition-opacity duration-300 ${
+              isLoading ? 'opacity-0' : 'opacity-100'
+            }`}
+            priority={isFirstImage}
+            loading={isFirstImage ? undefined : 'lazy'}
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 600px"
+            quality={90}
+            onLoad={() => handleImageLoad(currentIndex)}
+            onError={() => handleImageError(currentIndex)}
+            placeholder="blur"
+            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+            unoptimized={currentImage.startsWith('http') && !currentImage.includes(process.env.NEXT_PUBLIC_VERCEL_URL || '')}
+          />
+        )}
 
         {/* Navigation Arrows */}
         {displayImages.length > 1 && (
@@ -108,28 +159,60 @@ export default function ProductGallery({
       {/* Thumbnail Gallery */}
       {displayImages.length > 1 && (
         <div className="grid grid-cols-4 gap-2">
-          {displayImages.map((image, index) => (
-            <button
-              key={index}
-              onClick={() => goToSlide(index)}
-              className={`
-                relative aspect-square rounded-lg overflow-hidden border-2 transition-all
-                ${
-                  index === currentIndex
-                    ? 'border-pink-400 ring-2 ring-pink-200'
-                    : 'border-gray-200 hover:border-pink-300'
-                }
-              `}
-            >
-              <Image
-                src={image}
-                alt={`Thumbnail ${index + 1}`}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 25vw, 12.5vw"
-              />
-            </button>
-          ))}
+          {displayImages.map((image, index) => {
+            const isActive = index === currentIndex;
+            const thumbLoading = imageLoading[index];
+            const thumbError = imageError[index];
+
+            return (
+              <button
+                key={`${image}-${index}`}
+                onClick={() => goToSlide(index)}
+                className={`
+                  relative aspect-square rounded-lg overflow-hidden border-2 transition-all
+                  ${
+                    isActive
+                      ? 'border-pink-500 ring-2 ring-pink-200 shadow-md'
+                      : 'border-gray-200 hover:border-pink-300'
+                  }
+                `}
+                aria-label={`Xem ảnh ${index + 1}`}
+                aria-current={isActive ? 'true' : undefined}
+              >
+                {/* Thumbnail Loading State */}
+                {thumbLoading && !thumbError && (
+                  <div className="absolute inset-0 bg-gradient-to-br from-pink-100 to-pink-200 animate-pulse" />
+                )}
+
+                {/* Thumbnail Error State */}
+                {thumbError && (
+                  <div className="absolute inset-0 bg-gradient-to-br from-pink-100 to-pink-200 flex items-center justify-center">
+                    <span className="text-2xl">🐻</span>
+                  </div>
+                )}
+
+                {/* Thumbnail Image */}
+                {!thumbError && (
+                  <Image
+                    src={image}
+                    alt={`Thumbnail ${index + 1} of ${displayImages.length}`}
+                    fill
+                    className={`object-cover transition-opacity duration-200 ${
+                      thumbLoading ? 'opacity-0' : 'opacity-100'
+                    } ${isActive ? 'scale-105' : ''}`}
+                    loading="lazy"
+                    sizes="(max-width: 640px) 25vw, (max-width: 1024px) 12.5vw, 150px"
+                    quality={75}
+                    onLoad={() => handleImageLoad(index)}
+                    onError={() => handleImageError(index)}
+                    placeholder="blur"
+                    blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+                    unoptimized={image.startsWith('http') && !image.includes(process.env.NEXT_PUBLIC_VERCEL_URL || '')}
+                  />
+                )}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>

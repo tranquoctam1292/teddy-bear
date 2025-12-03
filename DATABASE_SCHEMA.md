@@ -28,9 +28,17 @@ interface Product {
   
   metaTitle?: string;
   metaDescription?: string;
+  seo?: SEOConfig; // Advanced SEO configuration
   
   createdAt: Date;
   updatedAt: Date;
+}
+
+interface SEOConfig {
+  canonicalUrl?: string; // Override canonical URL to avoid duplicate content
+  robots?: string; // "index, follow" | "noindex, follow" | "noindex, nofollow"
+  focusKeyword?: string; // Primary keyword for SEO tracking
+  altText?: string; // Alt text for featured image (if different from title/name)
 }
 
 interface ProductVariant {
@@ -57,7 +65,53 @@ interface ProductVariant {
 
 ---
 
-### 2. Order Schema
+### 2. Post Schema
+
+```typescript
+interface Post {
+  _id?: ObjectId;
+  id: string;
+  title: string;
+  slug: string;
+  excerpt?: string;
+  content: string; // Rich text content (HTML)
+  
+  // SEO fields
+  metaTitle?: string;
+  metaDescription?: string;
+  keywords?: string[];
+  seo?: SEOConfig; // Advanced SEO configuration
+  
+  // Media
+  featuredImage?: string;
+  images?: string[];
+  
+  // Categorization
+  category?: string;
+  tags: string[];
+  
+  // Status & Publishing
+  status: 'draft' | 'published' | 'archived';
+  publishedAt?: Date;
+  author?: string;
+  
+  // Analytics
+  views?: number;
+  likes?: number;
+  
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+**Key Points:**
+- `seo` object contains advanced SEO settings
+- `keywords` is an array for multiple keywords
+- `status` controls visibility and publishing
+
+---
+
+### 3. Order Schema
 
 ```typescript
 interface Order {
@@ -105,7 +159,7 @@ interface Order {
 
 ---
 
-### 3. Cart Schema
+### 4. Cart Schema
 
 ```typescript
 interface Cart {

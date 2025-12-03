@@ -1,16 +1,11 @@
-// Admin Product API Routes
+// Admin Product API Routes - MongoDB Integration
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { getCollections } from '@/lib/db';
 import type { Product, ProductVariant } from '@/lib/schemas/product';
+import { ObjectId } from 'mongodb';
 
-// Mock database - Replace with actual MongoDB in production
-const mockProducts: Product[] = [];
-
-// Helper to generate unique ID
-function generateId(): string {
-  return `prod_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
-}
-
+// Helper to generate unique ID for variants
 function generateVariantId(): string {
   return `var_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
 }
@@ -27,41 +22,56 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const { products } = await getCollections();
+
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
     const search = searchParams.get('search') || '';
     const category = searchParams.get('category') || '';
 
-    // Filter products
-    let filteredProducts = [...mockProducts];
-
+    // Build query
+    const query: any = {};
+    
     if (search) {
-      const searchLower = search.toLowerCase();
-      filteredProducts = filteredProducts.filter(
-        (p) =>
-          p.name.toLowerCase().includes(searchLower) ||
-          p.description.toLowerCase().includes(searchLower) ||
-          p.slug.toLowerCase().includes(searchLower)
-      );
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { slug: { $regex: search, $options: 'i' } },
+      ];
     }
 
     if (category) {
-      filteredProducts = filteredProducts.filter((p) => p.category === category);
+      query.category = category;
     }
 
-    // Pagination
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
+    // Get total count for pagination
+    const total = await products.countDocuments(query);
+
+    // Fetch products with pagination
+    const productsList = await products
+      .find(query)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .toArray();
+
+    // Convert MongoDB documents to Product format (remove _id, use id)
+    const formattedProducts = productsList.map((doc: any) => {
+      const { _id, ...product } = doc;
+      return {
+        ...product,
+        id: product.id || _id.toString(),
+      };
+    });
 
     return NextResponse.json({
-      products: paginatedProducts,
+      products: formattedProducts,
       pagination: {
         page,
         limit,
-        total: filteredProducts.length,
-        totalPages: Math.ceil(filteredProducts.length / limit),
+        total,
+        totalPages: Math.ceil(total / limit),
       },
     });
   } catch (error) {
@@ -98,6 +108,7 @@ export async function POST(request: NextRequest) {
       isActive,
       metaTitle,
       metaDescription,
+      seo,
     } = body;
 
     // Validation
@@ -118,6 +129,16 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Check if slug already exists
+    const { products } = await getCollections();
+    const existingProduct = await products.findOne({ slug });
+    if (existingProduct) {
+      return NextResponse.json(
+        { error: 'Product with this slug already exists' },
+        { status: 400 }
+      );
+    }
+
     // Calculate min/max price
     const prices = variants.map((v: ProductVariant) => v.price);
     const minPrice = Math.min(...prices);
@@ -131,7 +152,7 @@ export async function POST(request: NextRequest) {
 
     // Create product
     const newProduct: Product = {
-      id: generateId(),
+      id: new ObjectId().toString(),
       name,
       slug,
       description,
@@ -147,9 +168,18 @@ export async function POST(request: NextRequest) {
       updatedAt: new Date(),
       metaTitle,
       metaDescription,
+      seo: seo && Object.keys(seo).length > 0 ? seo : undefined,
     };
 
-    mockProducts.push(newProduct);
+    // Insert into MongoDB
+    await products.insertOne(newProduct);
+
+    // Trigger sitemap regeneration (non-blocking)
+    import('@/lib/seo/sitemap-regenerate').then(({ triggerSitemapRegeneration }) => {
+      triggerSitemapRegeneration().catch(err => {
+        console.error('Failed to trigger sitemap regeneration:', err);
+      });
+    });
 
     return NextResponse.json(
       { product: newProduct, message: 'Product created successfully' },
@@ -163,5 +193,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
-

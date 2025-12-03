@@ -9,7 +9,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Bold,
   Italic,
@@ -24,9 +24,21 @@ import {
 } from 'lucide-react';
 import type { Post } from '@/lib/schemas/post';
 import type { PostFormData } from '@/types/post';
+import { ROBOTS_OPTIONS } from '@/lib/schemas/seo';
+import { analyzeSEO, type SEOAnalysisResult } from '@/lib/seo/analysis-client';
+import { saveAnalysisToDatabase } from '@/lib/seo/analysis-save';
+import SEOAnalysisDisplay from './seo/SEOAnalysisDisplay';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Select } from './ui/select';
+
+// SEO Schema
+const seoSchema = z.object({
+  canonicalUrl: z.string().url('URL không hợp lệ').optional().or(z.literal('')),
+  robots: z.enum(['index, follow', 'noindex, follow', 'noindex, nofollow']).optional(),
+  focusKeyword: z.string().optional(),
+  altText: z.string().optional(),
+});
 
 // Validation Schema for form input (keywords and tags are strings in form)
 const postSchema = z.object({
@@ -40,6 +52,7 @@ const postSchema = z.object({
   category: z.string().optional(),
   tags: z.string().optional(), // String in form, converted to array on submit
   status: z.enum(['draft', 'published', 'archived']),
+  seo: seoSchema.optional(),
 });
 
 // Form input type (what the form uses)
@@ -49,7 +62,7 @@ type PostFormInput = z.infer<typeof postSchema> & {
 
 interface PostEditorProps {
   post?: Post;
-  onSubmit: (data: PostFormData) => Promise<void>;
+  onSubmit: (data: PostFormData) => Promise<{ post?: Post } | void>;
   onCancel: () => void;
   isLoading?: boolean;
 }
@@ -62,6 +75,7 @@ export default function PostEditor({
 }: PostEditorProps) {
   const [tagInput, setTagInput] = useState('');
   const [tags, setTags] = useState<string[]>(post?.tags || []);
+  const [seoAnalysis, setSeoAnalysis] = useState<SEOAnalysisResult | null>(null);
 
   const {
     register,
@@ -84,6 +98,12 @@ export default function PostEditor({
           tags: post.tags?.join(', ') || '',
           status: post.status,
           content: post.content,
+          seo: post.seo || {
+            canonicalUrl: '',
+            robots: 'index, follow',
+            focusKeyword: '',
+            altText: '',
+          },
         }
       : {
           title: '',
@@ -97,6 +117,12 @@ export default function PostEditor({
           tags: '',
           status: 'draft',
           content: '',
+          seo: {
+            canonicalUrl: '',
+            robots: 'index, follow',
+            focusKeyword: '',
+            altText: '',
+          },
         },
   });
 
@@ -116,6 +142,7 @@ export default function PostEditor({
       }),
     ],
     content: post?.content || '',
+    immediatelyRender: false, // Fix SSR hydration mismatch
     onUpdate: ({ editor }) => {
       setValue('content', editor.getHTML());
     },
@@ -163,12 +190,43 @@ export default function PostEditor({
       ? data.keywords.split(',').map((k) => k.trim()).filter(k => k.length > 0)
       : [];
     
+    // Clean SEO data - remove empty strings
+    const seoData = data.seo ? {
+      ...(data.seo.canonicalUrl && { canonicalUrl: data.seo.canonicalUrl }),
+      ...(data.seo.robots && { robots: data.seo.robots }),
+      ...(data.seo.focusKeyword && { focusKeyword: data.seo.focusKeyword }),
+      ...(data.seo.altText && { altText: data.seo.altText }),
+    } : undefined;
+    
     const submitData: PostFormData = {
       ...data,
       tags: tags,
       keywords: keywordsArray.length > 0 ? keywordsArray : undefined,
+      seo: seoData && Object.keys(seoData).length > 0 ? seoData : undefined,
     };
-    await onSubmit(submitData);
+    
+    // Save post first
+    const result = await onSubmit(submitData);
+    
+    // Save SEO analysis after post is saved (non-blocking)
+    if (seoAnalysis && data.slug) {
+      const postId = post?.id || (result as any)?.post?.id;
+      if (postId && postId !== 'new') {
+        // Save analysis in background (non-blocking)
+        // Don't await - let it run in background
+        saveAnalysisToDatabase(
+          seoAnalysis,
+          'post',
+          postId,
+          data.slug
+        ).catch(err => {
+          console.error('Failed to save SEO analysis:', err);
+          // Don't block the save process
+        });
+      }
+    }
+    
+    // Note: Redirect is handled by parent component after onSubmit completes
   };
 
   if (!editor) {
@@ -338,15 +396,15 @@ export default function PostEditor({
         )}
       </div>
 
-      {/* SEO Settings */}
+      {/* SEO Basic */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">SEO</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">SEO Cơ Bản</h2>
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Meta Title
             </label>
-            <Input {...register('metaTitle')} placeholder="SEO title" />
+            <Input {...register('metaTitle')} placeholder="Tiêu đề hiển thị trên kết quả tìm kiếm" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -356,7 +414,7 @@ export default function PostEditor({
               {...register('metaDescription')}
               rows={3}
               className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-gray-900 text-sm"
-              placeholder="SEO description"
+              placeholder="Mô tả ngắn hiển thị trên kết quả tìm kiếm"
             />
           </div>
           <div>
@@ -364,6 +422,71 @@ export default function PostEditor({
               Keywords (phân cách bằng dấu phẩy)
             </label>
             <Input {...register('keywords')} placeholder="keyword1, keyword2, keyword3" />
+          </div>
+        </div>
+      </div>
+
+      {/* SEO Advanced */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">Cấu Hình SEO Nâng Cao</h2>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Canonical URL
+            </label>
+            <Input
+              {...register('seo.canonicalUrl')}
+              type="url"
+              placeholder="https://example.com/canonical-url"
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              URL gốc để tránh duplicate content. Để trống để sử dụng URL mặc định.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Robots Meta Tag
+            </label>
+            <select
+              {...register('seo.robots')}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-gray-900 text-sm"
+            >
+              {ROBOTS_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-gray-500">
+              Hướng dẫn search engines cách index trang này.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Focus Keyword
+            </label>
+            <Input
+              {...register('seo.focusKeyword')}
+              placeholder="Từ khóa chính cho bài viết"
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Từ khóa chính để theo dõi và tối ưu SEO.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Alt Text (Ảnh đại diện)
+            </label>
+            <Input
+              {...register('seo.altText')}
+              placeholder="Mô tả ảnh đại diện (nếu khác tiêu đề bài viết)"
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Alt text cho ảnh đại diện. Để trống sẽ sử dụng tiêu đề bài viết.
+            </p>
           </div>
         </div>
       </div>

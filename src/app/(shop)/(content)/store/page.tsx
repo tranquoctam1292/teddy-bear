@@ -2,6 +2,8 @@
 import { MapPin, Phone, Clock, Mail } from 'lucide-react';
 import type { Metadata } from 'next';
 import MapButton from '@/components/store/MapButton';
+import JsonLd from '@/components/seo/JsonLd';
+import { generateLocalBusinessSchema } from '@/lib/seo/schemas';
 
 export const metadata: Metadata = {
   title: 'Hệ thống cửa hàng - The Emotional House',
@@ -42,8 +44,33 @@ const stores = [
 ];
 
 export default function StorePage() {
+  // Get base URL from environment or use default
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://emotionalhouse.vn';
+
+  // Generate JSON-LD schemas for all stores
+  const localBusinessSchemas = stores.map((store) => {
+    const addressParts = store.address.split(',');
+    return generateLocalBusinessSchema({
+      name: store.name,
+      address: addressParts[0]?.trim() || store.address,
+      city: addressParts[1]?.trim() || 'TP. Hồ Chí Minh',
+      region: addressParts[2]?.trim(),
+      country: 'VN',
+      lat: store.lat,
+      lng: store.lng,
+      phone: store.phone,
+      email: store.email,
+      openingHours: store.hours,
+      url: `${baseUrl}/store`,
+    }, baseUrl);
+  });
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-pink-50 to-white">
+      {/* JSON-LD Structured Data */}
+      {localBusinessSchemas.map((schema, index) => (
+        <JsonLd key={stores[index].id} data={schema} />
+      ))}
       {/* Hero Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">

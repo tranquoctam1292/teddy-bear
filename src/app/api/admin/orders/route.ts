@@ -1,8 +1,8 @@
-// Admin Order API Routes
+// Admin Order API Routes - MongoDB Integration
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { getCollections } from '@/lib/db';
 import type { Order } from '@/lib/schemas/order';
-import { mockOrders } from '@/lib/data/orders';
 
 // GET - List all orders with pagination and filtering
 export async function GET(request: NextRequest) {
@@ -16,50 +16,65 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const { orders } = await getCollections();
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
     const status = searchParams.get('status') || '';
     const search = searchParams.get('search') || '';
 
-    // Filter orders
-    let filteredOrders = [...mockOrders];
+    // Build query
+    const query: any = {};
 
     if (status) {
-      filteredOrders = filteredOrders.filter(
-        (order) => order.orderStatus === status
-      );
+      query.orderStatus = status;
     }
 
     if (search) {
       const searchLower = search.toLowerCase();
-      filteredOrders = filteredOrders.filter(
-        (order) =>
-          order.orderId.toLowerCase().includes(searchLower) ||
-          order.guestEmail.toLowerCase().includes(searchLower) ||
-          order.shippingAddress.fullName.toLowerCase().includes(searchLower) ||
-          order.shippingAddress.phone.includes(search)
-      );
+      query.$or = [
+        { orderId: { $regex: searchLower, $options: 'i' } },
+        { guestEmail: { $regex: searchLower, $options: 'i' } },
+        { 'shippingAddress.fullName': { $regex: searchLower, $options: 'i' } },
+        { 'shippingAddress.phone': { $regex: search, $options: 'i' } },
+      ];
     }
 
-    // Sort by createdAt (newest first)
-    filteredOrders.sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    // Get total count
+    const total = await orders.countDocuments(query);
 
-    // Pagination
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const paginatedOrders = filteredOrders.slice(startIndex, endIndex);
+    // Fetch orders with pagination
+    const ordersList = await orders
+      .find(query)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .toArray();
+
+    // Format orders (remove _id, ensure id exists)
+    const formattedOrders = ordersList.map((doc: any) => {
+      const { _id, ...order } = doc;
+      return {
+        ...order,
+        id: order.id || order.orderId || _id.toString(),
+      };
+    });
+
+    // Get stats
+    const totalOrders = await orders.countDocuments({});
+    const unreadOrders = await orders.countDocuments({ orderStatus: 'pending' });
 
     return NextResponse.json({
-      orders: paginatedOrders,
+      orders: formattedOrders,
       pagination: {
         page,
         limit,
-        total: filteredOrders.length,
-        totalPages: Math.ceil(filteredOrders.length / limit),
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+      stats: {
+        total: totalOrders,
+        pending: unreadOrders,
       },
     });
   } catch (error) {
@@ -70,4 +85,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-

@@ -13,6 +13,7 @@ import {
   Settings as SettingsIcon,
   Shield,
   Palette,
+  Search,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/admin/ui/card';
 
@@ -89,6 +90,14 @@ export default function AdminSettingsPage() {
       href: '/admin/settings/appearance',
       color: 'text-pink-600',
       bgColor: 'bg-pink-50',
+    },
+    {
+      title: 'SEO',
+      description: 'Quản lý và tối ưu hóa SEO',
+      icon: Search,
+      href: '/admin/seo',
+      color: 'text-indigo-600',
+      bgColor: 'bg-indigo-50',
     },
   ];
 

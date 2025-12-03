@@ -5,8 +5,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useEffect } from 'react';
-import PostEditor from '@/components/admin/PostEditor';
-import type { Post } from '@/lib/schemas/post';
+import PostEditorV3 from '@/components/admin/PostEditorV3';
 import type { PostFormData } from '@/types/post';
 
 export default function AdminPostNewPage() {
@@ -36,7 +35,14 @@ export default function AdminPostNewPage() {
         throw new Error(error.error || 'Failed to create post');
       }
 
+      const result = await response.json();
+      const post = result.post;
+
+      // Return response for PostEditor to extract ID and save analysis
+      // Note: SEO analysis will be saved by PostEditor component
+      // Redirect after analysis save is initiated (non-blocking)
       router.push('/admin/posts');
+      return { post };
     } catch (error) {
       console.error('Error creating post:', error);
       alert(error instanceof Error ? error.message : 'Có lỗi xảy ra khi tạo bài viết');
@@ -64,21 +70,11 @@ export default function AdminPostNewPage() {
   }
 
   return (
-    <>
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <h1 className="text-2xl font-bold text-gray-900">Thêm bài viết mới</h1>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <PostEditor
-          onSubmit={handleSubmit}
-          onCancel={handleCancel}
-          isLoading={isLoading}
-        />
-      </main>
-    </>
+    <PostEditorV3
+      onSubmit={handleSubmit}
+      onCancel={handleCancel}
+      isLoading={isLoading}
+    />
   );
 }
 

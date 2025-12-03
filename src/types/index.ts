@@ -2,10 +2,12 @@
 
 export type Variant = {
   id: string;
-  size: string;      // e.g., "1m2"
+  size: string;      // e.g., "1m2", "25cm", "40cm"
+  color?: string;    // Color name (e.g., "Pink", "Purple", "Blue")
+  colorCode?: string; // Hex color code (e.g., "#FF69B4")
   price: number;     // e.g., 350000
   stock: number;
-  image?: string;    // Specific image for this size
+  image?: string;    // Specific image for this size/color
 };
 
 export type Product = {

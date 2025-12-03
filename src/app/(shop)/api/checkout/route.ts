@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { CheckoutRequest, CheckoutResponse, CheckoutErrorResponse } from '@/lib/api-contracts/checkout';
 import type { Order, ShippingAddress, UpsellServices as OrderUpsellServices, PaymentDetails } from '@/lib/schemas/order';
+import { processPayment } from '@/lib/payment';
+import { reserveStock, releaseReservation } from '@/lib/stock/reservation';
+import { withRateLimit } from '@/lib/rate-limit';
 
 // Using CheckoutRequest from api-contracts
 
@@ -117,24 +120,11 @@ async function createOrder(data: CheckoutRequest): Promise<Order> {
     updatedAt: new Date(),
   };
 
-  // TODO: Save to database (MongoDB, PostgreSQL, etc.)
-  // await db.orders.insertOne(order);
-  
-  // TODO: Send confirmation email
-  // await sendOrderConfirmationEmail(order);
-  
-  // TODO: Process payment based on payment method
-  // if (data.paymentMethod === 'momo' || data.paymentMethod === 'vnpay') {
-  //   const paymentResult = await processPayment(order);
-  //   if (!paymentResult.success) {
-  //     throw new Error('Payment processing failed');
-  //   }
-  // }
-
   return order;
 }
 
-export async function POST(request: NextRequest) {
+// Main POST handler with rate limiting
+async function handlePOST(request: NextRequest) {
   try {
     // Parse request body
     const body = await request.json();
@@ -173,12 +163,97 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Reserve stock before creating order
+    const reservationItems = body.items.map((item: any) => ({
+      productId: item.productId,
+      variantId: item.variantId,
+      quantity: item.quantity,
+    }));
+
+    // Generate temporary orderId for reservation
+    const tempOrderId = generateOrderId();
+    const reservationResult = await reserveStock(tempOrderId, reservationItems);
+
+    if (!reservationResult.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: reservationResult.error || 'Không đủ hàng trong kho',
+        },
+        { status: 400 }
+      );
+    }
+
     // Create order
     const order = await createOrder(body);
 
-    // TODO: Save to MongoDB
-    // const { orders } = await getCollections();
-    // await orders.insertOne(order);
+    // Update orderId in reservation
+    if (reservationResult.reservations) {
+      const { getCollections } = await import('@/lib/db');
+      const { stockReservations } = await getCollections();
+      await stockReservations.updateOne(
+        { orderId: tempOrderId },
+        { $set: { orderId: order.orderId } }
+      );
+    }
+
+    // Process payment (for online payments)
+    let paymentResult = null;
+    if (body.paymentDetails.method !== 'cod') {
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+      paymentResult = await processPayment(body.paymentDetails.method, {
+        amount: order.total,
+        orderId: order.orderId,
+        description: `Thanh toán đơn hàng ${order.orderId}`,
+        returnUrl: `${baseUrl}/checkout/success?orderId=${order.orderId}`,
+        notifyUrl: `${baseUrl}/api/payment/${body.paymentDetails.method}/callback`,
+      });
+
+      if (!paymentResult.success) {
+        // Release stock reservation if payment fails
+        await releaseReservation(order.orderId);
+        return NextResponse.json(
+          {
+            success: false,
+            error: paymentResult.error || 'Không thể tạo yêu cầu thanh toán',
+          },
+          { status: 400 }
+        );
+      }
+
+      // Update payment details with transaction ID
+      if (paymentResult.transactionId) {
+        order.paymentDetails.transactionId = paymentResult.transactionId;
+      }
+    }
+
+    // Save to MongoDB
+    try {
+      const { getCollections } = await import('@/lib/db');
+      const { orders } = await getCollections();
+      await orders.insertOne(order);
+    } catch (dbError) {
+      console.error('Error saving order to database:', dbError);
+      // Release stock if database save fails
+      await releaseReservation(order.orderId);
+      throw new Error('Không thể lưu đơn hàng. Vui lòng thử lại.');
+    }
+
+    // Send order confirmation email (async, don't wait for it)
+    try {
+      const { sendOrderConfirmationEmail } = await import('@/lib/email');
+      sendOrderConfirmationEmail({
+        order,
+        customerName: body.shippingAddress.fullName,
+        customerEmail: body.guestEmail,
+      }).catch((emailError) => {
+        console.error('Error sending order confirmation email:', emailError);
+        // Don't fail the request if email fails
+      });
+    } catch (emailError) {
+      console.error('Error sending order confirmation email:', emailError);
+      // Don't fail the request if email fails
+    }
 
     // Return success response
     const response: CheckoutResponse = {
@@ -193,6 +268,17 @@ export async function POST(request: NextRequest) {
           paymentMethod: order.paymentDetails.method,
           estimatedDelivery: order.estimatedDelivery?.toISOString(),
         },
+        payment: paymentResult
+          ? {
+              paymentUrl: paymentResult.paymentUrl,
+              qrCode: paymentResult.qrCode,
+              qrCodeUrl: paymentResult.qrCodeUrl,
+              accountNo: paymentResult.accountNo,
+              accountName: paymentResult.accountName,
+              content: paymentResult.content,
+              transactionId: paymentResult.transactionId,
+            }
+          : undefined,
         message: 'Đơn hàng đã được tạo thành công',
       },
     };
@@ -211,6 +297,13 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// Export with rate limiting (5 requests per minute for checkout)
+export const POST = withRateLimit(handlePOST, {
+  windowMs: 60 * 1000,
+  maxRequests: 5,
+  message: 'Quá nhiều yêu cầu thanh toán. Vui lòng đợi một chút rồi thử lại.',
+});
+
 // GET endpoint to retrieve order status
 export async function GET(request: NextRequest) {
   try {
@@ -224,29 +317,30 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // TODO: Fetch order from MongoDB
-    // const { orders } = await getCollections();
-    // const order = await orders.findOne({ orderId });
-    // 
-    // if (!order) {
-    //   return NextResponse.json(
-    //     { success: false, error: 'Order not found' },
-    //     { status: 404 }
-    //   );
-    // }
+    // Fetch order from MongoDB
+    const { getCollections } = await import('@/lib/db');
+    const { orders } = await getCollections();
+    const order = await orders.findOne({ orderId });
     
-    // For now, return mock response
+    if (!order) {
+      return NextResponse.json(
+        { success: false, error: 'Order not found' },
+        { status: 404 }
+      );
+    }
+
+    const { _id, ...orderData } = order as any;
     return NextResponse.json({
       success: true,
       data: {
-        orderId,
-        status: 'pending' as const,
-        total: 0,
-        itemCount: 0,
-        shippingAddress: {} as ShippingAddress,
-        paymentStatus: 'pending' as const,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        orderId: orderData.orderId,
+        status: orderData.orderStatus,
+        total: orderData.total,
+        itemCount: orderData.items.reduce((sum: number, item: any) => sum + item.quantity, 0),
+        shippingAddress: orderData.shippingAddress,
+        paymentStatus: orderData.paymentDetails.status,
+        createdAt: orderData.createdAt,
+        updatedAt: orderData.updatedAt,
       },
     });
   } catch (error) {

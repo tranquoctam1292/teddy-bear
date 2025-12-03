@@ -1,8 +1,9 @@
-// Admin Post API Routes
+// Admin Post API Routes - MongoDB Integration
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { getCollections } from '@/lib/db';
 import type { Post } from '@/lib/schemas/post';
-import { mockPosts } from '@/lib/data/posts';
+import { ObjectId } from 'mongodb';
 
 // Helper to generate unique ID
 function generateId(): string {
@@ -21,48 +22,57 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const { posts } = await getCollections();
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
     const status = searchParams.get('status') || '';
     const search = searchParams.get('search') || '';
 
-    // Filter posts
-    let filteredPosts = [...mockPosts];
+    // Build query
+    const query: any = {};
 
     if (status) {
-      filteredPosts = filteredPosts.filter((p) => p.status === status);
+      query.status = status;
     }
 
     if (search) {
       const searchLower = search.toLowerCase();
-      filteredPosts = filteredPosts.filter(
-        (p) =>
-          p.title.toLowerCase().includes(searchLower) ||
-          p.slug.toLowerCase().includes(searchLower) ||
-          p.excerpt?.toLowerCase().includes(searchLower) ||
-          p.content.toLowerCase().includes(searchLower)
-      );
+      query.$or = [
+        { title: { $regex: searchLower, $options: 'i' } },
+        { slug: { $regex: searchLower, $options: 'i' } },
+        { excerpt: { $regex: searchLower, $options: 'i' } },
+        { content: { $regex: searchLower, $options: 'i' } },
+      ];
     }
 
-    // Sort by createdAt (newest first)
-    filteredPosts.sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    // Get total count
+    const total = await posts.countDocuments(query);
 
-    // Pagination
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const paginatedPosts = filteredPosts.slice(startIndex, endIndex);
+    // Fetch posts with pagination
+    const postsList = await posts
+      .find(query)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .toArray();
+
+    // Format posts
+    const formattedPosts = postsList.map((doc: any) => {
+      const { _id, ...post } = doc;
+      return {
+        ...post,
+        id: post.id || _id.toString(),
+      };
+    });
 
     return NextResponse.json({
-      posts: paginatedPosts,
+      posts: formattedPosts,
       pagination: {
         page,
         limit,
-        total: filteredPosts.length,
-        totalPages: Math.ceil(filteredPosts.length / limit),
+        total,
+        totalPages: Math.ceil(total / limit),
       },
     });
   } catch (error) {
@@ -99,21 +109,24 @@ export async function POST(request: NextRequest) {
       category,
       tags,
       status,
+      seo,
     } = body;
 
     // Validation
-    if (!title || !slug || !content) {
+    if (!title || !slug || !content || !status) {
       return NextResponse.json(
-        { error: 'Missing required fields: title, slug, content' },
+        { error: 'Missing required fields: title, slug, content, status' },
         { status: 400 }
       );
     }
 
+    const { posts } = await getCollections();
+
     // Check if slug already exists
-    const existingPost = mockPosts.find((p) => p.slug === slug);
+    const existingPost = await posts.findOne({ slug });
     if (existingPost) {
       return NextResponse.json(
-        { error: 'Slug already exists' },
+        { error: 'Post with this slug already exists' },
         { status: 400 }
       );
     }
@@ -123,23 +136,31 @@ export async function POST(request: NextRequest) {
       id: generateId(),
       title,
       slug,
-      excerpt: excerpt || '',
+      excerpt,
       content,
-      metaTitle: metaTitle || title,
-      metaDescription: metaDescription || excerpt || '',
+      metaTitle,
+      metaDescription,
       keywords: keywords || [],
-      featuredImage: featuredImage || '',
-      category: category || '',
+      featuredImage,
+      category,
       tags: tags || [],
-      status: status || 'draft',
+      status,
+      seo: seo && Object.keys(seo).length > 0 ? seo : undefined,
       publishedAt: status === 'published' ? new Date() : undefined,
       author: session.user?.name || 'Admin',
-      views: 0,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
-    mockPosts.push(newPost);
+    // Insert into MongoDB
+    await posts.insertOne(newPost);
+
+    // Trigger sitemap regeneration (non-blocking)
+    import('@/lib/seo/sitemap-regenerate').then(({ triggerSitemapRegeneration }) => {
+      triggerSitemapRegeneration().catch(err => {
+        console.error('Failed to trigger sitemap regeneration:', err);
+      });
+    });
 
     return NextResponse.json(
       { post: newPost, message: 'Post created successfully' },
@@ -153,5 +174,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
-

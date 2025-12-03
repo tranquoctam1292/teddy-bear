@@ -3,15 +3,38 @@
 import Link from 'next/link';
 import { ArrowRight, Star, Heart, ShoppingBag } from 'lucide-react';
 import ProductCard from '@/components/product/ProductCard';
-import { mockProducts } from '@/lib/data/products';
+import { mockProducts } from '@/lib/data/mock-products';
+import JsonLd from '@/components/seo/JsonLd';
+import { generateOrganizationSchema } from '@/lib/seo/schemas';
 
 export default function Home() {
   // Get hot products
   const hotProducts = mockProducts.filter((p) => p.isHot).slice(0, 6);
   const featuredProducts = mockProducts.slice(0, 4);
 
+  // Generate Organization Schema
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_SITE_URL || 'https://emotionalhouse.vn');
+  const organizationSchema = generateOrganizationSchema({
+    name: 'The Emotional House',
+    url: baseUrl,
+    logo: `${baseUrl}/logo.png`,
+    socialMedia: [
+      // Add social media URLs here when available
+      // 'https://www.facebook.com/emotionalhouse',
+      // 'https://www.instagram.com/emotionalhouse',
+    ],
+    contactPoint: {
+      telephone: '+84-1900-123-456',
+      email: 'hello@emotionalhouse.vn',
+      contactType: 'Customer Service',
+      areaServed: 'VN',
+    },
+  }, baseUrl);
+
   return (
     <div className="min-h-screen">
+      {/* JSON-LD Structured Data */}
+      <JsonLd data={organizationSchema} />
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-pink-500 via-pink-400 to-pink-600 text-white py-20 md:py-32">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

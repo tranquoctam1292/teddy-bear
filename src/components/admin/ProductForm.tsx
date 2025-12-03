@@ -4,7 +4,7 @@
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Plus,
   Trash2,
@@ -15,15 +15,29 @@ import {
 } from 'lucide-react';
 import type { Product, ProductVariant } from '@/lib/schemas/product';
 import { CATEGORIES } from '@/lib/constants';
+import { ROBOTS_OPTIONS } from '@/lib/schemas/seo';
+import { analyzeSEO, type SEOAnalysisResult } from '@/lib/seo/analysis-client';
+import { saveAnalysisToDatabase } from '@/lib/seo/analysis-save';
+import SEOAnalysisDisplay from './seo/SEOAnalysisDisplay';
+import RichTextEditor from './RichTextEditor';
 
 // Validation Schema
 const variantSchema = z.object({
   id: z.string().optional(),
   size: z.string().min(1, 'Kích thước là bắt buộc'),
+  color: z.string().optional(),
+  colorCode: z.string().optional(),
   price: z.number().min(0, 'Giá phải lớn hơn 0'),
   stock: z.number().min(0, 'Số lượng tồn kho phải lớn hơn hoặc bằng 0'),
   image: z.string().optional(),
   sku: z.string().optional(),
+});
+
+const seoSchema = z.object({
+  canonicalUrl: z.string().url('URL không hợp lệ').optional().or(z.literal('')),
+  robots: z.enum(['index, follow', 'noindex, follow', 'noindex, nofollow']).optional(),
+  focusKeyword: z.string().optional(),
+  altText: z.string().optional(),
 });
 
 const productSchema = z.object({
@@ -38,6 +52,7 @@ const productSchema = z.object({
   isActive: z.boolean(),
   metaTitle: z.string().optional(),
   metaDescription: z.string().optional(),
+  seo: seoSchema.optional(),
 });
 
 type ProductFormData = z.infer<typeof productSchema>;
@@ -57,6 +72,7 @@ export default function ProductForm({
 }: ProductFormProps) {
   const [imageInput, setImageInput] = useState('');
   const [tagInput, setTagInput] = useState('');
+  const [seoAnalysis, setSeoAnalysis] = useState<SEOAnalysisResult | null>(null);
 
   const {
     register,
@@ -78,6 +94,8 @@ export default function ProductForm({
           variants: product.variants.map((v) => ({
             id: v.id,
             size: v.size,
+            color: v.color || '',
+            colorCode: v.colorCode || '',
             price: v.price,
             stock: v.stock,
             image: v.image || '',
@@ -87,6 +105,12 @@ export default function ProductForm({
           isActive: product.isActive !== undefined ? product.isActive : true,
           metaTitle: product.metaTitle || '',
           metaDescription: product.metaDescription || '',
+          seo: product.seo || {
+            canonicalUrl: '',
+            robots: 'index, follow',
+            focusKeyword: '',
+            altText: '',
+          },
         }
       : {
           name: '',
@@ -98,6 +122,8 @@ export default function ProductForm({
           variants: [
             {
               size: '',
+              color: '',
+              colorCode: '',
               price: 0,
               stock: 0,
               image: '',
@@ -107,6 +133,12 @@ export default function ProductForm({
           isActive: true,
           metaTitle: '',
           metaDescription: '',
+          seo: {
+            canonicalUrl: '',
+            robots: 'index, follow',
+            focusKeyword: '',
+            altText: '',
+          },
         },
   });
 
@@ -121,6 +153,34 @@ export default function ProductForm({
 
   const images = watch('images');
   const tags = watch('tags');
+  const name = watch('name');
+  const slug = watch('slug');
+  const description = watch('description');
+  const metaTitle = watch('metaTitle');
+  const metaDescription = watch('metaDescription');
+  const focusKeyword = watch('seo.focusKeyword');
+
+  // Real-time SEO Analysis
+  useEffect(() => {
+    const title = metaTitle || name || '';
+    const desc = metaDescription || description || '';
+    const content = description || '';
+    const keyword = focusKeyword || '';
+    const url = slug ? `/products/${slug}` : '';
+
+    if (title || desc || content) {
+      const analysis = analyzeSEO({
+        title,
+        description: desc,
+        content,
+        focusKeyword: keyword,
+        url,
+      });
+      setSeoAnalysis(analysis);
+    } else {
+      setSeoAnalysis(null);
+    }
+  }, [name, slug, description, metaTitle, metaDescription, focusKeyword]);
 
   const addImage = () => {
     if (imageInput.trim()) {
@@ -169,7 +229,47 @@ export default function ProductForm({
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form 
+      onSubmit={handleSubmit(async (data) => {
+        // Clean SEO data - remove empty strings
+        const cleanData = {
+          ...data,
+          seo: data.seo && Object.keys(data.seo).length > 0
+            ? {
+                ...(data.seo.canonicalUrl && { canonicalUrl: data.seo.canonicalUrl }),
+                ...(data.seo.robots && { robots: data.seo.robots }),
+                ...(data.seo.focusKeyword && { focusKeyword: data.seo.focusKeyword }),
+                ...(data.seo.altText && { altText: data.seo.altText }),
+              }
+            : undefined,
+        };
+        // Remove seo if empty
+        if (cleanData.seo && Object.keys(cleanData.seo).length === 0) {
+          delete cleanData.seo;
+        }
+        
+        // Save product first
+        const result = await onSubmit(cleanData);
+        
+        // Save SEO analysis after product is saved (non-blocking)
+        if (seoAnalysis && cleanData.slug) {
+          const productId = product?.id || (result as any)?.product?.id;
+          if (productId && productId !== 'new') {
+            // Save analysis in background (non-blocking)
+            saveAnalysisToDatabase(
+              seoAnalysis,
+              'product',
+              productId,
+              cleanData.slug
+            ).catch(err => {
+              console.error('Failed to save SEO analysis:', err);
+              // Don't block the save process
+            });
+          }
+        }
+      })} 
+      className="space-y-6"
+    >
       {/* Basic Information */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">
@@ -208,22 +308,32 @@ export default function ProductForm({
             )}
           </div>
 
-          {/* Description */}
+          {/* Description - Rich Text Editor */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Mô tả <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Mô tả sản phẩm <span className="text-red-500">*</span>
             </label>
-            <textarea
-              {...register('description')}
-              rows={4}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-gray-900"
-              placeholder="Mô tả chi tiết về sản phẩm..."
+            <Controller
+              name="description"
+              control={control}
+              render={({ field }) => (
+                <RichTextEditor
+                  content={field.value || ''}
+                  onChange={field.onChange}
+                  placeholder="Viết mô tả chi tiết về sản phẩm của bạn..."
+                  minHeight="250px"
+                  showMediaLibrary={true}
+                />
+              )}
             />
             {errors.description && (
               <p className="mt-1 text-sm text-red-600">
                 {errors.description.message}
               </p>
             )}
+            <p className="mt-1 text-xs text-gray-500">
+              💡 Mô tả chi tiết giúp khách hàng hiểu rõ hơn về sản phẩm
+            </p>
           </div>
 
           {/* Category */}
@@ -352,7 +462,7 @@ export default function ProductForm({
                 )}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {/* Size */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -370,6 +480,39 @@ export default function ProductForm({
                   )}
                 </div>
 
+                {/* Color Name */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Màu sắc (Tên)
+                  </label>
+                  <input
+                    {...register(`variants.${index}.color` as const)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-gray-900"
+                    placeholder="Pink, Purple, Blue..."
+                  />
+                </div>
+
+                {/* Color Code */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Mã màu (Hex)
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      {...register(`variants.${index}.colorCode` as const)}
+                      type="color"
+                      className="w-12 h-10 border border-gray-300 rounded-md cursor-pointer"
+                    />
+                    <input
+                      {...register(`variants.${index}.colorCode` as const)}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-gray-900"
+                      placeholder="#FF69B4"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
                 {/* Price */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -489,9 +632,9 @@ export default function ProductForm({
         </div>
       </div>
 
-      {/* SEO */}
+      {/* SEO Basic */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">SEO</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">SEO Cơ Bản</h2>
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -500,6 +643,7 @@ export default function ProductForm({
             <input
               {...register('metaTitle')}
               className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-gray-900"
+              placeholder="Tiêu đề hiển thị trên kết quả tìm kiếm"
             />
           </div>
           <div>
@@ -510,7 +654,84 @@ export default function ProductForm({
               {...register('metaDescription')}
               rows={3}
               className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-gray-900"
+              placeholder="Mô tả ngắn hiển thị trên kết quả tìm kiếm"
             />
+          </div>
+        </div>
+      </div>
+
+      {/* SEO Analysis Display */}
+      {/* TODO: Implement SEO analysis for products */}
+      {/* {seoAnalysis && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <SEOAnalysisDisplay analysis={seoAnalysis} />
+        </div>
+      )} */}
+
+      {/* SEO Advanced */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">Cấu Hình SEO Nâng Cao</h2>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Canonical URL
+            </label>
+            <input
+              {...register('seo.canonicalUrl')}
+              type="url"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-gray-900"
+              placeholder="https://example.com/canonical-url"
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              URL gốc để tránh duplicate content. Để trống để sử dụng URL mặc định.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Robots Meta Tag
+            </label>
+            <select
+              {...register('seo.robots')}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-gray-900"
+            >
+              {ROBOTS_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-gray-500">
+              Hướng dẫn search engines cách index trang này.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Focus Keyword
+            </label>
+            <input
+              {...register('seo.focusKeyword')}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-gray-900"
+              placeholder="Từ khóa chính cho sản phẩm"
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Từ khóa chính để theo dõi và tối ưu SEO.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Alt Text (Ảnh đại diện)
+            </label>
+            <input
+              {...register('seo.altText')}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-gray-900"
+              placeholder="Mô tả ảnh đại diện (nếu khác tên sản phẩm)"
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Alt text cho ảnh đại diện. Để trống sẽ sử dụng tên sản phẩm.
+            </p>
           </div>
         </div>
       </div>

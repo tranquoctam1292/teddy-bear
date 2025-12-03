@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Search, ShoppingCart, Menu, Heart, User } from 'lucide-react';
 import { useCartStore } from '@/store/useCartStore';
+import { useTheme } from '@/components/providers/ThemeProvider';
 import MobileMenu from './MobileMenu';
 import DynamicNavigation from './DynamicNavigation';
 import type { NavigationMenuItem } from '@/lib/schemas/navigation';
@@ -25,6 +26,7 @@ export default function HeaderWithMenu() {
   const [navigationItems, setNavigationItems] = useState<NavigationMenuItem[]>(fallbackNavigation);
   const pathname = usePathname();
   const { items } = useCartStore();
+  const { logo, primaryColor } = useTheme();
   const cartItemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
   useEffect(() => {
@@ -60,9 +62,20 @@ export default function HeaderWithMenu() {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2 group">
-              <div className="w-10 h-10 bg-gradient-to-br from-pink-400 to-pink-600 rounded-full flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
-                <span className="text-white text-xl font-bold">🐻</span>
-              </div>
+              {logo ? (
+                <img
+                  src={logo}
+                  alt="The Emotional House"
+                  className="h-10 w-auto object-contain"
+                />
+              ) : (
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  <span className="text-white text-xl font-bold">🐻</span>
+                </div>
+              )}
               <div className="hidden sm:block">
                 <h1 className="text-xl font-bold text-gray-900">The Emotional House</h1>
                 <p className="text-xs text-gray-500">Gấu bông cao cấp</p>

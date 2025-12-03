@@ -1,25 +1,23 @@
-// Public Navigation API Route (Read-only)
+// Public Navigation API Route - MongoDB Integration
 import { NextRequest, NextResponse } from 'next/server';
-import type { NavigationMenu } from '@/lib/schemas/navigation';
-import { mockMenus } from '@/lib/data/navigation';
+import { getCollections } from '@/lib/db';
 
-// GET - Get menu by location (Public endpoint)
+// GET - Get menu by location (public, no auth required)
 export async function GET(request: NextRequest) {
   try {
+    const { navigation } = await getCollections();
     const { searchParams } = new URL(request.url);
     const location = searchParams.get('location');
 
     if (!location) {
       return NextResponse.json(
-        { error: 'Missing required parameter: location' },
+        { error: 'Location parameter is required' },
         { status: 400 }
       );
     }
 
-    // Find active menu by location
-    const menu = mockMenus.find(
-      (m) => m.location === location && m.isActive
-    );
+    // Get menu by location (only active menus)
+    const menu = await navigation.findOne({ location, isActive: true });
 
     if (!menu) {
       return NextResponse.json(
@@ -28,15 +26,24 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ menu });
+    // Format menu (remove _id, ensure id exists)
+    const { _id, ...menuData } = menu as any;
+    const formattedMenu = {
+      ...menuData,
+      id: menuData.id || _id.toString(),
+    };
+
+    return NextResponse.json({ menu: formattedMenu });
   } catch (error) {
     console.error('Error fetching navigation:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    // Fallback to empty menu if database fails
+    return NextResponse.json({
+      menu: {
+        location: 'header',
+        name: 'Main Menu',
+        items: [],
+        isActive: true,
+      },
+    });
   }
 }
-
-
-

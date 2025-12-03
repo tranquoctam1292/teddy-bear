@@ -62,8 +62,14 @@ export default function AdminProductEditPage() {
         throw new Error(error.error || 'Failed to update product');
       }
 
-      // Redirect to products list
+      const result = await response.json();
+      const product = result.product;
+
+      // Return response for ProductForm to extract ID and save analysis
+      // Note: SEO analysis will be saved by ProductForm component
+      // Redirect after analysis save is initiated (non-blocking)
       router.push('/admin/products');
+      return { product };
     } catch (error) {
       console.error('Error updating product:', error);
       alert(error instanceof Error ? error.message : 'Có lỗi xảy ra khi cập nhật sản phẩm');

@@ -1,8 +1,9 @@
-// Admin Contact API Routes - Single Contact Operations
+// Admin Contact API Routes - Single Contact Operations (MongoDB)
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { getCollections } from '@/lib/db';
 import type { ContactMessage } from '@/lib/schemas/contact';
-import { mockContacts } from '@/lib/data/contacts';
+import { ObjectId } from 'mongodb';
 
 // GET - Get single contact message by ID
 export async function GET(
@@ -20,7 +21,17 @@ export async function GET(
     }
 
     const { id } = await params;
-    const contact = mockContacts.find((c) => c.id === id);
+    const { contacts } = await getCollections();
+
+    // Try to find by id field first, then by _id
+    let contact = await contacts.findOne({ id });
+    if (!contact) {
+      try {
+        contact = await contacts.findOne({ _id: new ObjectId(id) });
+      } catch {
+        // Invalid ObjectId format
+      }
+    }
 
     if (!contact) {
       return NextResponse.json(
@@ -29,7 +40,14 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({ contact });
+    // Format contact
+    const { _id, ...contactData } = contact as any;
+    const formattedContact = {
+      ...contactData,
+      id: contactData.id || _id.toString(),
+    };
+
+    return NextResponse.json({ contact: formattedContact });
   } catch (error) {
     console.error('Error fetching contact:', error);
     return NextResponse.json(
@@ -58,16 +76,27 @@ export async function PUT(
     const body = await request.json();
     const { isRead, status, adminNotes, isReplied } = body;
 
-    const contactIndex = mockContacts.findIndex((c) => c.id === id);
+    const { contacts } = await getCollections();
 
-    if (contactIndex === -1) {
+    // Find contact
+    let contact = await contacts.findOne({ id });
+    if (!contact) {
+      try {
+        contact = await contacts.findOne({ _id: new ObjectId(id) });
+      } catch {
+        return NextResponse.json(
+          { error: 'Contact message not found' },
+          { status: 404 }
+        );
+      }
+    }
+
+    if (!contact) {
       return NextResponse.json(
         { error: 'Contact message not found' },
         { status: 404 }
       );
     }
-
-    const existingContact = mockContacts[contactIndex];
 
     // Validate status if provided
     const validStatuses: ContactMessage['status'][] = [
@@ -85,27 +114,42 @@ export async function PUT(
     }
 
     // Update contact
-    const updatedContact: ContactMessage = {
-      ...existingContact,
-      isRead: isRead !== undefined ? isRead : existingContact.isRead,
-      isReplied: isReplied !== undefined ? isReplied : existingContact.isReplied,
-      status: status || existingContact.status,
-      adminNotes: adminNotes !== undefined ? adminNotes : existingContact.adminNotes,
-      readAt:
-        isRead === true && !existingContact.readAt
-          ? new Date()
-          : existingContact.readAt,
-      repliedAt:
-        isReplied === true && !existingContact.repliedAt
-          ? new Date()
-          : existingContact.repliedAt,
+    const updateData: any = {
       updatedAt: new Date(),
     };
 
-    mockContacts[contactIndex] = updatedContact;
+    if (isRead !== undefined) {
+      updateData.isRead = isRead;
+      if (isRead === true && !contact.readAt) {
+        updateData.readAt = new Date();
+      }
+    }
+
+    if (isReplied !== undefined) {
+      updateData.isReplied = isReplied;
+      if (isReplied === true && !contact.repliedAt) {
+        updateData.repliedAt = new Date();
+      }
+    }
+
+    if (status !== undefined) updateData.status = status;
+    if (adminNotes !== undefined) updateData.adminNotes = adminNotes;
+
+    await contacts.updateOne(
+      { id },
+      { $set: updateData }
+    );
+
+    // Fetch updated contact
+    const updatedContact = await contacts.findOne({ id });
+    const { _id, ...contactData } = updatedContact as any;
+    const formattedContact = {
+      ...contactData,
+      id: contactData.id || _id.toString(),
+    };
 
     return NextResponse.json({
-      contact: updatedContact,
+      contact: formattedContact,
       message: 'Contact message updated successfully',
     });
   } catch (error) {
@@ -133,16 +177,26 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const contactIndex = mockContacts.findIndex((c) => c.id === id);
+    const { contacts } = await getCollections();
 
-    if (contactIndex === -1) {
+    // Try to find and delete by id field first
+    let result = await contacts.deleteOne({ id });
+    
+    // If not found, try MongoDB _id
+    if (result.deletedCount === 0) {
+      try {
+        result = await contacts.deleteOne({ _id: new ObjectId(id) });
+      } catch {
+        // Invalid ObjectId format
+      }
+    }
+
+    if (result.deletedCount === 0) {
       return NextResponse.json(
         { error: 'Contact message not found' },
         { status: 404 }
       );
     }
-
-    mockContacts.splice(contactIndex, 1);
 
     return NextResponse.json({
       message: 'Contact message deleted successfully',
@@ -155,5 +209,3 @@ export async function DELETE(
     );
   }
 }
-
-

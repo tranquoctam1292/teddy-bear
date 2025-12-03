@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useEffect } from 'react';
-import ProductForm from '@/components/admin/ProductForm';
+import ProductFormV3 from '@/components/admin/ProductFormV3';
 
 export default function AdminProductNewPage() {
   const { data: session, status } = useSession();
@@ -34,8 +34,14 @@ export default function AdminProductNewPage() {
         throw new Error(error.error || 'Failed to create product');
       }
 
-      // Redirect to products list
+      const result = await response.json();
+      const product = result.product;
+
+      // Return response for ProductForm to extract ID and save analysis
+      // Note: SEO analysis will be saved by ProductForm component
+      // Redirect after analysis save is initiated (non-blocking)
       router.push('/admin/products');
+      return { product };
     } catch (error) {
       console.error('Error creating product:', error);
       alert(error instanceof Error ? error.message : 'Có lỗi xảy ra khi tạo sản phẩm');
@@ -63,21 +69,11 @@ export default function AdminProductNewPage() {
   }
 
   return (
-    <>
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <h1 className="text-2xl font-bold text-gray-900">Thêm sản phẩm mới</h1>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <ProductForm
-          onSubmit={handleSubmit}
-          onCancel={handleCancel}
-          isLoading={isLoading}
-        />
-      </main>
-    </>
+    <ProductFormV3
+      onSubmit={handleSubmit}
+      onCancel={handleCancel}
+      isLoading={isLoading}
+    />
   );
 }
 

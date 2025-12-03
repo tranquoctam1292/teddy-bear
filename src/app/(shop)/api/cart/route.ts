@@ -6,7 +6,7 @@ import type {
   CartErrorResponse,
 } from '@/lib/api-contracts/cart';
 import type { Cart, CartItem } from '@/lib/schemas/cart';
-import { mockProducts } from '@/lib/data/products';
+import { getCollections } from '@/lib/db';
 
 /**
  * POST /api/cart
@@ -28,9 +28,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(errorResponse, { status: 400 });
     }
 
-    // Find product and variant
-    const product = mockProducts.find((p) => p.id === body.productId);
-    if (!product) {
+    // Find product and variant from MongoDB
+    const { products } = await getCollections();
+    const productDoc = await products.findOne({ id: body.productId, isActive: true });
+    
+    if (!productDoc) {
       const errorResponse: CartErrorResponse = {
         success: false,
         error: 'Product not found',
@@ -42,7 +44,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(errorResponse, { status: 404 });
     }
 
-    const variant = product.variants.find((v) => v.id === body.variantId);
+    // Format product (map minPrice to basePrice for compatibility)
+    const productDocAny = productDoc as any;
+    const product = {
+      ...productDocAny,
+      id: productDocAny.id || productDocAny._id.toString(),
+      basePrice: productDocAny.minPrice || productDocAny.basePrice || 0,
+      variants: productDocAny.variants || [],
+      name: productDocAny.name || '',
+      images: productDocAny.images || [],
+    };
+
+    const variant = product.variants.find((v: any) => v.id === body.variantId);
     if (!variant) {
       const errorResponse: CartErrorResponse = {
         success: false,

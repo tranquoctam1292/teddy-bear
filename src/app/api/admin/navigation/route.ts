@@ -1,8 +1,9 @@
-// Admin Navigation API Routes
+// Admin Navigation API Routes - MongoDB Integration
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { getCollections } from '@/lib/db';
 import type { NavigationMenu, NavigationMenuItem } from '@/lib/schemas/navigation';
-import { mockMenus } from '@/lib/data/navigation';
+import { ObjectId } from 'mongodb';
 
 // Helper to generate unique ID
 function generateId(): string {
@@ -34,23 +35,39 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const { navigation } = await getCollections();
     const { searchParams } = new URL(request.url);
     const location = searchParams.get('location');
 
     if (location) {
       // Get menu by location
-      const menu = mockMenus.find((m) => m.location === location);
+      const menu = await navigation.findOne({ location });
       if (!menu) {
         return NextResponse.json(
           { error: 'Menu not found' },
           { status: 404 }
         );
       }
-      return NextResponse.json({ menu });
+      const { _id, ...menuData } = menu as any;
+      return NextResponse.json({
+        menu: {
+          ...menuData,
+          id: menuData.id || _id.toString(),
+        },
+      });
     }
 
     // Return all menus
-    return NextResponse.json({ menus: mockMenus });
+    const menusList = await navigation.find({}).toArray();
+    const formattedMenus = menusList.map((doc: any) => {
+      const { _id, ...menu } = doc;
+      return {
+        ...menu,
+        id: menu.id || _id.toString(),
+      };
+    });
+
+    return NextResponse.json({ menus: formattedMenus });
   } catch (error) {
     console.error('Error fetching menus:', error);
     return NextResponse.json(
@@ -83,8 +100,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const { navigation } = await getCollections();
+
     // Check if location already exists
-    const existingMenu = mockMenus.find((m) => m.location === location);
+    const existingMenu = await navigation.findOne({ location });
     if (existingMenu) {
       return NextResponse.json(
         { error: 'Menu location already exists' },
@@ -106,7 +125,8 @@ export async function POST(request: NextRequest) {
       updatedAt: new Date(),
     };
 
-    mockMenus.push(newMenu);
+    // Insert into MongoDB
+    await navigation.insertOne(newMenu);
 
     return NextResponse.json(
       { menu: newMenu, message: 'Menu created successfully' },
@@ -143,33 +163,44 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const menuIndex = mockMenus.findIndex((m) => m.location === location);
+    const { navigation } = await getCollections();
 
-    if (menuIndex === -1) {
+    // Find menu
+    const menu = await navigation.findOne({ location });
+    if (!menu) {
       return NextResponse.json(
         { error: 'Menu not found' },
         { status: 404 }
       );
     }
 
-    const existingMenu = mockMenus[menuIndex];
-
     // Assign IDs to new items if provided
-    const itemsWithIds = items ? assignMenuItemIds(items) : existingMenu.items;
+    const itemsWithIds = items ? assignMenuItemIds(items) : menu.items;
 
     // Update menu
-    const updatedMenu: NavigationMenu = {
-      ...existingMenu,
-      name: name || existingMenu.name,
-      items: itemsWithIds,
-      isActive: isActive !== undefined ? isActive : existingMenu.isActive,
+    const updateData: any = {
       updatedAt: new Date(),
     };
 
-    mockMenus[menuIndex] = updatedMenu;
+    if (name !== undefined) updateData.name = name;
+    if (items !== undefined) updateData.items = itemsWithIds;
+    if (isActive !== undefined) updateData.isActive = isActive;
+
+    await navigation.updateOne(
+      { location },
+      { $set: updateData }
+    );
+
+    // Fetch updated menu
+    const updatedMenu = await navigation.findOne({ location });
+    const { _id, ...menuData } = updatedMenu as any;
+    const formattedMenu = {
+      ...menuData,
+      id: menuData.id || _id.toString(),
+    };
 
     return NextResponse.json({
-      menu: updatedMenu,
+      menu: formattedMenu,
       message: 'Menu updated successfully',
     });
   } catch (error) {
@@ -203,16 +234,16 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const menuIndex = mockMenus.findIndex((m) => m.location === location);
+    const { navigation } = await getCollections();
 
-    if (menuIndex === -1) {
+    const result = await navigation.deleteOne({ location });
+
+    if (result.deletedCount === 0) {
       return NextResponse.json(
         { error: 'Menu not found' },
         { status: 404 }
       );
     }
-
-    mockMenus.splice(menuIndex, 1);
 
     return NextResponse.json({
       message: 'Menu deleted successfully',
@@ -225,5 +256,3 @@ export async function DELETE(request: NextRequest) {
     );
   }
 }
-
-

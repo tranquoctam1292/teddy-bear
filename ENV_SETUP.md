@@ -1,0 +1,47 @@
+# Hướng Dẫn Cấu Hình Environment Variables
+
+Tạo file `.env.local` trong thư mục gốc với nội dung sau:
+
+```env
+# Database
+MONGODB_URI=mongodb://localhost:27017/teddy-shop
+# Hoặc MongoDB Atlas: mongodb+srv://username:password@cluster.mongodb.net/teddy-shop
+
+# Authentication
+AUTH_SECRET=your-secret-key-here-generate-with-openssl-rand-base64-32
+# Generate với: openssl rand -base64 32
+
+# Admin Credentials
+# IMPORTANT: Set strong password in production!
+ADMIN_EMAIL=admin@emotionalhouse.vn
+ADMIN_PASSWORD=your-strong-password-here
+# Password sẽ được hash với bcrypt, không lưu plain text
+
+# Site URL (for metadata, social sharing)
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+# Production: https://yourdomain.com
+
+# Vercel Blob Storage (for file uploads)
+# Get from: https://vercel.com/dashboard/stores
+BLOB_READ_WRITE_TOKEN=vercel_blob_rw_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+# This token is required for uploading/deleting files (logo, favicon, etc.)
+# On Vercel: Settings > Storage > Blob > Create Store > Copy token
+```
+
+## Cách tạo AUTH_SECRET mạnh:
+
+### Windows (PowerShell):
+```powershell
+[Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Maximum 256 }))
+```
+
+### Linux/Mac:
+```bash
+openssl rand -base64 32
+```
+
+## Lưu ý:
+- **KHÔNG** commit file `.env.local` vào git
+- File `.env.local` đã được thêm vào `.gitignore`
+- Trên Vercel, thêm các biến này vào Settings > Environment Variables
+

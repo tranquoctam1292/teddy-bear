@@ -1,20 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { GetProductsQueryParams, GetProductsResponse, ProductsErrorResponse } from '@/lib/api-contracts/products';
-import { mockProducts } from '@/lib/data/products';
+import { getCollections } from '@/lib/db';
 import type { ProductListItem } from '@/lib/schemas/product';
 
 /**
  * GET /api/products
  * 
- * Fetch products with filtering capabilities
+ * Fetch products with filtering capabilities (MongoDB)
  * 
  * Query Parameters:
  * - category, minPrice, maxPrice, size, tags, isHot, page, limit, sort
  */
 export async function GET(request: NextRequest) {
   try {
+    const { products } = await getCollections();
     const searchParams = request.nextUrl.searchParams;
     
+    // Check if requesting single product by slug
+    const slug = searchParams.get('slug');
+    if (slug) {
+      const product = await products.findOne({ slug, isActive: true });
+      if (!product) {
+        return NextResponse.json(
+          { success: false, error: 'Product not found' },
+          { status: 404 }
+        );
+      }
+      const { _id, ...productData } = product as any;
+      return NextResponse.json({
+        success: true,
+        data: {
+          product: {
+            ...productData,
+            id: productData.id || _id.toString(),
+            basePrice: productData.minPrice || productData.basePrice || 0,
+          },
+        },
+      });
+    }
+
     // Parse query parameters
     const params: GetProductsQueryParams = {
       category: searchParams.get('category') || undefined,
@@ -28,107 +52,110 @@ export async function GET(request: NextRequest) {
       sort: (searchParams.get('sort') as GetProductsQueryParams['sort']) || 'newest',
     };
 
+    // Handle exclude parameter (for related products)
+    const excludeId = searchParams.get('exclude');
+
     // Validate pagination
     const page = Math.max(1, params.page || 1);
     const limit = Math.min(50, Math.max(1, params.limit || 12));
 
-    // Filter products
-    let filteredProducts = [...mockProducts];
+    // Build MongoDB query
+    const query: any = { isActive: true }; // Only show active products
 
-    // Apply filters
     if (params.category) {
-      filteredProducts = filteredProducts.filter((p) => p.category === params.category);
+      query.category = params.category;
     }
 
     if (params.minPrice !== undefined) {
-      filteredProducts = filteredProducts.filter((p) => p.basePrice >= params.minPrice!);
+      query.minPrice = { $gte: params.minPrice };
     }
 
     if (params.maxPrice !== undefined) {
-      filteredProducts = filteredProducts.filter((p) => {
-        const maxPrice = p.maxPrice || p.basePrice;
-        return maxPrice <= params.maxPrice!;
-      });
+      query.$or = [
+        { minPrice: { $lte: params.maxPrice } },
+        { maxPrice: { $lte: params.maxPrice } },
+      ];
     }
 
     if (params.size) {
-      filteredProducts = filteredProducts.filter((p) =>
-        p.variants.some((v) => v.size === params.size)
-      );
+      query['variants.size'] = params.size;
     }
 
     if (params.tags) {
       const tagList = params.tags.split(',').map((t) => t.trim());
-      filteredProducts = filteredProducts.filter((p) =>
-        tagList.some((tag) => p.tags.includes(tag))
-      );
+      query.tags = { $in: tagList };
     }
 
     if (params.isHot !== undefined) {
-      filteredProducts = filteredProducts.filter((p) => p.isHot === params.isHot);
+      query.isHot = params.isHot;
     }
 
-    // Sort products
+    // Exclude specific product by ID
+    if (excludeId) {
+      query.id = { $ne: excludeId };
+      // Also try to exclude by _id if it's an ObjectId
+      try {
+        const { ObjectId } = await import('mongodb');
+        query._id = { $ne: new ObjectId(excludeId) };
+      } catch {
+        // Ignore if ObjectId import fails
+      }
+    }
+
+    // Build sort
+    let sort: any = { createdAt: -1 }; // Default: newest first
     switch (params.sort) {
       case 'price_asc':
-        filteredProducts.sort((a, b) => a.basePrice - b.basePrice);
+        sort = { minPrice: 1 };
         break;
       case 'price_desc':
-        filteredProducts.sort((a, b) => (b.maxPrice || b.basePrice) - (a.maxPrice || a.basePrice));
+        sort = { minPrice: -1 };
         break;
       case 'popular':
-        // Sort by isHot first, then by name
-        filteredProducts.sort((a, b) => {
-          if (a.isHot !== b.isHot) return a.isHot ? -1 : 1;
-          return a.name.localeCompare(b.name);
-        });
+        // Sort by isHot first, then by views/rating if available
+        sort = { isHot: -1, createdAt: -1 };
         break;
       case 'newest':
       default:
-        // Keep original order (newest first)
+        sort = { createdAt: -1 };
         break;
     }
 
-    // Pagination
-    const total = filteredProducts.length;
+    // Get total count
+    const total = await products.countDocuments(query);
+
+    // Fetch products
+    const productsList = await products
+      .find(query)
+      .sort(sort)
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .toArray();
+
+    // Format products for response
+    const formattedProducts: ProductListItem[] = productsList.map((doc: any) => {
+      const { _id, ...product } = doc;
+      return {
+        id: product.id || _id.toString(),
+        name: product.name,
+        slug: product.slug,
+        category: product.category,
+        tags: product.tags || [],
+        minPrice: product.minPrice || product.basePrice || 0,
+        maxPrice: product.maxPrice,
+        images: product.images || [],
+        isHot: product.isHot || false,
+        rating: product.rating,
+        reviewCount: product.reviewCount,
+        variantCount: product.variants?.length || 0,
+      };
+    });
+
     const totalPages = Math.ceil(total / limit);
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
-
-    // Convert to ProductListItem format
-    const productListItems: ProductListItem[] = paginatedProducts.map((product) => ({
-      id: product.id,
-      name: product.name,
-      slug: product.slug,
-      category: product.category,
-      tags: product.tags,
-      minPrice: product.basePrice,
-      maxPrice: product.maxPrice,
-      images: product.images,
-      isHot: product.isHot,
-      variantCount: product.variants.length,
-    }));
-
-    // Get available filter options
-    const categories = Array.from(new Set(mockProducts.map((p) => p.category)));
-    const allPrices = mockProducts.flatMap((p) => [
-      p.basePrice,
-      ...p.variants.map((v) => v.price),
-    ]);
-    const minPrice = Math.min(...allPrices);
-    const maxPrice = Math.max(...allPrices);
-
-    const sizes = Array.from(
-      new Set(mockProducts.flatMap((p) => p.variants.map((v) => v.size)))
-    );
-
-    const allTags = Array.from(new Set(mockProducts.flatMap((p) => p.tags)));
-
     const response: GetProductsResponse = {
       success: true,
       data: {
-        products: productListItems,
+        products: formattedProducts,
         pagination: {
           page,
           limit,
@@ -140,24 +167,10 @@ export async function GET(request: NextRequest) {
         filters: {
           applied: params,
           available: {
-            categories: categories.map((cat) => ({
-              value: cat,
-              label: cat.charAt(0).toUpperCase() + cat.slice(1),
-              count: mockProducts.filter((p) => p.category === cat).length,
-            })),
-            priceRange: { min: minPrice, max: maxPrice },
-            sizes: sizes.map((size) => ({
-              value: size,
-              label: size,
-              count: mockProducts.filter((p) =>
-                p.variants.some((v) => v.size === size)
-              ).length,
-            })),
-            tags: allTags.map((tag) => ({
-              value: tag,
-              label: tag,
-              count: mockProducts.filter((p) => p.tags.includes(tag)).length,
-            })),
+            categories: [],
+            priceRange: { min: 0, max: 0 },
+            sizes: [],
+            tags: [],
           },
         },
       },
@@ -165,7 +178,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(response);
   } catch (error) {
-    console.error('Products API error:', error);
+    console.error('Error fetching products:', error);
     const errorResponse: ProductsErrorResponse = {
       success: false,
       error: 'Failed to fetch products',

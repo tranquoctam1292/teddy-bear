@@ -1,5 +1,6 @@
 // MongoDB Schema Definitions for Product
 import type { ObjectId } from 'mongodb';
+import type { SEOConfig } from './seo';
 
 /**
  * Product Variant Schema
@@ -9,6 +10,8 @@ export interface ProductVariant {
   _id?: ObjectId;
   id: string; // Unique identifier for the variant
   size: string; // e.g., "80cm", "1m2", "1m5", "2m"
+  color?: string; // Color name (e.g., "Pink", "Purple", "Blue")
+  colorCode?: string; // Hex color code (e.g., "#FF69B4", "#9B59B6", "#3498DB")
   price: number; // Price in VND
   stock: number; // Available quantity
   image?: string; // Optional variant-specific image URL
@@ -53,6 +56,7 @@ export interface Product {
   // SEO & Marketing
   metaTitle?: string;
   metaDescription?: string;
+  seo?: SEOConfig; // Advanced SEO configuration
   
   // Timestamps
   createdAt: Date;

@@ -1,37 +1,79 @@
 'use client';
 
 // Trang chi tiết sản phẩm (Dynamic Route)
-import { useState, useCallback } from 'react';
+import { useState, useCallback, use, useEffect } from 'react';
 import Link from 'next/link';
 import { ShoppingCart, Heart, Share2, Ruler, Star, Check } from 'lucide-react';
 import ProductGallery from '@/components/product/ProductGallery';
 import VariantSelector from '@/components/product/VariantSelector';
 import SizeGuideModal from '@/components/product/SizeGuideModal';
 import MobileBuyButton from '@/components/product/MobileBuyButton';
-import { getProductBySlug } from '@/lib/data/products';
 import { useCartStore } from '@/store/useCartStore';
 import { formatCurrency } from '@/lib/utils';
-import type { Variant } from '@/types';
+import type { Variant, Product } from '@/types';
+import JsonLd from '@/components/seo/JsonLd';
+import { generateProductSchema } from '@/lib/seo/schemas';
+import Breadcrumb from '@/components/navigation/Breadcrumb';
+import RelatedPosts from '@/components/product/RelatedPosts';
 
 interface ProductDetailPageProps {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 export default function ProductDetailPage({ params }: ProductDetailPageProps) {
-  const product = getProductBySlug(params.slug);
-  const [selectedVariant, setSelectedVariant] = useState<Variant | null>(
-    product?.variants[0] || null
-  );
+  const { slug } = use(params);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
   const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const { addItem } = useCartStore();
 
+  // Fetch product from API
+  useEffect(() => {
+    async function fetchProduct() {
+      try {
+        setLoading(true);
+        const response = await fetch(`/api/products?slug=${slug}`);
+        if (!response.ok) {
+          throw new Error('Product not found');
+        }
+        const data = await response.json();
+        if (data.success && data.data?.product) {
+          setProduct(data.data.product);
+          setSelectedVariant(data.data.product.variants[0] || null);
+        } else {
+          setError('Product not found');
+        }
+      } catch (err) {
+        console.error('Error fetching product:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load product');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchProduct();
+  }, [slug]);
+
   const handleVariantChange = useCallback((variant: Variant) => {
     setSelectedVariant(variant);
     setQuantity(1); // Reset quantity when variant changes
-  }, [setQuantity]);
+  }, []);
 
-  if (!product) {
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-pink-300 border-t-pink-600 rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Đang tải sản phẩm...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !product) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -39,7 +81,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
             Không tìm thấy sản phẩm
           </h1>
           <p className="text-gray-600 mb-4">
-            Sản phẩm bạn đang tìm kiếm không tồn tại.
+            {error || 'Sản phẩm bạn đang tìm kiếm không tồn tại.'}
           </p>
           <Link
             href="/products"
@@ -69,9 +111,41 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   const currentPrice = selectedVariant?.price || product.basePrice;
   const displayImage = selectedVariant?.image || product.images[0];
 
+  // Generate JSON-LD schema
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_SITE_URL || 'https://emotionalhouse.vn');
+  const productSchema = product ? generateProductSchema({
+    name: product.name,
+    description: product.description,
+    images: product.images,
+    sku: (selectedVariant as any)?.sku,
+    variants: product.variants,
+    rating: (product as any).rating || 0,
+    reviewCount: (product as any).reviewCount || 0,
+  }, baseUrl) : null;
+
+  // Get category label for breadcrumb
+  const categoryLabels: Record<string, string> = {
+    teddy: 'Gấu Teddy',
+    capybara: 'Gấu Capybara',
+    lotso: 'Gấu Lotso',
+    kuromi: 'Gấu Kuromi',
+    cartoon: 'Gấu Hoạt Hình',
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-pink-50 to-white pb-20 lg:pb-8">
+      {/* JSON-LD Structured Data */}
+      {productSchema && <JsonLd data={productSchema} />}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Breadcrumb */}
+        <Breadcrumb
+          items={[
+            { label: 'Sản phẩm', href: '/products' },
+            { label: categoryLabels[product.category] || product.category, href: `/products?category=${product.category}` },
+            { label: product.name },
+          ]}
+          className="mb-6"
+        />
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
           {/* Left: Product Gallery */}
           <div>
@@ -262,6 +336,14 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
         selectedVariant={selectedVariant}
         quantity={quantity}
       />
+
+      {/* Related Posts */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <RelatedPosts
+          productName={product.name}
+          category={product.category}
+        />
+      </div>
     </div>
   );
 }

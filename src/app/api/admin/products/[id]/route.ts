@@ -1,11 +1,9 @@
-// Admin Product API Routes - Single Product Operations
+// Admin Product API Routes - Single Product Operations (MongoDB)
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { getCollections } from '@/lib/db';
 import type { Product, ProductVariant } from '@/lib/schemas/product';
-
-// Mock database - Replace with actual MongoDB in production
-// This should be imported from a shared store or database
-const mockProducts: Product[] = [];
+import { ObjectId } from 'mongodb';
 
 function generateVariantId(): string {
   return `var_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
@@ -27,7 +25,18 @@ export async function GET(
     }
 
     const { id } = await params;
-    const product = mockProducts.find((p) => p.id === id);
+    const { products } = await getCollections();
+
+    // Try to find by id field first, then by _id
+    let product = await products.findOne({ id });
+    if (!product) {
+      // Try MongoDB _id if id doesn't match
+      try {
+        product = await products.findOne({ _id: new ObjectId(id) });
+      } catch {
+        // Invalid ObjectId format
+      }
+    }
 
     if (!product) {
       return NextResponse.json(
@@ -36,7 +45,14 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({ product });
+    // Format product (remove _id, ensure id exists)
+    const { _id, ...productData } = product as any;
+    const formattedProduct = {
+      ...productData,
+      id: productData.id || _id.toString(),
+    };
+
+    return NextResponse.json({ product: formattedProduct });
   } catch (error) {
     console.error('Error fetching product:', error);
     return NextResponse.json(
@@ -75,18 +91,41 @@ export async function PUT(
       isActive,
       metaTitle,
       metaDescription,
+      seo,
     } = body;
 
-    const productIndex = mockProducts.findIndex((p) => p.id === id);
+    const { products } = await getCollections();
 
-    if (productIndex === -1) {
+    // Find product
+    let product = await products.findOne({ id });
+    if (!product) {
+      try {
+        product = await products.findOne({ _id: new ObjectId(id) });
+      } catch {
+        return NextResponse.json(
+          { error: 'Product not found' },
+          { status: 404 }
+        );
+      }
+    }
+
+    if (!product) {
       return NextResponse.json(
         { error: 'Product not found' },
         { status: 404 }
       );
     }
 
-    const existingProduct = mockProducts[productIndex];
+    // Check slug uniqueness if slug is being changed
+    if (slug && slug !== product.slug) {
+      const existingProduct = await products.findOne({ slug, id: { $ne: id } });
+      if (existingProduct) {
+        return NextResponse.json(
+          { error: 'Product with this slug already exists' },
+          { status: 400 }
+        );
+      }
+    }
 
     // Validate variants if provided
     if (variants && variants.length > 0) {
@@ -111,43 +150,81 @@ export async function PUT(
       const maxPrice = Math.max(...prices);
 
       // Update product
-      mockProducts[productIndex] = {
-        ...existingProduct,
-        name: name || existingProduct.name,
-        slug: slug || existingProduct.slug,
-        description: description || existingProduct.description,
-        category: category || existingProduct.category,
-        tags: tags !== undefined ? tags : existingProduct.tags,
-        images: images !== undefined ? images : existingProduct.images,
-        variants: variantsWithIds,
-        minPrice,
-        maxPrice: prices.length > 1 ? maxPrice : undefined,
-        isHot: isHot !== undefined ? isHot : existingProduct.isHot,
-        isActive: isActive !== undefined ? isActive : existingProduct.isActive,
-        metaTitle: metaTitle !== undefined ? metaTitle : existingProduct.metaTitle,
-        metaDescription: metaDescription !== undefined ? metaDescription : existingProduct.metaDescription,
+      const updateData: any = {
         updatedAt: new Date(),
       };
+
+      if (name !== undefined) updateData.name = name;
+      if (slug !== undefined) updateData.slug = slug;
+      if (description !== undefined) updateData.description = description;
+      if (category !== undefined) updateData.category = category;
+      if (tags !== undefined) updateData.tags = tags;
+      if (images !== undefined) updateData.images = images;
+      if (isHot !== undefined) updateData.isHot = isHot;
+      if (isActive !== undefined) updateData.isActive = isActive;
+      if (metaTitle !== undefined) updateData.metaTitle = metaTitle;
+      if (metaDescription !== undefined) updateData.metaDescription = metaDescription;
+      if (seo !== undefined) {
+        // Clean SEO data - remove empty strings
+        const cleanSeo = seo && Object.keys(seo).length > 0 
+          ? {
+              ...(seo.canonicalUrl && { canonicalUrl: seo.canonicalUrl }),
+              ...(seo.robots && { robots: seo.robots }),
+              ...(seo.focusKeyword && { focusKeyword: seo.focusKeyword }),
+              ...(seo.altText && { altText: seo.altText }),
+            }
+          : null;
+        updateData.seo = cleanSeo && Object.keys(cleanSeo).length > 0 ? cleanSeo : null;
+      }
+
+      updateData.variants = variantsWithIds;
+      updateData.minPrice = minPrice;
+      updateData.maxPrice = prices.length > 1 ? maxPrice : undefined;
+
+      await products.updateOne(
+        { id },
+        { $set: updateData }
+      );
     } else {
       // Update without changing variants
-      mockProducts[productIndex] = {
-        ...existingProduct,
-        name: name || existingProduct.name,
-        slug: slug || existingProduct.slug,
-        description: description || existingProduct.description,
-        category: category || existingProduct.category,
-        tags: tags !== undefined ? tags : existingProduct.tags,
-        images: images !== undefined ? images : existingProduct.images,
-        isHot: isHot !== undefined ? isHot : existingProduct.isHot,
-        isActive: isActive !== undefined ? isActive : existingProduct.isActive,
-        metaTitle: metaTitle !== undefined ? metaTitle : existingProduct.metaTitle,
-        metaDescription: metaDescription !== undefined ? metaDescription : existingProduct.metaDescription,
+      const updateData: any = {
         updatedAt: new Date(),
       };
+
+      if (name !== undefined) updateData.name = name;
+      if (slug !== undefined) updateData.slug = slug;
+      if (description !== undefined) updateData.description = description;
+      if (category !== undefined) updateData.category = category;
+      if (tags !== undefined) updateData.tags = tags;
+      if (images !== undefined) updateData.images = images;
+      if (isHot !== undefined) updateData.isHot = isHot;
+      if (isActive !== undefined) updateData.isActive = isActive;
+      if (metaTitle !== undefined) updateData.metaTitle = metaTitle;
+      if (metaDescription !== undefined) updateData.metaDescription = metaDescription;
+
+      await products.updateOne(
+        { id },
+        { $set: updateData }
+      );
     }
 
+    // Fetch updated product
+    const updatedProduct = await products.findOne({ id });
+    const { _id, ...productData } = updatedProduct as any;
+    const formattedProduct = {
+      ...productData,
+      id: productData.id || _id.toString(),
+    };
+
+    // Trigger sitemap regeneration (non-blocking)
+    import('@/lib/seo/sitemap-regenerate').then(({ triggerSitemapRegeneration }) => {
+      triggerSitemapRegeneration().catch(err => {
+        console.error('Failed to trigger sitemap regeneration:', err);
+      });
+    });
+
     return NextResponse.json({
-      product: mockProducts[productIndex],
+      product: formattedProduct,
       message: 'Product updated successfully',
     });
   } catch (error) {
@@ -175,16 +252,26 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const productIndex = mockProducts.findIndex((p) => p.id === id);
+    const { products } = await getCollections();
 
-    if (productIndex === -1) {
+    // Try to find and delete by id field first
+    let result = await products.deleteOne({ id });
+    
+    // If not found, try MongoDB _id
+    if (result.deletedCount === 0) {
+      try {
+        result = await products.deleteOne({ _id: new ObjectId(id) });
+      } catch {
+        // Invalid ObjectId format
+      }
+    }
+
+    if (result.deletedCount === 0) {
       return NextResponse.json(
         { error: 'Product not found' },
         { status: 404 }
       );
     }
-
-    mockProducts.splice(productIndex, 1);
 
     return NextResponse.json({
       message: 'Product deleted successfully',
@@ -197,5 +284,3 @@ export async function DELETE(
     );
   }
 }
-
-

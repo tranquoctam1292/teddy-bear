@@ -1,5 +1,6 @@
 // Blog Post Schema
 import type { ObjectId } from 'mongodb';
+import type { SEOConfig } from './seo';
 
 /**
  * Blog Post Schema
@@ -17,6 +18,7 @@ export interface Post {
   metaTitle?: string;
   metaDescription?: string;
   keywords?: string[];
+  seo?: SEOConfig; // Advanced SEO configuration
   
   // Media
   featuredImage?: string; // URL to featured image

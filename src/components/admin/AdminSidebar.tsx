@@ -14,6 +14,7 @@ import {
   LogOut,
   Menu,
   X,
+  Search,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from './ui/button';
@@ -49,6 +50,11 @@ const navItems: NavItem[] = [
     label: 'Tin nhắn',
     route: '/admin/contacts',
     icon: Mail,
+  },
+  {
+    label: 'SEO',
+    route: '/admin/seo',
+    icon: Search,
   },
   {
     label: 'Cài đặt',

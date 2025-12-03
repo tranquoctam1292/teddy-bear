@@ -156,11 +156,13 @@ export default function AdminLoginPage() {
 
         {/* Demo Credentials (Remove in production) */}
         <div className="bg-gray-100 border border-gray-200 rounded-md p-4">
-          <p className="text-xs text-gray-700 font-medium mb-1">Demo Credentials:</p>
+          <p className="text-xs text-gray-700 font-medium mb-1">Admin Credentials:</p>
           <p className="text-xs text-gray-600">
             Email: admin@emotionalhouse.vn
             <br />
-            Password: admin123
+            Password: Admin@123!ChangeMe
+            <br />
+            <span className="text-gray-500 italic">(Check .env.local for actual password)</span>
           </p>
         </div>
       </div>

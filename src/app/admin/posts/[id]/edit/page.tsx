@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import PostEditor from '@/components/admin/PostEditor';
+import { PostEditor } from '@/components/admin/PostEditor.lazy';
 import type { Post } from '@/lib/schemas/post';
 import type { PostFormData } from '@/types/post';
 
@@ -63,7 +63,14 @@ export default function AdminPostEditPage() {
         throw new Error(error.error || 'Failed to update post');
       }
 
+      const result = await response.json();
+      const post = result.post;
+
+      // Return response for PostEditor to extract ID and save analysis
+      // Note: SEO analysis will be saved by PostEditor component
+      // Redirect after analysis save is initiated (non-blocking)
       router.push('/admin/posts');
+      return { post };
     } catch (error) {
       console.error('Error updating post:', error);
       alert(error instanceof Error ? error.message : 'Có lỗi xảy ra khi cập nhật bài viết');
@@ -92,14 +99,21 @@ export default function AdminPostEditPage() {
 
   return (
     <>
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <h1 className="text-2xl font-bold text-gray-900">Chỉnh sửa bài viết</h1>
-          <p className="text-sm text-gray-600 mt-1">{post.title}</p>
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Chỉnh sửa bài viết</h1>
+              <p className="text-sm text-gray-600 mt-1">{post.title}</p>
+            </div>
+            <div className="text-sm text-gray-500">
+              Modern CMS Editor
+            </div>
+          </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <PostEditor
           post={post}
           onSubmit={handleSubmit}
