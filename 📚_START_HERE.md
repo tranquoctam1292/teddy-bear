@@ -170,7 +170,7 @@ npm run dev
 
 # 4. Login
 # http://localhost:3000/admin/login
-# admin@teddyshop.com / admin123
+# Use credentials from your .env.local file
 ```
 
 **That's it!** 🎉

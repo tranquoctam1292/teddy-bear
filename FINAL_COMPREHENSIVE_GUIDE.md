@@ -47,8 +47,7 @@ npm run dev          # Start server
 
 ### Bước 4: Login
 - URL: `http://localhost:3000/admin/login`
-- Email: `admin@teddyshop.com`
-- Password: `admin123`
+- Use credentials from your `.env.local` file (ADMIN_EMAIL / ADMIN_PASSWORD)
 
 ---
 

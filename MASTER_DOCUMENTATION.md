@@ -262,7 +262,7 @@ teddy-shop/
 ```bash
 # 1. Login
 Visit: http://localhost:3000/admin/login
-Login with: admin@teddyshop.com / admin123
+Login with credentials from your `.env.local` file
 
 # 2. Test core features
 - Upload media
@@ -471,7 +471,7 @@ NODE_OPTIONS=--max-old-space-size=4096 npm run build
 
 ### Admin Access
 - **URL:** `/admin/login`
-- **Default:** admin@teddyshop.com / admin123
+- **Credentials:** Set in `.env.local` (ADMIN_EMAIL / ADMIN_PASSWORD)
 
 ### Key Pages
 - Dashboard: `/admin/dashboard`
