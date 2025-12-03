@@ -1,0 +1,25 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Check if ignoreBuildErrors is enabled in next.config.ts
+if grep -q "ignoreBuildErrors: true" next.config.ts; then
+  echo "⚠️  Note: ignoreBuildErrors is enabled"
+  echo "🔍 Checking for NEW TypeScript errors in staged files only..."
+  
+  # Only check staged .ts/.tsx files (incremental check)
+  npx lint-staged
+  
+else
+  # Full type check when ignoreBuildErrors is false
+  echo "🔍 Full TypeScript type check..."
+  npm run type-check || {
+    echo ""
+    echo "❌ TypeScript errors found!"
+    echo "🔧 Fix the errors before committing."
+    echo ""
+    exit 1
+  }
+  
+  npx lint-staged
+fi
+

@@ -1,0 +1,76 @@
+name: CI - Type Safety & Build Check
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  type-check:
+    name: TypeScript Type Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Type check
+        run: npm run type-check
+        continue-on-error: false
+  
+  lint:
+    name: ESLint Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run ESLint
+        run: npm run lint
+        continue-on-error: false
+  
+  build:
+    name: Production Build
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build
+        run: npm run build
+        env:
+          # Set dummy env vars for build
+          AUTH_SECRET: ${{ secrets.AUTH_SECRET || 'dummy-secret-for-ci-build-only-not-real' }}
+          MONGODB_URI: mongodb://localhost:27017/teddy-shop-ci
+          ADMIN_EMAIL: ci@test.com
+          ADMIN_PASSWORD: ci-test-password
+          NEXT_PUBLIC_SITE_URL: http://localhost:3000
+          BLOB_READ_WRITE_TOKEN: dummy-token
+
