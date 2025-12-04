@@ -1,5 +1,3 @@
-'use client';
-
 import { Image, Palette } from 'lucide-react';
 import { Button } from '@/components/admin/ui/button';
 

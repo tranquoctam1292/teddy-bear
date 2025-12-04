@@ -145,12 +145,12 @@ export async function POST(request: NextRequest) {
           redirectId: redirectData.id,
           destination,
         });
-      } catch (error) {
-        console.error(`Error auto-redirecting ${error.id}:`, error);
+      } catch (err) {
+        console.error(`Error auto-redirecting ${error.id}:`, err);
         results.push({
           errorId: error.id,
           success: false,
-          error: error instanceof Error ? error.message : 'Unknown error',
+          error: err instanceof Error ? err.message : 'Unknown error',
         });
       }
     }

@@ -155,9 +155,9 @@ export default function WordPressToolbar({
   };
 
   return (
-    <div className={`bg-white border border-gray-300 rounded-t-lg ${className}`}>
+    <nav className={`bg-white border border-gray-300 rounded-t-lg ${className}`} role="toolbar" aria-label="Rich text editor toolbar">
       {/* Action Buttons Row */}
-      <div className="flex items-center gap-2 px-4 py-2 border-b border-gray-200">
+      <section className="flex items-center gap-2 px-4 py-2 border-b border-gray-200" aria-label="Media actions">
         <Button
           type="button"
           size="sm"
@@ -168,10 +168,10 @@ export default function WordPressToolbar({
           <ImageIcon className="h-4 w-4 mr-2" />
           Thêm Media
         </Button>
-      </div>
+      </section>
 
       {/* Row 1 - Primary Formatting */}
-      <div className="flex items-center gap-0.5 px-2 py-2 border-b border-gray-200 flex-wrap">
+      <section className="flex items-center gap-0.5 px-2 py-2 border-b border-gray-200 flex-wrap" aria-label="Text formatting">
         {/* Format Dropdown */}
         <select
           value={
@@ -442,10 +442,10 @@ export default function WordPressToolbar({
             </div>
           )}
         </div>
-      </div>
+      </section>
 
       {/* Row 2 - Advanced Formatting */}
-      <div className="flex items-center gap-0.5 px-2 py-2 flex-wrap">
+      <section className="flex items-center gap-0.5 px-2 py-2 flex-wrap" aria-label="Advanced formatting">
         <ToolbarButton
           icon={UnderlineIcon}
           onClick={() => editor.chain().focus().toggleUnderline().run()}
@@ -587,7 +587,7 @@ export default function WordPressToolbar({
           onClick={() => alert('Phím tắt:\n\nCtrl+B: In đậm\nCtrl+I: In nghiêng\nCtrl+U: Gạch chân\nCtrl+Z: Hoàn tác\nCtrl+Y: Làm lại\nCtrl+K: Chèn liên kết')}
           title="Trợ giúp & Phím tắt"
         />
-      </div>
+      </section>
 
       {/* Link Modal */}
       <LinkModal
@@ -604,7 +604,7 @@ export default function WordPressToolbar({
           editor.chain().focus().setColor(color).run();
         }}
       />
-    </div>
+    </nav>
   );
 }
 

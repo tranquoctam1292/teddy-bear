@@ -82,9 +82,9 @@ export default function AnalyticsDashboard({ days = 30 }: AnalyticsDashboardProp
   }
 
   return (
-    <div className="space-y-6">
+    <section className="space-y-6">
       {/* Period Selector */}
-      <div className="flex items-center gap-4">
+      <header className="flex items-center gap-4">
         <label className="text-sm font-medium">Thời gian:</label>
         <Select
           value={selectedDays.toString()}
@@ -96,11 +96,11 @@ export default function AnalyticsDashboard({ days = 30 }: AnalyticsDashboardProp
           <option value="180">6 tháng</option>
           <option value="365">1 năm</option>
         </Select>
-      </div>
+      </header>
 
       {/* Performance Metrics */}
       {performance && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" aria-label="Performance metrics">
           {/* SEO Score */}
           <Card>
             <CardContent className="p-6">
@@ -190,7 +190,7 @@ export default function AnalyticsDashboard({ days = 30 }: AnalyticsDashboardProp
               </div>
             </CardContent>
           </Card>
-        </div>
+        </section>
       )}
 
       {/* SEO Score Trends */}
@@ -405,7 +405,7 @@ export default function AnalyticsDashboard({ days = 30 }: AnalyticsDashboardProp
           </CardContent>
         </Card>
       )}
-    </div>
+    </section>
   );
 }
 

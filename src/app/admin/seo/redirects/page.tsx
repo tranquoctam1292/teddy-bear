@@ -158,8 +158,7 @@ export default function SEORedirectsPage() {
       const data = await response.json();
 
       if (data.success && data.data.chains.length > 0) {
-        alert(`Phát hiện ${data.data.chains.length} redirect chain(s). Kiểm tra console để xem chi tiết.`);
-        console.log('Redirect chains:', data.data.chains);
+        alert(`Phát hiện ${data.data.chains.length} redirect chain(s).`);
       } else {
         setMessage({ type: 'success', text: 'Không phát hiện redirect chain nào' });
       }

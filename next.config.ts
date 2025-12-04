@@ -63,7 +63,7 @@ const nextConfig: NextConfig = {
         // Preserve function behavior by wrapping in new function
         // Webpack passes positional params: (context, request, callback)
         const originalExternals = config.externals;
-        config.externals = (context, request, callback) => {
+        config.externals = (context: any, request: any, callback: any) => {
           if (request === 'mongodb') {
             return callback(null, 'commonjs ' + request);
           }

@@ -45,8 +45,8 @@ export default function UserManager({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <section className="space-y-6">
+      <header className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-gray-900">Quản lý người dùng</h3>
           <p className="text-sm text-gray-600 mt-1">
@@ -57,10 +57,10 @@ export default function UserManager({
           <Plus className="w-4 h-4 mr-2" />
           Thêm người dùng
         </Button>
-      </div>
+      </header>
 
       {users.length > 0 ? (
-        <div className="space-y-3">
+        <section className="space-y-3" role="list" aria-label="User list">
           {users.map((user) => (
             <Card key={user.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-4">
@@ -139,7 +139,7 @@ export default function UserManager({
               </CardContent>
             </Card>
           ))}
-        </div>
+        </section>
       ) : (
         <Card>
           <CardContent className="p-12 text-center">
@@ -151,7 +151,7 @@ export default function UserManager({
           </CardContent>
         </Card>
       )}
-    </div>
+    </section>
   );
 }
 

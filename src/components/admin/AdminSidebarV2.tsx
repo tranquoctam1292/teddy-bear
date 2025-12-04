@@ -73,7 +73,7 @@ export default function AdminSidebarV2() {
   const sidebarContent = (
     <>
       {/* Header */}
-      <div className="p-6 border-b border-gray-700">
+      <header className="p-6 border-b border-gray-700">
         <Link href="/admin/dashboard" className="block">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gray-700 rounded-lg flex items-center justify-center">
@@ -85,7 +85,7 @@ export default function AdminSidebarV2() {
             </div>
           </div>
         </Link>
-      </div>
+      </header>
 
       {/* Menu Items */}
       <nav className="flex-1 py-4 overflow-y-auto scrollbar-hide">
@@ -103,7 +103,7 @@ export default function AdminSidebarV2() {
       </nav>
 
       {/* User Section */}
-      <div className="p-4 border-t border-gray-700">
+      <footer className="p-4 border-t border-gray-700">
         <div className="flex items-center gap-3 mb-3">
           <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center">
             <span className="text-sm font-semibold text-white">
@@ -125,7 +125,7 @@ export default function AdminSidebarV2() {
           <LogOut className="w-4 h-4" />
           <span>Đăng xuất</span>
         </button>
-      </div>
+      </footer>
     </>
   );
 
@@ -137,7 +137,7 @@ export default function AdminSidebarV2() {
       </aside>
 
       {/* Mobile Header Bar */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 bg-gray-800 text-white z-50 px-4 py-3 flex items-center justify-between shadow-lg">
+      <header className="lg:hidden fixed top-0 left-0 right-0 bg-gray-800 text-white z-50 px-4 py-3 flex items-center justify-between shadow-lg">
         <div className="flex items-center gap-3">
           <button
             onClick={() => setIsMobileMenuOpen(true)}
@@ -156,7 +156,7 @@ export default function AdminSidebarV2() {
         <div className="text-xs text-gray-400">
           Admin
         </div>
-      </div>
+      </header>
 
       {/* Mobile Sidebar Overlay */}
       {isMobileMenuOpen && (
@@ -170,7 +170,7 @@ export default function AdminSidebarV2() {
           {/* Sidebar */}
           <aside className="absolute left-0 top-0 bottom-0 w-64 bg-gray-800 text-white flex flex-col mobile-sidebar shadow-2xl">
             {/* Close button */}
-            <div className="p-4 border-b border-gray-700 flex items-center justify-between">
+            <header className="p-4 border-b border-gray-700 flex items-center justify-between">
               <span className="font-semibold">Menu</span>
               <button
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -178,7 +178,7 @@ export default function AdminSidebarV2() {
               >
                 <X className="w-6 h-6" />
               </button>
-            </div>
+            </header>
             
             {sidebarContent}
           </aside>

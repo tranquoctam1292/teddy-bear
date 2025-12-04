@@ -46,15 +46,21 @@
 
 ## 2. Core Principles
 
-### 🎯 The Four Pillars:
+### 🎯 The Five Pillars:
 
 #### 1️⃣ Server-Side First
 
 ```
 Prioritize Server Components by default.
 Use 'use client' ONLY when absolutely needed:
-  ✅ When: useState, useEffect, event handlers
+  ✅ When: useState, useEffect, event handlers, useRouter, useSession
   ❌ When: Just rendering static content
+  ❌ When: Only using window.location.href (use Link instead)
+
+AUDIT RULE (Dec 2025):
+  - 100% of pages must justify 'use client' usage
+  - If no React hooks used → Must be Server Component
+  - Replace window.location.href with Next.js Link
 ```
 
 #### 2️⃣ Clean Architecture
@@ -65,6 +71,13 @@ Separation of Concerns:
   🧠 Business logic   → src/lib/
   🗄️ Data access      → src/lib/db.ts
   ✅ Validation       → src/lib/schemas/
+  🔧 Utility functions → src/lib/utils/
+
+UTILITY EXTRACTION RULE (Dec 2025):
+  - Pure functions (no React hooks) → src/lib/utils/
+  - Examples: slug.ts, format.ts
+  - Never inline formatDate, generateSlug, etc.
+  - Reuse centralized utilities
 ```
 
 #### 3️⃣ Strict TypeScript
@@ -83,6 +96,24 @@ Separation of Concerns:
 ✅ Check auth/roles on EVERY protected route
 ✅ Never trust client data
 ✅ Always recalculate prices server-side
+```
+
+#### 5️⃣ Performance Optimization
+
+```
+BUNDLE SIZE RULES (Dec 2025):
+  ✅ Use dynamic imports for heavy libraries (>50KB)
+  ✅ Examples: Recharts, Tiptap, Framer Motion
+  ✅ Show loading skeletons
+  ✅ Set ssr: false for client-only libraries
+
+PATTERN:
+  const HeavyComponent = dynamic(() => import('./HeavyComponent'), {
+    loading: () => <Skeleton />,
+    ssr: false,
+  });
+
+TARGET: Keep initial bundle < 250KB
 ```
 
 ---
@@ -345,6 +376,9 @@ src/
 │   ├── auth.ts              # 🔐 NextAuth config
 │   ├── types/               # TypeScript interfaces
 │   ├── schemas/             # Zod validation
+│   ├── utils/               # 🆕 Utility functions
+│   │   ├── slug.ts          # generateSlug(), isValidSlug()
+│   │   └── format.ts        # formatDate(), formatCurrency()
 │   ├── payment/             # Payment gateways
 │   ├── stock/               # Stock management
 │   └── email/               # Email service
@@ -355,14 +389,15 @@ src/
 
 ### 📁 Key Directories:
 
-| Directory           | Purpose         | Pattern                      |
-| ------------------- | --------------- | ---------------------------- |
-| `src/app/(shop)`    | Public pages    | Server Components preferred  |
-| `src/app/admin`     | Admin dashboard | Authentication required      |
-| `src/app/api`       | REST endpoints  | Return NextResponse.json     |
-| `src/components/ui` | Reusable UI     | Prefer reusing over creating |
-| `src/lib`           | Business logic  | No React code                |
-| `src/lib/schemas`   | Validation      | Zod schemas                  |
+| Directory           | Purpose           | Pattern                      |
+| ------------------- | ----------------- | ---------------------------- |
+| `src/app/(shop)`    | Public pages      | Server Components preferred  |
+| `src/app/admin`     | Admin dashboard   | Authentication required      |
+| `src/app/api`       | REST endpoints    | Return NextResponse.json     |
+| `src/components/ui` | Reusable UI       | Prefer reusing over creating |
+| `src/lib`           | Business logic    | No React code                |
+| `src/lib/schemas`   | Validation        | Zod schemas                  |
+| `src/lib/utils`     | 🆕 Pure functions | slug, format, etc.           |
 
 ---
 
@@ -502,6 +537,106 @@ export async function POST(request: NextRequest) {
 
 ---
 
+#### 🔒 Standardized Error Responses (NEW - Dec 2025)
+
+**Rule:** All API Routes MUST return errors in a strict JSON structure to prevent inconsistent error objects.
+
+**Type Definition:**
+
+```typescript
+type APIErrorResponse = {
+  success: false;
+  error: {
+    code: string; // e.g., 'VALIDATION_ERROR', 'AUTH_ERROR', 'NOT_FOUND'
+    message: string; // Human-readable message
+    details?: unknown; // Zod error details or additional context
+  };
+};
+
+type APISuccessResponse<T> = {
+  success: true;
+  data: T;
+  message?: string;
+};
+```
+
+**Error Codes:**
+
+| Code               | Status | Usage                  |
+| ------------------ | ------ | ---------------------- |
+| `VALIDATION_ERROR` | 400    | Zod validation failed  |
+| `AUTH_ERROR`       | 401    | Not authenticated      |
+| `FORBIDDEN`        | 403    | No permission          |
+| `NOT_FOUND`        | 404    | Resource doesn't exist |
+| `CONFLICT`         | 409    | Duplicate/conflict     |
+| `SERVER_ERROR`     | 500    | Internal error         |
+
+**Examples:**
+
+```typescript
+// ✅ CORRECT: Validation error
+return NextResponse.json(
+  {
+    success: false,
+    error: {
+      code: 'VALIDATION_ERROR',
+      message: 'Invalid input data',
+      details: error.flatten(),
+    },
+  },
+  { status: 400 }
+);
+
+// ✅ CORRECT: Authentication error
+return NextResponse.json(
+  {
+    success: false,
+    error: {
+      code: 'AUTH_ERROR',
+      message: 'Authentication required',
+    },
+  },
+  { status: 401 }
+);
+
+// ✅ CORRECT: Not found
+return NextResponse.json(
+  {
+    success: false,
+    error: {
+      code: 'NOT_FOUND',
+      message: 'Resource not found',
+    },
+  },
+  { status: 404 }
+);
+
+// ✅ CORRECT: Success response
+return NextResponse.json(
+  {
+    success: true,
+    data: { user },
+    message: 'User created successfully',
+  },
+  { status: 201 }
+);
+
+// ❌ WRONG: Inconsistent error format
+return NextResponse.json({ error: 'Something went wrong' }, { status: 500 });
+
+// ❌ WRONG: No success field
+return NextResponse.json({ data: user }, { status: 200 });
+```
+
+**Benefits:**
+
+- ✅ Consistent error handling across all API routes
+- ✅ Better client-side error detection (`if (!response.success)`)
+- ✅ Easier debugging with error codes
+- ✅ Type-safe error responses
+
+---
+
 ### 3️⃣ Authentication & Authorization
 
 ```typescript
@@ -606,15 +741,95 @@ import { cn } from '@/lib/utils';
 
 ---
 
-### 5️⃣ Date & Time
+#### Accessibility (A11y):
+
+**Rule:** Icon-only buttons MUST have an `aria-label` for screen readers.
 
 ```typescript
-// ✅ Use date-fns for formatting
-import { format, formatDistanceToNow } from 'date-fns';
+// ❌ WRONG: Icon button without label
+<Button size="icon">
+  <TrashIcon />
+</Button>
 
-// Display dates
-format(new Date(), 'dd/MM/yyyy'); // 04/12/2025
-formatDistanceToNow(date, { addSuffix: true }); // "2 hours ago"
+// ✅ CORRECT: Accessible icon button
+<Button size="icon" aria-label="Delete item">
+  <TrashIcon />
+</Button>
+
+// ✅ CORRECT: Icon with text (no aria-label needed)
+<Button>
+  <TrashIcon className="w-4 h-4 mr-2" />
+  Delete
+</Button>
+```
+
+**Additional A11y Rules:**
+
+- ✅ All images MUST have alt text
+- ✅ Form inputs MUST have labels
+- ✅ Interactive elements MUST be keyboard accessible
+- ✅ Color contrast MUST meet WCAG 2.1 AA standards
+
+---
+
+### 5️⃣ Utility Functions (NEW - Dec 2025)
+
+#### Centralized Utilities:
+
+**Location:** `src/lib/utils/`
+
+**Pattern:**
+
+```typescript
+// ❌ WRONG: Inline utility in component
+export function PostEditor() {
+  const generateSlug = (text: string) => {
+    return text.toLowerCase()...
+  };
+  // Component logic
+}
+
+// ✅ CORRECT: Import from centralized utils
+import { generateSlug } from '@/lib/utils/slug';
+
+export function PostEditor() {
+  // Component logic - just use generateSlug()
+}
+```
+
+**Available Utilities:**
+
+**A. Slug Generation (`src/lib/utils/slug.ts`):**
+
+```typescript
+import { generateSlug, isValidSlug } from '@/lib/utils/slug';
+
+generateSlug('Hello World'); // → 'hello-world'
+isValidSlug('hello-world'); // → true
+```
+
+**B. Formatting (`src/lib/utils/format.ts`):**
+
+```typescript
+import { formatDate, formatCurrency, formatFileSize } from '@/lib/utils/format';
+
+formatDate(new Date()); // → '04/12/2025 14:30'
+formatCurrency(100000); // → '100.000 ₫'
+formatFileSize(1024); // → '1 KB'
+```
+
+**Rule:** ALWAYS import utilities. NEVER duplicate logic.
+
+---
+
+### 6️⃣ Date & Time
+
+```typescript
+// ✅ Use centralized format utility
+import { formatDate } from '@/lib/utils/format';
+
+formatDate(new Date()); // Vietnamese format
+formatDate(date, 'en-US'); // Custom locale
 
 // ✅ Store as Date objects in MongoDB
 const document = {
@@ -703,16 +918,86 @@ export default {
 
 ---
 
-### 3️⃣ Documentation Management
+### 3️⃣ Performance Optimization (NEW - Dec 2025)
+
+#### Dynamic Import for Heavy Libraries:
+
+**When to Use:**
+
+```typescript
+// ✅ DO use dynamic import for:
+- Libraries > 50KB (Recharts ~150KB, Tiptap ~200KB, Framer Motion ~100KB)
+- Components used on specific pages only
+- Client-only libraries (charts, editors, animations)
+- Features behind user interaction (modals)
+
+// ❌ DON'T use for:
+- Small libraries < 10KB
+- Libraries used on every page
+- Critical above-fold content
+- Server Components
+```
+
+**Pattern:**
+
+```typescript
+// Create lazy wrapper: Component.lazy.tsx
+import dynamic from 'next/dynamic';
+import ComponentSkeleton from './ComponentSkeleton';
+
+const Component = dynamic(() => import('./Component'), {
+  loading: () => <ComponentSkeleton />,
+  ssr: false, // for client-only libraries
+});
+
+export default Component;
+
+// Usage in page:
+import Component from '@/components/Component.lazy';
+```
+
+**Implemented Examples:**
+
+```typescript
+// 1. Recharts (analytics only)
+const RevenueChart = dynamic(
+  () =>
+    import('@/components/admin/analytics/AnalyticsCharts').then((mod) => ({
+      default: mod.RevenueChart,
+    })),
+  { loading: () => <ChartSkeleton />, ssr: false }
+);
+
+// 2. Tiptap (editor pages only)
+import RichTextEditor from '@/components/admin/RichTextEditor.lazy';
+
+// 3. Framer Motion (modal only)
+import SizeGuideModal from '@/components/product/SizeGuideModal.lazy';
+```
+
+**Results Achieved:**
+
+- ✅ -44% bundle size on public pages
+- ✅ -150KB (Recharts) on non-analytics pages
+- ✅ -200KB (Tiptap) on non-editor pages
+- ✅ -50KB (Framer) when modal not opened
+
+---
+
+### 4️⃣ Documentation Management
 
 #### Rules:
 
-**Organization:**
+**Organization (Updated Dec 2025):**
 
 ```
-✅ Keep core docs at root: README, @CONTEXT, FLOW
+✅ Keep core docs at root: README, @CONTEXT, FLOW (3 files only!)
 ✅ Keep detailed docs in: docs/ folder
-✅ Use logical subfolders: guides/, reports/, etc.
+✅ Use logical subfolders:
+   - docs/guides/              (User guides)
+   - docs/reports/             (Technical reports)
+   - docs/reports/performance/ (NEW - Performance reports)
+   - docs/archive/             (Historical only)
 ```
 
 **Redundancy Check:**
@@ -740,6 +1025,96 @@ When AI needs context:
 ---
 
 ## 8. Testing & Quality
+
+### 🧪 Unit Testing Strategy (NEW - Dec 2025)
+
+#### Rule: "No Utility Without Test"
+
+**Enforcement:** Any new logic created in `src/lib/utils/*.ts` MUST have an accompanying `.test.ts` file.
+
+**Pattern:**
+
+```
+src/lib/utils/
+├── slug.ts              ✅ Implementation
+├── slug.test.ts         ✅ Tests (REQUIRED)
+├── format.ts            ✅ Implementation
+└── format.test.ts       ✅ Tests (REQUIRED)
+```
+
+**Test Framework:** Vitest (preferred) or Jest
+
+**Example:**
+
+```typescript
+// src/lib/utils/slug.ts
+export function generateSlug(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+}
+
+// src/lib/utils/slug.test.ts
+import { describe, it, expect } from 'vitest';
+import { generateSlug } from './slug';
+
+describe('generateSlug', () => {
+  it('should convert text to lowercase slug', () => {
+    expect(generateSlug('Hello World')).toBe('hello-world');
+  });
+
+  it('should handle Vietnamese characters', () => {
+    expect(generateSlug('Gấu Bông Đẹp')).toBe('gau-bong-dep');
+  });
+
+  it('should remove special characters', () => {
+    expect(generateSlug('Hello@#$World!')).toBe('hello-world');
+  });
+
+  it('should handle edge cases', () => {
+    expect(generateSlug('')).toBe('');
+    expect(generateSlug('---')).toBe('');
+    expect(generateSlug('a b c')).toBe('a-b-c');
+  });
+});
+```
+
+**Coverage Targets:**
+
+1. **New & Critical Utilities:** **100%** Coverage (Mandatory)
+
+   - Applies to: All new files in `src/lib/utils/` and core logic (payment, auth)
+   - Examples: New slug.ts, format.ts, validation helpers
+   - Reason: Prevent bugs from day one
+
+2. **Legacy & UI Utilities:** **80%+** Coverage (Recommended)
+   - Applies to: Existing non-critical helpers or UI formatting strings
+   - Examples: Older formatting functions, display helpers
+   - Reason: Balance between quality and effort
+
+**Refined Rule:**
+
+"Any **NEW** logic added to `src/lib/utils/*.ts` MUST target **100% coverage**. For existing legacy utilities, aim for at least 80%."
+
+**When AI Creates Utility:**
+
+1. ✅ Write the utility function
+2. ✅ Write the test file immediately
+3. ✅ Run tests: `npm run test`
+4. ✅ Verify 100% coverage for **new** utility
+5. ✅ For legacy utilities, ensure 80%+ coverage
+
+**Benefits:**
+
+- ✅ Prevents regression bugs
+- ✅ Documents expected behavior
+- ✅ Easier refactoring
+- ✅ Higher code confidence
+
+---
 
 ### ✅ Pre-Commit Checklist:
 
@@ -871,17 +1246,20 @@ Added comprehensive checkout flow diagram including:
 
 ### Must Do ✅
 
-| Category       | Rule                                   |
-| -------------- | -------------------------------------- |
-| **Types**      | No `any`, always define interfaces     |
-| **DB**         | Use getCollections(), ObjectId for IDs |
-| **Validation** | Zod schemas for all inputs             |
-| **Auth**       | Check session on protected routes      |
-| **Images**     | Use next/image with alt                |
-| **Imports**    | Remove unused, use `import type`       |
-| **Hooks**      | Include all deps in array              |
-| **Components** | export function pattern                |
-| **Errors**     | Try-catch with proper status codes     |
+| Category          | Rule                                   |
+| ----------------- | -------------------------------------- |
+| **Types**         | No `any`, always define interfaces     |
+| **DB**            | Use getCollections(), ObjectId for IDs |
+| **Validation**    | Zod schemas for all inputs             |
+| **Auth**          | Check session on protected routes      |
+| **Images**        | Use next/image with alt                |
+| **Imports**       | Remove unused, use `import type`       |
+| **Hooks**         | Include all deps in array              |
+| **Components**    | export function pattern                |
+| **Errors**        | Try-catch with proper status codes     |
+| **Utilities**     | 🆕 Import from src/lib/utils/          |
+| **Performance**   | 🆕 Dynamic import heavy libraries      |
+| **Server/Client** | 🆕 Justify every 'use client'          |
 
 ### Must Not ❌
 
@@ -917,9 +1295,23 @@ When coding, AI must:
 
 ---
 
-**Rules Version:** 2.0  
-**Last Updated:** December 4, 2025  
+**Rules Version:** 3.1  
+**Last Updated:** December 4, 2025 (Quality Assurance Pass)  
 **Status:** Active & Enforced  
 **Compliance:** Mandatory for all AI-generated code
+
+**Recent Updates (Version 3.1):**
+
+- ✅ **Standardized Error Response** - Strict JSON structure for all API errors
+- ✅ **Mandatory Utils Testing** - No utility without .test.ts file
+- ✅ **A11y for Icon Buttons** - aria-label requirement for icon-only buttons
+
+**Previous Updates (Version 3.0):**
+
+- ✅ Server Component audit rules (100% compliance)
+- ✅ Dynamic import patterns for heavy libraries
+- ✅ Centralized utility functions (slug.ts, format.ts)
+- ✅ Performance optimization guidelines
+- ✅ Updated documentation structure
 
 🎯 **AI: I have read and memorized all rules in this file!**

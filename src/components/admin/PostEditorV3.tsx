@@ -27,6 +27,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { ROBOTS_OPTIONS } from '@/lib/schemas/seo';
+import { generateSlug } from '@/lib/utils/slug';
 
 // Schemas
 const seoSchema = z.object({
@@ -130,16 +131,6 @@ export default function PostEditorV3({
 
   const watchedValues = watch();
 
-  // Auto-generate slug
-  const generateSlug = (title: string) => {
-    return title
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
-  };
-
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const title = e.target.value;
     setValue('title', title, { shouldDirty: true });
@@ -216,9 +207,8 @@ export default function PostEditorV3({
         title: watchedValues.metaTitle || watchedValues.title,
         description: watchedValues.metaDescription || watchedValues.excerpt || '',
         content: watchedValues.content,
-        keyword: watchedValues.seo?.focusKeyword || '',
-        slug: watchedValues.slug,
-        images: images,
+        focusKeyword: watchedValues.seo?.focusKeyword || '',
+        url: watchedValues.slug ? `/blog/${watchedValues.slug}` : undefined,
       });
       setSeoAnalysis(analysis);
     };
@@ -253,7 +243,7 @@ export default function PostEditorV3({
 
   // Main Content
   const mainContent = (
-    <div className="space-y-4">
+    <section className="space-y-4">
       {/* Title & Slug */}
       <Card>
         <CardContent className="pt-6 space-y-4">
@@ -401,7 +391,7 @@ export default function PostEditorV3({
           </Accordion>
         </CardContent>
       </Card>
-    </div>
+    </section>
   );
 
   // Sidebar
@@ -507,10 +497,10 @@ export default function PostEditorV3({
 
       {/* Auto-save Indicator */}
       {lastSaved && (
-        <div className="fixed bottom-4 left-4 z-50 bg-green-100 text-green-800 px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 text-sm">
+        <aside className="fixed bottom-4 left-4 z-50 bg-green-100 text-green-800 px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 text-sm" role="status" aria-live="polite">
           <Check className="h-4 w-4" />
           Đã lưu lúc {lastSaved.toLocaleTimeString('vi-VN')}
-        </div>
+        </aside>
       )}
 
       {/* Draft Restoration Modal */}

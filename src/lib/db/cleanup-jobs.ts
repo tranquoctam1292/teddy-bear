@@ -32,7 +32,6 @@ export const RETENTION_POLICIES: Record<string, RetentionPolicy> = {
  * Cleanup old 404 error logs
  */
 export async function cleanup404Errors(): Promise<number> {
-  console.log('Starting 404 error cleanup...');
   const { errorLogs } = await getCollections();
   
   const policy = RETENTION_POLICIES['404_errors'];
@@ -44,8 +43,6 @@ export async function cleanup404Errors(): Promise<number> {
     type: '404',
     timestamp: { $lt: cutoffDate },
   });
-  
-  console.log(`Deleted ${result.deletedCount} old 404 errors`);
   
   // Aggregate duplicate 404s
   if (policy.aggregateAfter) {
@@ -100,8 +97,6 @@ export async function cleanup404Errors(): Promise<number> {
       
       aggregated += deleteResult.deletedCount;
     }
-    
-    console.log(`Aggregated ${aggregated} duplicate 404 errors`);
   }
   
   return result.deletedCount;
@@ -111,7 +106,6 @@ export async function cleanup404Errors(): Promise<number> {
  * Aggregate old keyword ranking history
  */
 export async function aggregateKeywordRankings(): Promise<number> {
-  console.log('Starting keyword ranking aggregation...');
   const { seoKeywords } = await getCollections();
   
   const policy = RETENTION_POLICIES['keyword_ranking'];
@@ -156,7 +150,6 @@ export async function aggregateKeywordRankings(): Promise<number> {
     totalAggregated += oldHistory.length - weeklyAggregated.length;
   }
   
-  console.log(`Aggregated ${totalAggregated} keyword ranking entries across ${keywords.length} keywords`);
   return totalAggregated;
 }
 
@@ -203,7 +196,6 @@ function sum(arr: number[]): number {
  * Cleanup old SEO analyses (keep latest per entity)
  */
 export async function cleanupOldAnalyses(): Promise<number> {
-  console.log('Starting SEO analysis cleanup...');
   const { seoAnalysis } = await getCollections();
   
   const policy = RETENTION_POLICIES['seo_analysis'];
@@ -237,7 +229,6 @@ export async function cleanupOldAnalyses(): Promise<number> {
     }
   }
   
-  console.log(`Deleted ${totalDeleted} old SEO analyses`);
   return totalDeleted;
 }
 
@@ -245,7 +236,6 @@ export async function cleanupOldAnalyses(): Promise<number> {
  * Cleanup old AI usage logs
  */
 export async function cleanupAIUsageLogs(): Promise<number> {
-  console.log('Starting AI usage logs cleanup...');
   const { aiUsageLogs } = await getCollections();
   
   const policy = RETENTION_POLICIES['ai_usage'];
@@ -256,7 +246,6 @@ export async function cleanupAIUsageLogs(): Promise<number> {
     timestamp: { $lt: cutoffDate },
   });
   
-  console.log(`Deleted ${result.deletedCount} old AI usage logs`);
   return result.deletedCount;
 }
 
@@ -274,10 +263,6 @@ export async function runAllCleanupJobs(): Promise<{
   duration: number;
 }> {
   const startTime = Date.now();
-  console.log('========================================');
-  console.log('Starting all cleanup jobs...');
-  console.log('Timestamp:', new Date().toISOString());
-  console.log('========================================');
   
   try {
     const [errors404, keywordRankings, seoAnalyses, aiUsageLogs] = await Promise.all([
@@ -287,14 +272,9 @@ export async function runAllCleanupJobs(): Promise<{
       cleanupAIUsageLogs(),
     ]);
     
-    const duration = Date.now() - startTime;
-    
-    console.log('========================================');
-    console.log('Cleanup jobs completed successfully');
-    console.log(`Duration: ${duration}ms`);
-    console.log('========================================');
-    
-    return {
+  const duration = Date.now() - startTime;
+  
+  return {
       success: true,
       results: {
         errors404,

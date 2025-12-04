@@ -105,9 +105,9 @@ export function HomepageEditor({ config }: HomepageEditorProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <section className="space-y-6">
       {/* Auto-save indicator */}
-      <div className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 p-4">
+      <aside className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 p-4" role="status" aria-live="polite">
         <div className="flex items-center gap-2">
           {saving ? (
             <>
@@ -127,7 +127,7 @@ export function HomepageEditor({ config }: HomepageEditorProps) {
             </span>
           )}
         </div>
-      </div>
+      </aside>
 
       {/* Editor Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -271,7 +271,7 @@ export function HomepageEditor({ config }: HomepageEditorProps) {
         open={showScheduleModal}
         onClose={() => setShowScheduleModal(false)}
       />
-    </div>
+    </section>
   );
 }
 

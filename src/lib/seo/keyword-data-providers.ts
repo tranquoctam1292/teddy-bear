@@ -32,17 +32,13 @@ export async function getKeywordData(
   keyword: string,
   preferredSource: 'auto' | 'serpapi' | 'gsc' | 'internal' = 'auto'
 ): Promise<KeywordData> {
-  console.log(`🔍 Fetching keyword data for: "${keyword}" (source: ${preferredSource})`);
-  
   // Try sources in order of preference
   if (preferredSource === 'serpapi' || preferredSource === 'auto') {
     try {
       const serpData = await getDataFromSerpAPI(keyword);
       if (serpData) {
-        console.log(`✅ Using SerpAPI data for "${keyword}"`);
         return serpData;
       }
-      console.log(`⚠️ SerpAPI returned no data, trying internal analysis...`);
     } catch (error) {
       console.warn(`⚠️ SerpAPI failed for "${keyword}", falling back:`, error);
     }
@@ -53,17 +49,14 @@ export async function getKeywordData(
     try {
       const internalData = await getDataFromInternalAnalysis(keyword);
       if (internalData) {
-        console.log(`✅ Using internal analysis for "${keyword}"`);
         return internalData;
       }
-      console.log(`⚠️ No internal data available for "${keyword}", using estimation...`);
     } catch (error) {
       console.warn(`⚠️ Internal analysis failed for "${keyword}":`, error);
     }
   }
   
   // Last resort: Return estimated data
-  console.log(`ℹ️ Using estimated data for "${keyword}" (low confidence)`);
   return getEstimatedData(keyword);
 }
 
@@ -73,7 +66,6 @@ export async function getKeywordData(
 async function getDataFromSerpAPI(keyword: string): Promise<KeywordData | null> {
   const apiKey = process.env.SERPAPI_KEY;
   if (!apiKey) {
-    console.log('⚠️ SerpAPI key not configured, falling back to internal analysis');
     return null;
   }
   
@@ -136,8 +128,6 @@ async function getDataFromSerpAPI(keyword: string): Promise<KeywordData | null> 
     const organicResults = data.organic_results || [];
     const relatedSearches = data.related_searches || [];
     const adsCount = data.ads?.length || 0;
-    
-    console.log(`✅ SerpAPI: Successfully fetched data for "${keyword}"`);
     
     return {
       keyword,

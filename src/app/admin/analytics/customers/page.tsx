@@ -1,6 +1,6 @@
 'use client';
 
-import { Users, TrendingUp } from 'lucide-react';
+import { Users } from 'lucide-react';
 import { Button } from '@/components/admin/ui/button';
 
 export default function CustomersAnalyticsPage() {

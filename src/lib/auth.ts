@@ -50,8 +50,6 @@ async function initializeAdminUser() {
         createdAt: new Date(),
         updatedAt: new Date(),
       });
-
-      console.log('✅ Admin user created in database');
     }
   } catch (error) {
     // If MongoDB is not connected, skip initialization

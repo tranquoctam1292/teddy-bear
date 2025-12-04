@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const stats = await getUserUsageStats(session.user.id);
+    const stats = await getUserUsageStats(session.user.id || '');
     
     // Get recent usage logs for details
     const { aiUsageLogs } = await getCollections();

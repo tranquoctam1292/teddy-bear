@@ -329,7 +329,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { _id, ...orderData } = order as any;
+    const { _id: _omittedId, ...orderData } = order as any;
     return NextResponse.json({
       success: true,
       data: {

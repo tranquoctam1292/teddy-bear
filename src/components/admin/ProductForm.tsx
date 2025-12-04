@@ -20,6 +20,7 @@ import { analyzeSEO, type SEOAnalysisResult } from '@/lib/seo/analysis-client';
 import { saveAnalysisToDatabase } from '@/lib/seo/analysis-save';
 import SEOAnalysisDisplay from './seo/SEOAnalysisDisplay';
 import RichTextEditor from './RichTextEditor';
+import { generateSlug } from '@/lib/utils/slug';
 
 // Validation Schema
 const variantSchema = z.object({
@@ -208,15 +209,6 @@ export default function ProductForm({
       'tags',
       tags.filter((_, i) => i !== index)
     );
-  };
-
-  const generateSlug = (name: string) => {
-    return name
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
   };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {

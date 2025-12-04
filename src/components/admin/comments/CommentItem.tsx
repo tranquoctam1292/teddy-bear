@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { CommentWithRelations } from '@/lib/types/comment';
 import { Button } from '@/components/admin/ui/button';
+import { formatDate } from '@/lib/utils/format';
 
 interface CommentItemProps {
   comment: CommentWithRelations;
@@ -37,16 +38,6 @@ export default function CommentItem({
 }: CommentItemProps) {
   const [showActions, setShowActions] = useState(false);
 
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('vi-VN', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
   const getStatusBadge = (status: string) => {
     const badges = {
       pending: { label: 'Đang chờ', className: 'bg-yellow-100 text-yellow-700' },
@@ -65,13 +56,13 @@ export default function CommentItem({
   };
 
   return (
-    <div
+    <article
       className={`bg-white border rounded-lg p-4 hover:shadow-md transition-shadow ${
         isSelected ? 'ring-2 ring-blue-600' : 'border-gray-200'
       } ${comment.parentId ? 'ml-12 border-l-4 border-l-blue-200' : ''}`}
     >
       {/* Header */}
-      <div className="flex items-start justify-between mb-3">
+      <header className="flex items-start justify-between mb-3">
         <div className="flex items-start gap-3 flex-1">
           <input
             type="checkbox"
@@ -145,10 +136,10 @@ export default function CommentItem({
         <div className="flex items-center gap-2">
           {getStatusBadge(comment.status)}
         </div>
-      </div>
+      </header>
 
       {/* Actions */}
-      <div className="flex items-center gap-2 pl-13">
+      <footer className="flex items-center gap-2 pl-13">
         {comment.status !== 'approved' && (
           <Button
             onClick={() => onApprove(comment._id || '')}
@@ -191,8 +182,8 @@ export default function CommentItem({
           <Trash2 className="h-4 w-4 mr-1" />
           Xóa
         </Button>
-      </div>
-    </div>
+      </footer>
+    </article>
   );
 }
 

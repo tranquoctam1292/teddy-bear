@@ -207,7 +207,7 @@ export default function MediaLibrary({
               {/* Library Tab */}
               <TabsContent value="library" className="flex-1 flex flex-col">
                 {/* Filters */}
-                <div className="px-6 py-3 border-b bg-gray-50 flex items-center gap-4">
+                <section className="px-6 py-3 border-b bg-gray-50 flex items-center gap-4" aria-label="Media filters">
                   <span className="text-sm font-medium text-gray-700">Lọc media</span>
                   <Select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="w-40">
                     <option value="all">Tất cả</option>
@@ -230,10 +230,10 @@ export default function MediaLibrary({
                       className="pl-10"
                     />
                   </div>
-                </div>
+                </section>
 
                 {/* Media Grid */}
-                <div className="flex-1 overflow-y-auto p-6">
+                <section className="flex-1 overflow-y-auto p-6" aria-label="Media gallery">
                   {filteredFiles.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-gray-400">
                       <ImageIcon className="h-16 w-16 mb-4" />
@@ -269,7 +269,7 @@ export default function MediaLibrary({
                       ))}
                     </div>
                   )}
-                </div>
+                </section>
               </TabsContent>
             </Tabs>
           </div>

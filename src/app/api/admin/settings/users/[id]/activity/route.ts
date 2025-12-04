@@ -2,7 +2,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { getCollections } from '@/lib/db';
-import { ObjectId } from 'mongodb';
 
 // GET - Get user activity logs
 export async function GET(

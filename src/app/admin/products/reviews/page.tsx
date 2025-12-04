@@ -1,6 +1,5 @@
-'use client';
-
-import { Star, MessageSquare } from 'lucide-react';
+import Link from 'next/link';
+import { Star } from 'lucide-react';
 import { Button } from '@/components/admin/ui/button';
 
 export default function ProductReviewsPage() {
@@ -24,9 +23,11 @@ export default function ProductReviewsPage() {
         <p className="text-gray-600 mb-6">
           Tính năng sẽ được thêm trong phiên bản tiếp theo. Hiện tại reviews được quản lý qua Comments.
         </p>
-        <Button variant="secondary" onClick={() => window.location.href = '/admin/comments'}>
-          Xem Comments
-        </Button>
+        <Link href="/admin/comments">
+          <Button variant="secondary">
+            Xem Comments
+          </Button>
+        </Link>
       </div>
     </div>
   );

@@ -1,5 +1,4 @@
-'use client';
-
+import Link from 'next/link';
 import { Paintbrush, Eye } from 'lucide-react';
 import { Button } from '@/components/admin/ui/button';
 
@@ -23,9 +22,11 @@ export default function AppearanceCustomizePage() {
             <div className="p-4 bg-gray-50 rounded-lg text-center text-gray-600">
               Color pickers, typography settings, spacing controls...
             </div>
-            <Button className="w-full" variant="secondary" onClick={() => window.location.href = '/admin/settings/appearance'}>
-              Đến Theme Settings hiện tại
-            </Button>
+            <Link href="/admin/settings/appearance">
+              <Button className="w-full" variant="secondary">
+                Đến Theme Settings hiện tại
+              </Button>
+            </Link>
           </div>
         </div>
 

@@ -86,9 +86,11 @@ export async function getCollections() {
     // SEO Management Center collections
     seoAnalysis: db.collection('seoAnalysis'),
     keywordTracking: db.collection('keywordTracking'),
+    seoKeywords: db.collection('seoKeywords'),
     seoSettings: db.collection('seoSettings'),
     redirectRules: db.collection('redirectRules'),
     error404Log: db.collection('error404Log'),
+    errorLogs: db.collection('errorLogs'),
     scheduledReports: db.collection('scheduledReports'),
     // Competitor Analysis collections
     competitors: db.collection('competitors'),
@@ -117,6 +119,8 @@ export async function getCollections() {
     authors: db.collection('authors'),
     // Homepage Configuration collections
     homepage_configs: db.collection('homepage_configs'),
+    // AI Usage Tracking collections
+    aiUsageLogs: db.collection('aiUsageLogs'),
   };
 }
 
@@ -126,7 +130,6 @@ export async function getCollections() {
 export async function connectDB(): Promise<void> {
   try {
     await getClientPromise();
-    console.log('✅ Connected to MongoDB');
   } catch (error) {
     console.error('❌ MongoDB connection error:', error);
     throw error;

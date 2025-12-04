@@ -41,8 +41,8 @@ export default function CategoryManager({
   const inactiveCategories = categories.filter((cat) => !cat.isActive);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <section className="space-y-6">
+      <header className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-gray-900">Danh mục sản phẩm</h3>
           <p className="text-sm text-gray-600 mt-1">
@@ -53,11 +53,11 @@ export default function CategoryManager({
           <Plus className="w-4 h-4 mr-2" />
           Thêm danh mục
         </Button>
-      </div>
+      </header>
 
       {activeCategories.length > 0 && (
-        <div>
-          <h4 className="text-sm font-medium text-gray-700 mb-3">Danh mục đang hoạt động</h4>
+        <section aria-labelledby="active-categories">
+          <h4 id="active-categories" className="text-sm font-medium text-gray-700 mb-3">Danh mục đang hoạt động</h4>
           <div className="space-y-2">
             {activeCategories.map((category) => (
               <Card key={category.id} className="hover:shadow-md transition-shadow">
@@ -111,12 +111,12 @@ export default function CategoryManager({
               </Card>
             ))}
           </div>
-        </div>
+        </section>
       )}
 
       {inactiveCategories.length > 0 && (
-        <div>
-          <h4 className="text-sm font-medium text-gray-700 mb-3">Danh mục không hoạt động</h4>
+        <section aria-labelledby="inactive-categories">
+          <h4 id="inactive-categories" className="text-sm font-medium text-gray-700 mb-3">Danh mục không hoạt động</h4>
           <div className="space-y-2">
             {inactiveCategories.map((category) => (
               <Card key={category.id} className="opacity-60">
@@ -158,7 +158,7 @@ export default function CategoryManager({
               </Card>
             ))}
           </div>
-        </div>
+        </section>
       )}
 
       {categories.length === 0 && (
@@ -172,7 +172,7 @@ export default function CategoryManager({
           </CardContent>
         </Card>
       )}
-    </div>
+    </section>
   );
 }
 

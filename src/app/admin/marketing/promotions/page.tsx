@@ -1,5 +1,4 @@
-'use client';
-
+import Link from 'next/link';
 import { Sparkles, Percent, Gift } from 'lucide-react';
 import { Button } from '@/components/admin/ui/button';
 
@@ -42,9 +41,11 @@ export default function PromotionsPage() {
         <p className="text-gray-600 mb-6">
           Tính năng đang phát triển. Hiện tại sử dụng Coupons để tạo khuyến mãi.
         </p>
-        <Button onClick={() => window.location.href = '/admin/marketing/coupons'}>
-          Quản lý Coupons
-        </Button>
+        <Link href="/admin/marketing/coupons">
+          <Button>
+            Quản lý Coupons
+          </Button>
+        </Link>
       </div>
     </div>
   );

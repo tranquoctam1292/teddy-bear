@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     const { backlinks } = await getCollections();
     
     // Use cache
-    const cache = getCache();
+    // const cache = getCache();
     const cacheKey = generateCacheKey('backlinks:stats');
     
     const stats = await cached(

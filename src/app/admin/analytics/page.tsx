@@ -1,12 +1,28 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import { RefreshCw, TrendingUp, ShoppingCart, DollarSign, Users, Download } from 'lucide-react';
 import { Button } from '@/components/admin/ui/button';
 import { AnalyticsDashboard } from '@/lib/types/analytics';
-import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { ChartSkeleton, PieChartSkeleton } from '@/components/admin/analytics/ChartSkeleton';
 
-const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+// Dynamic imports for Recharts - only load when needed (~150KB savings on other pages)
+const RevenueChart = dynamic(
+  () => import('@/components/admin/analytics/AnalyticsCharts').then((mod) => ({ default: mod.RevenueChart })),
+  {
+    loading: () => <ChartSkeleton height={300} />,
+    ssr: false,
+  }
+);
+
+const TrafficChart = dynamic(
+  () => import('@/components/admin/analytics/AnalyticsCharts').then((mod) => ({ default: mod.TrafficChart })),
+  {
+    loading: () => <PieChartSkeleton />,
+    ssr: false,
+  }
+);
 
 export default function AnalyticsPage() {
   const [data, setData] = useState<AnalyticsDashboard | null>(null);
@@ -16,11 +32,7 @@ export default function AnalyticsPage() {
     to: new Date().toISOString().split('T')[0],
   });
 
-  useEffect(() => {
-    loadData();
-  }, [dateRange]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
       const params = new URLSearchParams({
@@ -39,7 +51,11 @@ export default function AnalyticsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [dateRange]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -149,32 +165,10 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* Revenue Chart with Recharts */}
+      {/* Revenue Chart - Dynamically loaded */}
       <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
         <h2 className="text-lg font-bold text-gray-900 mb-4">Doanh thu 30 ngày gần nhất</h2>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={data.revenueData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis 
-              dataKey="date" 
-              tickFormatter={(date) => new Date(date).getDate().toString()}
-            />
-            <YAxis tickFormatter={(value) => `${(value / 1000000).toFixed(0)}M`} />
-            <Tooltip 
-              formatter={(value: number) => formatCurrency(value)}
-              labelFormatter={(date) => new Date(date).toLocaleDateString('vi-VN')}
-            />
-            <Legend />
-            <Line 
-              type="monotone" 
-              dataKey="revenue" 
-              stroke="#3B82F6" 
-              strokeWidth={2}
-              name="Doanh thu"
-              dot={{ fill: '#3B82F6' }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
+        <RevenueChart data={data.revenueData} formatCurrency={formatCurrency} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -200,27 +194,10 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        {/* Traffic Sources with Pie Chart */}
+        {/* Traffic Sources - Dynamically loaded */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h2 className="text-lg font-bold text-gray-900 mb-4">Nguồn truy cập</h2>
-          <ResponsiveContainer width="100%" height={250}>
-            <PieChart>
-              <Pie
-                data={data.trafficSources as any}
-                dataKey="visitors"
-                nameKey="source"
-                cx="50%"
-                cy="50%"
-                outerRadius={80}
-                label={(entry: any) => `${entry.source}: ${entry.percentage}%`}
-              >
-                {data.trafficSources.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
+          <TrafficChart data={data.trafficSources} />
           <p className="text-xs text-gray-500 mt-4 text-center">
             * Dữ liệu demo - cần tích hợp Google Analytics
           </p>

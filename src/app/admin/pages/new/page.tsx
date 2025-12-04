@@ -8,7 +8,7 @@ import { Button } from '@/components/admin/ui/button';
 import { Input } from '@/components/admin/ui/input';
 import { Label } from '@/components/admin/ui/label';
 import { Page } from '@/lib/types/page';
-import RichTextEditor from '@/components/admin/RichTextEditor';
+import RichTextEditor from '@/components/admin/RichTextEditor.lazy';
 import EditorLayout from '@/components/admin/EditorLayout';
 import { PublishBox, FeaturedImageBox } from '@/components/admin/sidebar';
 import {

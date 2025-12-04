@@ -9,6 +9,7 @@ import {
 } from '@/components/admin/ui/dialog';
 import { Button } from '@/components/admin/ui/button';
 import { Input } from '@/components/admin/ui/input';
+import { formatCurrency } from '@/lib/utils/format';
 import { Label } from '@/components/admin/ui/label';
 import { TransactionWithOrder } from '@/lib/types/payment';
 import { AlertTriangle } from 'lucide-react';

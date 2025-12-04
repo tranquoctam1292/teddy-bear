@@ -58,8 +58,6 @@ export async function triggerSitemapRegeneration(): Promise<void> {
     // 1. Invalidate CDN cache
     // 2. Trigger a background job to regenerate
     // 3. Ping search engines about the update
-    
-    console.log('Sitemap regeneration triggered');
   } catch (error) {
     console.error('Error triggering sitemap regeneration:', error);
     throw error;

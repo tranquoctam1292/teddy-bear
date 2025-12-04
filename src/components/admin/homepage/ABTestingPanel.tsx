@@ -154,14 +154,14 @@ export function ABTestingPanel({ configId, configName }: ABTestingPanelProps) {
 
           {/* Variants */}
           {variants.length === 0 ? (
-            <div className="text-center py-8">
+            <section className="text-center py-8" aria-label="No variants">
               <TrendingUp className="mx-auto h-12 w-12 text-muted-foreground" />
               <p className="mt-4 text-sm text-muted-foreground">
                 No variants yet. Create a variant to start A/B testing.
               </p>
-            </div>
+            </section>
           ) : (
-            <div className="space-y-3">
+            <section className="space-y-3" aria-label="Variant list">
               {variants.map((variant) => (
                 <div
                   key={variant._id}
@@ -194,7 +194,7 @@ export function ABTestingPanel({ configId, configName }: ABTestingPanelProps) {
                   </div>
                 </div>
               ))}
-            </div>
+            </section>
           )}
 
           {/* Weight Summary */}

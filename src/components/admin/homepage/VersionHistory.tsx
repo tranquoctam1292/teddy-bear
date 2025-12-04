@@ -151,7 +151,7 @@ export function VersionHistory({ configId }: VersionHistoryProps) {
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <section className="space-y-3" aria-label="Version history list">
               {versions.map((version) => (
                 <div
                   key={version._id}
@@ -195,7 +195,7 @@ export function VersionHistory({ configId }: VersionHistoryProps) {
                   </div>
                 </div>
               ))}
-            </div>
+            </section>
           )}
         </CardContent>
       </Card>

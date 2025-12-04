@@ -28,6 +28,7 @@ import { ROBOTS_OPTIONS } from '@/lib/schemas/seo';
 import { analyzeSEO, type SEOAnalysisResult } from '@/lib/seo/analysis-client';
 import { saveAnalysisToDatabase } from '@/lib/seo/analysis-save';
 import SEOAnalysisDisplay from './seo/SEOAnalysisDisplay';
+import { generateSlug } from '@/lib/utils/slug';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Select } from './ui/select';
@@ -152,15 +153,6 @@ export default function PostEditor({
       },
     },
   });
-
-  const generateSlug = (title: string) => {
-    return title
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
-  };
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const title = e.target.value;

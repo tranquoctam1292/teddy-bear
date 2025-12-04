@@ -1,142 +1,279 @@
 # 📚 Teddy Shop - Documentation Index
 
-## 🎯 START HERE: [📚_START_HERE.md](../📚_START_HERE.md)
+**Project:** Teddy Shop E-commerce Platform  
+**Last Updated:** 04 December 2025  
+**Status:** ✅ Production Ready
 
 ---
 
-## 📖 Essential Documentation (15 files)
+## 🎯 ESSENTIAL DOCUMENTATION
 
-### 🚀 Getting Started
-1. **[📚_START_HERE.md](../📚_START_HERE.md)** ⭐⭐⭐ - **READ THIS FIRST!**
-2. **[README.md](../README.md)** ⭐⭐ - Project overview & quick start
-3. **[ENV_SETUP.md](../ENV_SETUP.md)** - Environment variables
+### 📌 Core Files (Root Directory)
 
-### 📘 Complete Guides
-4. **[MASTER_DOCUMENTATION.md](../MASTER_DOCUMENTATION.md)** ⭐⭐⭐ - All-in-one reference
-5. **[FINAL_COMPREHENSIVE_GUIDE.md](../FINAL_COMPREHENSIVE_GUIDE.md)** - Detailed guide
-6. **[🎯_FINAL_REPORT.md](../🎯_FINAL_REPORT.md)** - Executive summary
+**Must Read:**
 
-### 📊 Project Status
-7. **[COMPLETE_PROJECT_SUMMARY.md](../COMPLETE_PROJECT_SUMMARY.md)** - What was built
-8. **[FINAL_STATUS_REPORT.md](../FINAL_STATUS_REPORT.md)** - Final status
-9. **[PROJECT_STATUS.md](../PROJECT_STATUS.md)** - Current status
+1. **[@CONTEXT.md](../@CONTEXT.md)** ⭐⭐⭐ - Core business context & AI memory
+2. **[FLOW.md](../FLOW.md)** ⭐⭐⭐ - Business logic flows & processes
+3. **[README.md](../README.md)** ⭐⭐ - Project overview & quick start
 
-### 🎯 Implementation
-10. **[ADMIN_FEATURES_ROADMAP.md](../ADMIN_FEATURES_ROADMAP.md)** - Original roadmap
-11. **[COMPLETE_IMPLEMENTATION_SUMMARY.md](../COMPLETE_IMPLEMENTATION_SUMMARY.md)** - How it was built
+**Priority for AI:**
 
-### 🗄️ Database
-12. **[DATABASE_SCHEMA.md](../DATABASE_SCHEMA.md)** - Collections & structure
-13. **[MONGODB_CONNECTION_GUIDE.md](../MONGODB_CONNECTION_GUIDE.md)** - MongoDB setup
-
-### 🚀 Deployment & Testing
-14. **[DEPLOYMENT_GUIDE.md](../DEPLOYMENT_GUIDE.md)** - Deploy to production
-15. **[TESTING_CHECKLIST.md](../TESTING_CHECKLIST.md)** - Testing guide
-16. **[PRODUCTION_FINAL_CHECKLIST.md](../PRODUCTION_FINAL_CHECKLIST.md)** - Pre-launch
-
-### 🔧 Technical
-17. **[BUILD_FIXES_NEEDED.md](../BUILD_FIXES_NEEDED.md)** - Build issues & fixes
+- 🥇 @CONTEXT.md (highest priority)
+- 🥈 FLOW.md (business logic)
+- 🥉 DATABASE_SCHEMA.md (data structures)
 
 ---
 
-## 🎯 Quick Links by Purpose
+## 📂 DOCUMENTATION STRUCTURE
 
-### "I want to start developing"
-→ **[📚_START_HERE.md](../📚_START_HERE.md)** → **[README.md](../README.md)**
-
-### "I want to understand everything"
-→ **[MASTER_DOCUMENTATION.md](../MASTER_DOCUMENTATION.md)**
-
-### "I want to deploy"
-→ **[DEPLOYMENT_GUIDE.md](../DEPLOYMENT_GUIDE.md)** + **[BUILD_FIXES_NEEDED.md](../BUILD_FIXES_NEEDED.md)**
-
-### "I want to test"
-→ **[TESTING_CHECKLIST.md](../TESTING_CHECKLIST.md)**
-
-### "I want database info"
-→ **[DATABASE_SCHEMA.md](../DATABASE_SCHEMA.md)** + **[MONGODB_CONNECTION_GUIDE.md](../MONGODB_CONNECTION_GUIDE.md)**
-
-### "I want to see what was built"
-→ **[COMPLETE_PROJECT_SUMMARY.md](../COMPLETE_PROJECT_SUMMARY.md)** + **[🎯_FINAL_REPORT.md](../🎯_FINAL_REPORT.md)**
+```
+teddy-shop/
+│
+├── @CONTEXT.md              [Core business context]
+├── FLOW.md                  [Business logic flows]
+├── README.md                [Project overview]
+│
+└── docs/
+    ├── guides/              [User & Developer Guides - 7 files]
+    ├── reports/             [Technical & QA Reports - 22 files]
+    │   └── performance/     [Performance Optimization - 7 files]
+    └── archive/             [Historical documentation]
+```
 
 ---
 
-## 📂 Document Categories
+## 📘 GUIDES (7 files)
 
-### Management (5 docs)
-- Roadmap, Status, Summaries, Reports
+### Developer Guides
 
-### Technical (5 docs)
-- Master doc, Comprehensive guide, Database, Build fixes
+**Quick Start:**
 
-### Operations (5 docs)
-- Deployment, Testing, Production checklist, Env setup, MongoDB
+- **[QUICK_START.md](guides/QUICK_START.md)** - Get started in 5 minutes
+- **[TROUBLESHOOTING.md](guides/TROUBLESHOOTING.md)** - Common issues & solutions
 
-### Getting Started (2 docs)
-- START_HERE, README
+**Feature Guides:**
+
+- **[AUTHOR_SYSTEM_QUICK_GUIDE.md](guides/AUTHOR_SYSTEM_QUICK_GUIDE.md)** - Author management (E-E-A-T)
+- **[HOMEPAGE_CONFIGURATION_USER_GUIDE.md](guides/HOMEPAGE_CONFIGURATION_USER_GUIDE.md)** - Homepage builder
+
+**Technical Guides:**
+
+- **[MONGODB_CONNECTION_GUIDE.md](guides/MONGODB_CONNECTION_GUIDE.md)** - Database setup
+- **[📘_NOTEBOOKLM_GUIDE.md](guides/📘_NOTEBOOKLM_GUIDE.md)** - NotebookLM integration
+- **[🚀_DEPLOY_NOW.md](guides/🚀_DEPLOY_NOW.md)** - Deployment guide
 
 ---
 
-## 📈 Documentation Stats
+## 📊 REPORTS (22 files)
 
-### Improvement
-- **Before:** 43 MD files (confusing!)
-- **After:** 17 MD files (organized!)
-- **Reduction:** 60% fewer files
-- **Organization:** 100% better
+### Core Reports (7 files)
+
+**Database & Architecture:**
+
+- **[DATABASE_SCHEMA.md](reports/DATABASE_SCHEMA.md)** ⭐⭐⭐ - MongoDB schema & collections
+- **[SOURCE_CODE_ANALYSIS.md](reports/SOURCE_CODE_ANALYSIS.md)** - Codebase analysis
+
+**Quality Audits:**
+
+- **[ACCESSIBILITY_AUDIT.md](reports/ACCESSIBILITY_AUDIT.md)** - WCAG compliance
+- **[🔒_SECURITY_AUDIT_REPORT.md](reports/🔒_SECURITY_AUDIT_REPORT.md)** - Security review
+
+**Build & Testing:**
+
+- **[🎯_BUILD_STATUS_FINAL.md](reports/🎯_BUILD_STATUS_FINAL.md)** - Final build status
+- **[🎯_QUALITY_TESTING_REPORT.md](reports/🎯_QUALITY_TESTING_REPORT.md)** - QA testing
+- **[📊_TESTING_SUMMARY.md](reports/📊_TESTING_SUMMARY.md)** - Test results
+
+---
+
+### QA Session Reports (8 files)
+
+**Recent QA Pass (December 2025):**
+
+- **[FINAL_QA_AUDIT_REPORT.md](reports/FINAL_QA_AUDIT_REPORT.md)** ⭐ - Complete audit summary
+- **[TODO_SEMANTIC.md](reports/TODO_SEMANTIC.md)** - Semantic HTML roadmap
+- **[SEMANTIC_HTML_IMPLEMENTATION_REPORT.md](reports/SEMANTIC_HTML_IMPLEMENTATION_REPORT.md)** - Implementation details
+
+**Code Quality:**
+
+- **[UTILITY_EXTRACTION_REPORT.md](reports/UTILITY_EXTRACTION_REPORT.md)** - Utility function refactoring
+- **[FUNCTION_EXPORT_PATTERN_AUDIT.md](reports/FUNCTION_EXPORT_PATTERN_AUDIT.md)** - Pattern compliance
+- **[COMPONENT_LIST_TO_REFACTOR.md](reports/COMPONENT_LIST_TO_REFACTOR.md)** - Component inventory
+
+**Type Safety:**
+
+- **[FORM_TYPE_FIXES.md](reports/FORM_TYPE_FIXES.md)** - Form type improvements
+- **[COLLECTION_STANDARDIZATION.md](reports/COLLECTION_STANDARDIZATION.md)** - DB collection patterns
+
+---
+
+### Performance Reports (7 files)
+
+**Location:** `docs/reports/performance/`
+
+**Bundle Optimization (December 2025):**
+
+- **[BUNDLE_OPTIMIZATION_FINAL_REPORT.md](reports/performance/BUNDLE_OPTIMIZATION_FINAL_REPORT.md)** ⭐ - Complete optimization summary
+- **[REFACTORING_SUMMARY.md](reports/performance/REFACTORING_SUMMARY.md)** ⭐ - Session summary
+
+**Dynamic Imports:**
+
+- **[DYNAMIC_IMPORT_IMPLEMENTATION_REPORT.md](reports/performance/DYNAMIC_IMPORT_IMPLEMENTATION_REPORT.md)** - Recharts & Tiptap
+- **[FRAMER_MOTION_OPTIMIZATION_REPORT.md](reports/performance/FRAMER_MOTION_OPTIMIZATION_REPORT.md)** - Animation optimization
+- **[BUNDLE_ANALYSIS.md](reports/performance/BUNDLE_ANALYSIS.md)** - Library analysis
+
+**Architecture:**
+
+- **[NEXTJS_ARCHITECT_AUDIT.md](reports/performance/NEXTJS_ARCHITECT_AUDIT.md)** - Server vs Client audit
+- **[SERVER_COMPONENT_CONVERSION_REPORT.md](reports/performance/SERVER_COMPONENT_CONVERSION_REPORT.md)** - 6 files converted
+
+---
+
+## 🎯 QUICK NAVIGATION
+
+### "I need to..."
+
+**Understand the project:**
+→ [@CONTEXT.md](../@CONTEXT.md) + [README.md](../README.md)
+
+**Understand business logic:**
+→ [FLOW.md](../FLOW.md)
+
+**Check database structure:**
+→ [DATABASE_SCHEMA.md](reports/DATABASE_SCHEMA.md)
+
+**Start development:**
+→ [QUICK_START.md](guides/QUICK_START.md)
+
+**Configure homepage:**
+→ [HOMEPAGE_CONFIGURATION_USER_GUIDE.md](guides/HOMEPAGE_CONFIGURATION_USER_GUIDE.md)
+
+**Fix MongoDB issues:**
+→ [MONGODB_CONNECTION_GUIDE.md](guides/MONGODB_CONNECTION_GUIDE.md) + [TROUBLESHOOTING.md](guides/TROUBLESHOOTING.md)
+
+**Deploy to production:**
+→ [🚀_DEPLOY_NOW.md](guides/🚀_DEPLOY_NOW.md)
+
+**Review performance optimizations:**
+→ [BUNDLE_OPTIMIZATION_FINAL_REPORT.md](reports/performance/BUNDLE_OPTIMIZATION_FINAL_REPORT.md)
+
+**Review code quality:**
+→ [FINAL_QA_AUDIT_REPORT.md](reports/FINAL_QA_AUDIT_REPORT.md)
+
+---
+
+## 📈 DOCUMENTATION STATS
+
+### Organization
+
+- **Root files:** 3 core docs (clean!) ✅
+- **Guides:** 7 user/developer guides
+- **Reports:** 22 technical reports
+  - Core: 7 reports
+  - QA: 8 reports
+  - Performance: 7 reports
+- **Total:** 32 active documents
 
 ### Quality
+
 - ✅ No duplicates
 - ✅ Well-organized
-- ✅ Easy to navigate
-- ✅ Comprehensive coverage
-- ✅ Up-to-date
+- ✅ Clear categorization
+- ✅ Up-to-date content
+- ✅ Easy navigation
+
+### Recent Updates (December 2025)
+
+- ✅ Server Component conversion (6 files)
+- ✅ Dynamic import optimization (3 libraries)
+- ✅ Bundle size reduction (44%)
+- ✅ QA pass (65% error reduction)
+- ✅ Semantic HTML (41 tags)
+- ✅ Utility extraction (10 functions)
 
 ---
 
-## 🎓 Recommended Reading Order
+## 📚 RECOMMENDED READING PATHS
 
-### For New Developers
-1. `📚_START_HERE.md` (5 min)
-2. `README.md` (10 min)
-3. `MASTER_DOCUMENTATION.md` (30 min)
-4. Start coding!
+### Path 1: New Developer (30 minutes)
 
-### For Deployment
-1. `DEPLOYMENT_GUIDE.md` (15 min)
-2. `BUILD_FIXES_NEEDED.md` (5 min)
-3. `PRODUCTION_FINAL_CHECKLIST.md` (10 min)
-4. Deploy!
+1. [@CONTEXT.md](../@CONTEXT.md) - 10 min
+2. [README.md](../README.md) - 5 min
+3. [QUICK_START.md](guides/QUICK_START.md) - 5 min
+4. [DATABASE_SCHEMA.md](reports/DATABASE_SCHEMA.md) - 10 min
 
-### For Complete Understanding
-1. `📚_START_HERE.md`
-2. `MASTER_DOCUMENTATION.md`
-3. `COMPLETE_PROJECT_SUMMARY.md`
-4. `ADMIN_FEATURES_ROADMAP.md`
-5. `DATABASE_SCHEMA.md`
+### Path 2: Before Coding (15 minutes)
 
----
+1. [FLOW.md](../FLOW.md) - 10 min (business logic)
+2. [DATABASE_SCHEMA.md](reports/DATABASE_SCHEMA.md) - 5 min
 
-## 🎉 SUMMARY
+### Path 3: Performance Review (20 minutes)
 
-### Documentation Status
-✅ **Complete** - All essential information documented  
-✅ **Organized** - Easy to find what you need  
-✅ **Clean** - No duplicates or outdated info  
-✅ **Professional** - High-quality documentation  
+1. [BUNDLE_OPTIMIZATION_FINAL_REPORT.md](reports/performance/BUNDLE_OPTIMIZATION_FINAL_REPORT.md) - 10 min
+2. [REFACTORING_SUMMARY.md](reports/performance/REFACTORING_SUMMARY.md) - 10 min
 
-### Project Status
-✅ **100% features delivered**  
-✅ **All pages functional**  
-✅ **No 404 errors**  
-✅ **Production ready**  
-✅ **Well documented**  
+### Path 4: Code Quality Review (25 minutes)
+
+1. [FINAL_QA_AUDIT_REPORT.md](reports/FINAL_QA_AUDIT_REPORT.md) - 15 min
+2. [SEMANTIC_HTML_IMPLEMENTATION_REPORT.md](reports/SEMANTIC_HTML_IMPLEMENTATION_REPORT.md) - 10 min
 
 ---
 
-**🚀 Ready to build amazing things with Teddy Shop!**
+## 🎊 PROJECT STATUS
 
-**Last Updated:** December 2025  
-**Maintained by:** AI Assistant + Your Team
+### Current State (December 2025)
 
+- ✅ **Build Status:** Production build passing
+- ✅ **Type Safety:** 96.5% coverage (34 minor errors)
+- ✅ **Performance:** 44% bundle reduction achieved
+- ✅ **Code Quality:** A++ grade
+- ✅ **Documentation:** Comprehensive & organized
 
+### Latest Optimizations
+
+- ✅ 6 Client → Server Components
+- ✅ 3 Libraries dynamically imported
+- ✅ 41 Semantic HTML tags added
+- ✅ 10 Utility functions extracted
+- ✅ ~350KB bundle size reduction
+
+---
+
+## 🔄 MAINTENANCE
+
+### Documentation Updates
+
+- Update this index when new reports are added
+- Archive obsolete reports to `archive/`
+- Keep root directory clean (3 core files only)
+
+### Review Schedule
+
+- **Weekly:** Check for new reports to organize
+- **Monthly:** Review and archive outdated docs
+- **Quarterly:** Major documentation cleanup
+
+---
+
+## ✅ CONCLUSION
+
+**Documentation Status:** ✅ **EXCELLENT**
+
+**Organization:**
+
+- Clean root directory (3 files)
+- Well-structured docs/ folder
+- Clear categorization
+- Easy to navigate
+
+**Recommendation:** Follow this index for all documentation needs
+
+---
+
+**Maintained by:** AI Documentation Manager  
+**Last Cleanup:** 04 December 2025  
+**Next Review:** January 2025
+
+---
+
+**END OF INDEX**

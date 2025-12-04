@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { ShoppingCart, Heart, Share2, Ruler, Star, Check } from 'lucide-react';
 import ProductGallery from '@/components/product/ProductGallery';
 import VariantSelector from '@/components/product/VariantSelector';
-import SizeGuideModal from '@/components/product/SizeGuideModal';
+import SizeGuideModal from '@/components/product/SizeGuideModal.lazy';
 import MobileBuyButton from '@/components/product/MobileBuyButton';
 import { useCartStore } from '@/store/useCartStore';
 import { formatCurrency } from '@/lib/utils';
@@ -109,7 +109,6 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   };
 
   const currentPrice = selectedVariant?.price || product.basePrice;
-  const displayImage = selectedVariant?.image || product.images[0];
 
   // Generate JSON-LD schema
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_SITE_URL || 'https://emotionalhouse.vn');

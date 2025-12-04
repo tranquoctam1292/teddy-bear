@@ -15,12 +15,11 @@ export default function SchemaBuilderPage() {
 
   const handleSave = (schema: Record<string, any>) => {
     // Handle schema save
-    console.log('Saving schema:', schema);
     // Could integrate with bulk apply API here
   };
 
   const handleValidate = (valid: boolean, errors: string[]) => {
-    console.log('Validation result:', { valid, errors });
+    // Validation result handled
   };
 
   if (status === 'loading') {

@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
 
     const { _id, password: _, ...userData } = newUser;
     return NextResponse.json(
-      { user: { ...userData, id: userData.id || _id.toString() }, message: 'Admin user created successfully' },
+      { user: { ...userData, id: userData.id || _id?.toString() || '' }, message: 'Admin user created successfully' },
       { status: 201 }
     );
   } catch (error) {

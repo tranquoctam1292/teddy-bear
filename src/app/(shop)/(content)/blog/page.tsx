@@ -4,7 +4,6 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Calendar, User, ArrowRight } from 'lucide-react';
-import type { Metadata } from 'next';
 
 // NOTE: Metadata moved to client component state
 // If you need static metadata, convert this back to server component

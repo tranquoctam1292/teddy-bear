@@ -16,7 +16,6 @@ export async function POST(request: NextRequest) {
     
     if (cronSecret && authHeader === `Bearer ${cronSecret}`) {
       // Request from cron - proceed
-      console.log('Cleanup job triggered by cron');
     } else {
       // Manual request - check admin authentication
       const session = await auth();
@@ -26,7 +25,6 @@ export async function POST(request: NextRequest) {
           { status: 401 }
         );
       }
-      console.log('Cleanup job triggered manually by admin');
     }
     
     // Run cleanup jobs

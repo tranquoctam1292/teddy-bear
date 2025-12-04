@@ -9,6 +9,7 @@ import type { PaymentMethod } from '@/lib/schemas/order-settings';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { generateSlug } from '@/lib/utils/slug';
 
 const paymentMethodSchema = z.object({
   name: z.string().min(1, 'Tên phương thức là bắt buộc'),
@@ -66,16 +67,6 @@ export default function PaymentMethodForm({
 
   const feeType = watch('fee.type');
   const methodName = watch('name');
-
-  // Auto-generate slug from name
-  const generateSlug = (name: string) => {
-    return name
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
-  };
 
   return (
     <Card>

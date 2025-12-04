@@ -4,7 +4,7 @@
  * AI Generator Component
  * Generate meta descriptions, titles, and content suggestions
  */
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Sparkles, Copy, Check, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/admin/ui/card';
 import { Button } from '@/components/admin/ui/button';

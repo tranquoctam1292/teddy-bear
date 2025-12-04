@@ -16,9 +16,13 @@ import { checkRateLimit, logAIUsage, getUserUsageStats, estimateCost } from '@/l
  * Generate AI content (meta descriptions, titles, etc.)
  */
 export async function POST(request: NextRequest) {
+  let useAI = false;
+  let aiProvider: string | undefined;
+  let session;
+  
   try {
     // Check authentication
-    const session = await auth();
+    session = await auth();
     if (!session || session.user?.role !== 'admin') {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -27,7 +31,9 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { type, content, keyword, options = {}, useAI = false, aiProvider } = body;
+    const { type, content, keyword, options = {} } = body;
+    useAI = body.useAI || false;
+    aiProvider = body.aiProvider;
     
     // Get user IP for rate limiting
     const ip = request.headers.get('x-forwarded-for') || 
@@ -36,7 +42,7 @@ export async function POST(request: NextRequest) {
     
     // Check rate limit if using AI
     if (useAI) {
-      const rateLimitResult = await checkRateLimit(session.user.id, ip, 'ai_generation');
+      const rateLimitResult = await checkRateLimit(session.user.id || '', ip, 'ai_generation');
       
       if (!rateLimitResult.allowed) {
         return NextResponse.json(
@@ -154,7 +160,7 @@ export async function POST(request: NextRequest) {
       const cost = estimateCost(result.provider, tokensUsed);
       
       await logAIUsage(
-        session.user.id,
+        session.user.id || '',
         result.provider,
         tokensUsed,
         cost,
@@ -164,7 +170,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Get current usage stats
-    const usageStats = await getUserUsageStats(session.user.id);
+    const usageStats = await getUserUsageStats(session.user.id || '');
 
     return NextResponse.json({
       success: true,

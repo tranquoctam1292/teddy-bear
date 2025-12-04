@@ -3,6 +3,7 @@
 import { TransactionWithOrder } from '@/lib/types/payment';
 import { Calendar, DollarSign, CreditCard, User, Mail } from 'lucide-react';
 import { Button } from '@/components/admin/ui/button';
+import { formatDate, formatCurrency } from '@/lib/utils/format';
 
 interface TransactionItemProps {
   transaction: TransactionWithOrder;
@@ -15,23 +16,6 @@ export default function TransactionItem({
   onViewDetails,
   onRefund,
 }: TransactionItemProps) {
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('vi-VN', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: transaction.currency || 'VND',
-    }).format(amount);
-  };
-
   const getStatusBadge = (status: string) => {
     const badges = {
       pending: { label: 'Đang chờ', className: 'bg-yellow-100 text-yellow-700' },

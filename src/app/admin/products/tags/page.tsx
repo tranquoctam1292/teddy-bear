@@ -1,5 +1,4 @@
-'use client';
-
+import Link from 'next/link';
 import { Tag } from 'lucide-react';
 import { Button } from '@/components/admin/ui/button';
 
@@ -24,9 +23,11 @@ export default function ProductTagsPage() {
         <p className="text-gray-600 mb-6">
           Quản lý tags qua Settings → Products
         </p>
-        <Button variant="secondary" onClick={() => window.location.href = '/admin/settings/products'}>
-          Đến Settings
-        </Button>
+        <Link href="/admin/settings/products">
+          <Button variant="secondary">
+            Đến Settings
+          </Button>
+        </Link>
       </div>
     </div>
   );

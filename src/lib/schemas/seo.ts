@@ -1,5 +1,9 @@
 // SEO Schema - Shared between Product and Post
-import type { ObjectId } from 'mongodb';
+
+/**
+ * Robots meta tag options
+ */
+export type RobotsOption = 'index, follow' | 'noindex, follow' | 'noindex, nofollow';
 
 /**
  * SEO Configuration Schema
@@ -7,7 +11,7 @@ import type { ObjectId } from 'mongodb';
  */
 export interface SEOConfig {
   canonicalUrl?: string; // Override canonical URL to avoid duplicate content
-  robots?: string; // Robots meta tag: "index, follow" | "noindex, follow" | "noindex, nofollow"
+  robots?: RobotsOption; // Robots meta tag: strict union type
   focusKeyword?: string; // Primary keyword for SEO tracking
   altText?: string; // Alt text for featured image (if different from title/name)
 }
@@ -16,7 +20,7 @@ export interface SEOConfig {
  * Default SEO values
  */
 export const DEFAULT_SEO: SEOConfig = {
-  robots: 'index, follow',
+  robots: 'index, follow' as RobotsOption,
 };
 
 /**

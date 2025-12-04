@@ -63,7 +63,6 @@ export async function saveAnalysisToDatabase(
     
     // Skip if entity ID is still 'new' (entity not yet created)
     if (finalEntityId === 'new') {
-      console.log('Skipping SEO analysis save - entity not yet created');
       return;
     }
     
@@ -81,8 +80,6 @@ export async function saveAnalysisToDatabase(
       const error = await response.json();
       console.error('Error saving SEO analysis:', error);
       // Don't throw - analysis save failure shouldn't block product/post save
-    } else {
-      console.log('SEO analysis saved successfully');
     }
   } catch (error) {
     console.error('Error saving SEO analysis:', error);

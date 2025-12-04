@@ -6,7 +6,6 @@ import { Filter, Grid, List } from 'lucide-react';
 import ProductCard from '@/components/product/ProductCard';
 import FilterSidebar, { type FilterState } from '@/components/filter/FilterSidebar';
 import { mockProducts, filterProducts } from '@/lib/data/mock-products';
-import type { Product } from '@/types';
 
 export default function ProductsPage() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);

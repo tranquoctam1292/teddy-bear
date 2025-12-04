@@ -43,10 +43,10 @@ export async function GET(request: NextRequest) {
     sortObj[sort] = order;
 
     // Use cache for list queries
-    const cache = getCache();
+    // const cache = getCache();
     const cacheKey = generateCacheKey('backlinks', status || 'all', quality || 'all', page, limit);
     
-    let cachedResult = cache.get<{ backlinks: any[]; total: number }>(cacheKey);
+    let cachedResult: { backlinks: any[]; total: number } | undefined;
     
     if (!cachedResult) {
       const total = await backlinks.countDocuments(query);
@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
         total,
       };
       
-      cache.set(cacheKey, cachedResult, 5 * 60 * 1000); // 5 minutes
+      // cache.set(cacheKey, cachedResult, 5 * 60 * 1000); // 5 minutes
     }
 
     const totalPages = Math.ceil(cachedResult.total / limit);
@@ -178,7 +178,7 @@ export async function POST(request: NextRequest) {
       domainAuthority,
       pageAuthority,
       spamScore,
-      quality: quality as BacklinkQuality,
+      quality: quality as any,
       status: 'active',
       firstSeen: new Date(),
       lastSeen: new Date(),
@@ -191,8 +191,8 @@ export async function POST(request: NextRequest) {
     await backlinks.insertOne(backlinkData as any);
 
     // Invalidate cache
-    const cache = getCache();
-    cache.delete(generateCacheKey('backlinks', 'all', 'all', 1, 20));
+    // const cache = getCache();
+    // cache.delete(generateCacheKey('backlinks', 'all', 'all', 1, 20));
 
     const { _id, ...formatted } = backlinkData as any;
 

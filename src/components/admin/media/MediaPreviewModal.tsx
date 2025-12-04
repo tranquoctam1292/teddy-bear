@@ -11,6 +11,7 @@ import {
 import { Button } from '@/components/admin/ui/button';
 import { Input } from '@/components/admin/ui/input';
 import { MediaFile } from '@/lib/types/media';
+import { formatDateLong } from '@/lib/utils/format';
 import {
   Copy,
   Download,
@@ -74,16 +75,6 @@ export default function MediaPreviewModal({
     alert('Đã sao chép vào clipboard!');
   };
 
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('vi-VN', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-5xl max-h-[90vh] p-0">
@@ -137,7 +128,7 @@ export default function MediaPreviewModal({
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div className="flex items-center gap-2 text-gray-600">
                   <Calendar className="h-4 w-4" />
-                  <span>{formatDate(file.uploadedAt)}</span>
+                  <span>{formatDateLong(file.uploadedAt)}</span>
                 </div>
                 <div className="flex items-center gap-2 text-gray-600">
                   <HardDrive className="h-4 w-4" />

@@ -1,5 +1,3 @@
-'use client';
-
 import { Grid3x3, Search, Calendar, Tag } from 'lucide-react';
 
 export default function WidgetsPage() {

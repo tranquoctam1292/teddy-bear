@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
       // Add top issues/performers/etc.
       if (report.topIssues) {
         csvRows.push('Top Issues,Type,Field,Affected Pages,Suggestion');
-        report.topIssues.forEach(issue => {
+        report.topIssues.forEach((issue: any) => {
           csvRows.push(
             `"${issue.message}","${issue.type}","${issue.field}",${issue.affectedPages},"${issue.suggestion}"`
           );
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
       if (report.topPerformers) {
         csvRows.push('');
         csvRows.push('Top Performers,Keyword,Current Rank,Previous Rank,Rank Change,Search Volume');
-        report.topPerformers.forEach(performer => {
+        report.topPerformers.forEach((performer: any) => {
           csvRows.push(
             `"${performer.keyword}",${performer.currentRank},${performer.previousRank || ''},${performer.rankChange},${performer.searchVolume || ''}`
           );
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
       if (report.topDecliners) {
         csvRows.push('');
         csvRows.push('Top Decliners,Keyword,Current Rank,Previous Rank,Rank Change');
-        report.topDecliners.forEach(decliner => {
+        report.topDecliners.forEach((decliner: any) => {
           csvRows.push(
             `"${decliner.keyword}",${decliner.currentRank},${decliner.previousRank || ''},${decliner.rankChange}`
           );
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
       if (report.recommendations && report.recommendations.length > 0) {
         csvRows.push('');
         csvRows.push('Recommendations');
-        report.recommendations.forEach(rec => {
+        report.recommendations.forEach((rec: any) => {
           csvRows.push(`"${rec}"`);
         });
       }

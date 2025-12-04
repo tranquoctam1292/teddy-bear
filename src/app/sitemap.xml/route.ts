@@ -23,10 +23,15 @@ const MAX_URLS_PER_SITEMAP = 50000; // Sitemap protocol limit
 /**
  * GET /sitemap.xml
  * Generate main sitemap or sitemap index
+ * 
+ * Note: Using dynamic route to support query params (?type=products)
+ * This is intentionally dynamic to allow sitemap splitting
  */
+export const dynamic = 'force-dynamic'; // Required for searchParams
+
 export async function GET(request: NextRequest) {
   try {
-    // Use nextUrl instead of request.url for better Next.js compatibility
+    // Use searchParams for type filtering
     const type = request.nextUrl.searchParams.get('type'); // 'products', 'posts', 'pages', or null for index
 
     // If type is specified, generate specific sitemap

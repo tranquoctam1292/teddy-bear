@@ -48,6 +48,7 @@ import type { PostFormData } from '@/types/post';
 import { ROBOTS_OPTIONS } from '@/lib/schemas/seo';
 import { analyzeSEO, type SEOAnalysisResult } from '@/lib/seo/analysis-client';
 import { saveAnalysisToDatabase } from '@/lib/seo/analysis-save';
+import { generateSlug } from '@/lib/utils/slug';
 import GoogleSnippetPreview from './seo/GoogleSnippetPreview';
 import SEOScoreCircle from './seo/SEOScoreCircle';
 import FeaturedImageUploader from './FeaturedImageUploader';
@@ -318,15 +319,6 @@ export default function PostEditorModern({
     setDraftData(null);
   };
 
-  const generateSlug = (title: string) => {
-    return title
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
-  };
-
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const title = e.target.value;
     setValue('title', title, { shouldDirty: true });
@@ -422,7 +414,7 @@ export default function PostEditorModern({
       {/* 2-Column Layout */}
       <div className={`grid ${isFullscreen ? 'grid-cols-1' : 'lg:grid-cols-[1fr_360px]'} gap-6`}>
         {/* LEFT COLUMN - Main Content (70-75%) */}
-        <div className="space-y-4">
+        <section className="space-y-4">
           {/* Title & Slug */}
           <Card>
             <CardContent className="p-6 space-y-4">
@@ -452,7 +444,7 @@ export default function PostEditorModern({
           </Card>
 
           {/* WordPress-Style Toolbar (Sticky below page header) */}
-          <div ref={toolbarRef} className="relative">
+          <section ref={toolbarRef} className="relative">
             <WordPressToolbar
               editor={editor}
               onAddMedia={() => setMediaLibraryOpen(true)}
@@ -479,7 +471,7 @@ export default function PostEditorModern({
                 )}
               </Button>
             </div>
-          </div>
+          </section>
 
           {/* Media Library Modal */}
           <MediaLibrary
@@ -634,11 +626,11 @@ export default function PostEditorModern({
               </Accordion>
             </CardContent>
           </Card>
-        </div>
+        </section>
 
         {/* RIGHT COLUMN - Sidebar (25-30%) */}
         {!isFullscreen && (
-          <div className="space-y-6 lg:sticky lg:top-4 lg:h-fit">
+          <aside className="space-y-6 lg:sticky lg:top-4 lg:h-fit">
             {/* Publish Actions */}
             <Card>
               <CardHeader>
@@ -850,7 +842,7 @@ export default function PostEditorModern({
                 </div>
               </CardContent>
             </Card>
-          </div>
+          </aside>
         )}
       </div>
 
@@ -906,7 +898,6 @@ export default function PostEditorModern({
         onApply={(schema) => {
           setSchemaData(schema);
           // You can save schema data with the post
-          console.log('Schema applied:', schema);
         }}
       />
     </form>

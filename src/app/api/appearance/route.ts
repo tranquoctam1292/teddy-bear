@@ -1,7 +1,6 @@
 // Public Appearance API Route (No authentication required)
 import { NextRequest, NextResponse } from 'next/server';
 import { getCollections } from '@/lib/db';
-import { ObjectId } from 'mongodb';
 
 function generateId(): string {
   return `appearance_${Date.now()}`;

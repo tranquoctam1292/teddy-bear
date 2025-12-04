@@ -9,6 +9,7 @@ import { Plus, Trash2, Code } from 'lucide-react';
 import type { Product } from '@/lib/schemas/product';
 import { CATEGORIES } from '@/lib/constants';
 import { analyzeSEO } from '@/lib/seo/analysis-client';
+import { generateSlug } from '@/lib/utils/slug';
 import EditorLayout from './EditorLayout';
 import RichTextEditor from './RichTextEditor';
 import SchemaBuilder from './seo/SchemaBuilder';
@@ -42,8 +43,8 @@ const productSchema = z.object({
   tags: z.array(z.string()).default([]),
   images: z.array(z.string()).min(1, 'Cần ít nhất 1 ảnh'),
   variants: z.array(variantSchema).min(1, 'Cần ít nhất 1 biến thể'),
-  isHot: z.boolean().default(false),
-  isActive: z.boolean().default(true),
+  isHot: z.boolean(),
+  isActive: z.boolean(),
   metaTitle: z.string().optional(),
   metaDescription: z.string().optional(),
 });
@@ -68,6 +69,11 @@ export default function ProductFormV3({
   const [schemaData, setSchemaData] = useState<any>(null);
   const [images, setImages] = useState<string[]>(product?.images || []);
 
+  // Wrapper to handle form submission with proper typing
+  const handleFormSubmit = async (data: ProductFormData) => {
+    await onSubmit(data);
+  };
+
   const {
     register,
     control,
@@ -76,8 +82,20 @@ export default function ProductFormV3({
     setValue,
     formState: { errors, isDirty },
   } = useForm<ProductFormData>({
-    resolver: zodResolver(productSchema),
-    defaultValues: product || {
+    resolver: zodResolver(productSchema) as any,
+    defaultValues: product ? {
+      name: product.name,
+      slug: product.slug,
+      description: product.description,
+      category: product.category,
+      tags: product.tags || [],
+      images: product.images || [],
+      variants: product.variants || [],
+      isHot: product.isHot ?? false,
+      isActive: product.isActive ?? true,
+      metaTitle: product.metaTitle,
+      metaDescription: product.metaDescription,
+    } : {
       name: '',
       slug: '',
       description: '',
@@ -96,16 +114,6 @@ export default function ProductFormV3({
   });
 
   const watchedValues = watch();
-
-  // Auto-generate slug
-  const generateSlug = (name: string) => {
-    return name
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
-  };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const name = e.target.value;
@@ -135,7 +143,7 @@ export default function ProductFormV3({
 
   // Main Content
   const mainContent = (
-    <div className="space-y-4">
+    <section className="space-y-4">
       {/* Basic Info */}
       <Card>
         <CardHeader>
@@ -319,7 +327,7 @@ export default function ProductFormV3({
           </Accordion>
         </CardContent>
       </Card>
-    </div>
+    </section>
   );
 
   // Sidebar
@@ -330,8 +338,8 @@ export default function ProductFormV3({
         onStatusChange={(s) => setValue('isActive', s === 'published')}
         publishDate=""
         onDateChange={() => {}}
-        onSave={handleSubmit(onSubmit)}
-        onPublish={handleSubmit(onSubmit)}
+        onSave={handleSubmit(handleFormSubmit)}
+        onPublish={handleSubmit(handleFormSubmit)}
         onPreview={() => window.open(`/products/${watchedValues.slug}`, '_blank')}
         isLoading={isLoading}
         isDirty={isDirty}
@@ -363,7 +371,7 @@ export default function ProductFormV3({
       />
 
       <CategoryBox
-        categories={CATEGORIES.map(cat => ({ id: cat, name: cat }))}
+        categories={CATEGORIES.map(cat => ({ id: cat.value, name: cat.label }))}
         selected={watchedValues.category ? [watchedValues.category] : []}
         onChange={(cats) => setValue('category', cats[0] || '')}
         allowMultiple={false}
@@ -408,7 +416,7 @@ export default function ProductFormV3({
       </Button>
       <Button
         type="button"
-        onClick={handleSubmit(onSubmit)}
+        onClick={handleSubmit(handleFormSubmit)}
         className="flex-1"
         disabled={isLoading}
       >
@@ -419,7 +427,7 @@ export default function ProductFormV3({
 
   return (
     <>
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={handleSubmit(handleFormSubmit)}>
         <EditorLayout
           title={product ? 'Chỉnh sửa sản phẩm' : 'Thêm sản phẩm mới'}
           subtitle="Modern Product Editor • Rich Features • SEO Optimized"
