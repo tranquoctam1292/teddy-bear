@@ -182,3 +182,9 @@ Did I remove all unused imports?
 Did I strictly type all variables (no any)?
 
 Did I mix Server/Client logic incorrectly?
+
+# 🔒 Git & Project Management Protocols
+1. **Commit Policy:** NEVER perform or suggest a Git operation (`git commit`, `git push`, `git rebase`) unless explicitly asked by the user.
+2. **Atomic Commits:** When asked to commit, the commit message MUST be descriptive, atomic (chỉ mô tả một thay đổi duy nhất), and follow the Conventional Commit pattern if possible (e.g., `feat: add coupon system` or `fix: resolve hydration error`).
+3. **Draft Mode:** All code outputted is considered a DRAFT and MUST be reviewed by the user before final deployment or integration.
+4. **No Automated Deployment:** AI must assume that CI/CD is the user's responsibility. Do not initiate deployment or mention automated deployment processes unless instructed.
