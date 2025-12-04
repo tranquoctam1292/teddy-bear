@@ -7,6 +7,11 @@
  * Based on analysis in docs/reports/DATABASE_SCHEMA.md
  */
 
+// Load environment variables
+import { config } from 'dotenv';
+import { resolve } from 'path';
+config({ path: resolve(__dirname, '../.env.local') });
+
 import { getCollections } from '../src/lib/db';
 
 async function createAuthorIndexes() {
