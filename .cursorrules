@@ -14,9 +14,10 @@
 4. [QA & Safety Protocols](#4-qa--safety-protocols)
 5. [Architecture & Directory](#5-architecture--directory-structure)
 6. [Coding Standards](#6-coding-standards)
-7. [Specific Features](#7-specific-feature-guidelines)
-8. [Testing & Quality](#8-testing--quality)
-9. [Git Protocols](#9-git--project-management-protocols)
+7. [File Naming & Case Sensitivity](#7-file-naming--case-sensitivity-critical---dec-2025)
+8. [Specific Features](#8-specific-feature-guidelines)
+9. [Testing & Quality](#9-testing--quality)
+10. [Git Protocols](#10-git--project-management-protocols)
 
 ---
 
@@ -845,7 +846,82 @@ const document = {
 
 ---
 
-## 7. Specific Feature Guidelines
+### 7️⃣ File Naming & Case Sensitivity (CRITICAL - Dec 2025)
+
+#### ⚠️ CRITICAL Rule: Lowercase Filenames
+
+**Problem:** Windows is case-insensitive, but Linux (CI/Production) is case-sensitive.
+
+```typescript
+// ❌ WRONG: PascalCase filenames
+src/components/ui/Button.tsx     // Works on Windows
+import { Button } from '@/components/ui/button';  // ❌ Fails on Linux CI!
+
+// ✅ CORRECT: lowercase filenames
+src/components/ui/button.tsx     // Works everywhere
+import { Button } from '@/components/ui/button';  // ✅ Works on all OS
+```
+
+**Rule Enforcement:**
+
+```
+✅ ALWAYS: Use lowercase for ALL filenames
+   - button.tsx (not Button.tsx)
+   - input.tsx (not Input.tsx)
+   - user-card.tsx (kebab-case)
+
+✅ EXPORTS: PascalCase for components
+   - export function Button() { }
+   - export function UserCard() { }
+
+❌ NEVER: Mix case in filename and import
+   - File: Button.tsx + Import: '@/button' → ❌ CI will fail
+```
+
+**Naming Conventions:**
+
+```typescript
+// Components
+button.tsx              → export function Button()
+user-profile-card.tsx   → export function UserProfileCard()
+
+// Utilities
+slug.ts                 → export function generateSlug()
+format.ts               → export function formatDate()
+
+// Types/Interfaces
+user.ts                 → export interface User
+product.ts              → export interface Product
+
+// API Routes
+route.ts                → export async function GET()
+[id]/route.ts           → Dynamic route
+```
+
+**Git Commands for Case Change (Windows):**
+
+```bash
+# Two-step rename required on Windows
+git mv Button.tsx button-temp.tsx
+git mv button-temp.tsx button.tsx
+```
+
+**Why This Matters:**
+
+- 🟢 **Local (Windows/Mac):** Case-insensitive → Works even with wrong case
+- 🔴 **CI (Linux/Docker):** Case-sensitive → Module not found errors
+- 🚨 **Production:** Same as CI → Deploy will fail
+
+**Recent Case Sensitivity Fix (Dec 2025):**
+
+- Fixed: `Button.tsx` → `button.tsx`
+- Fixed: `Input.tsx` → `input.tsx`
+- Issue: CI build failed with "Module not found"
+- Lesson: ALWAYS use lowercase filenames
+
+---
+
+## 8. Specific Feature Guidelines
 
 ### 1️⃣ Author Management (E-E-A-T)
 
@@ -1024,7 +1100,7 @@ When AI needs context:
 
 ---
 
-## 8. Testing & Quality
+## 9. Testing & Quality
 
 ### 🧪 Unit Testing Strategy (NEW - Dec 2025)
 
@@ -1158,7 +1234,7 @@ describe('generateSlug', () => {
 
 ---
 
-## 9. Git & Project Management Protocols
+## 10. Git & Project Management Protocols
 
 ### 🔒 Commit Policy
 
@@ -1260,6 +1336,7 @@ Added comprehensive checkout flow diagram including:
 | **Utilities**     | 🆕 Import from src/lib/utils/          |
 | **Performance**   | 🆕 Dynamic import heavy libraries      |
 | **Server/Client** | 🆕 Justify every 'use client'          |
+| **File Naming**   | 🆕 Lowercase filenames (button.tsx)    |
 
 ### Must Not ❌
 
@@ -1273,6 +1350,7 @@ Added comprehensive checkout flow diagram including:
 | **Commits**    | Never auto-commit without asking  |
 | **DB**         | No Mongoose/Prisma patterns       |
 | **Secrets**    | Never commit credentials          |
+| **File Naming**| 🆕 No PascalCase filenames        |
 
 ---
 
@@ -1296,13 +1374,14 @@ When coding, AI must:
 
 ---
 
-**Rules Version:** 3.2  
-**Last Updated:** December 4, 2025 (Language Policy Update)  
+**Rules Version:** 3.3  
+**Last Updated:** December 4, 2025 (Case Sensitivity Fix)  
 **Status:** Active & Enforced  
 **Compliance:** Mandatory for all AI-generated code
 
-**Recent Updates (Version 3.2):**
+**Recent Updates (Version 3.3):**
 
+- ✅ **File Naming Convention** - CRITICAL: Lowercase filenames for cross-platform compatibility (button.tsx not Button.tsx)
 - ✅ **Vietnamese Language Requirement** - All AI responses MUST be in Vietnamese (VI)
 - ✅ **Standardized Error Response** - Strict JSON structure for all API errors
 - ✅ **Mandatory Utils Testing** - No utility without .test.ts file
