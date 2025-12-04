@@ -24,7 +24,7 @@ interface ProductCardProps {
   showAddToCart?: boolean;
 }
 
-export function ProductCard({
+export default function ProductCard({
   product,
   showPrice = true,
   showRating = true,

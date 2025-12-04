@@ -1,0 +1,130 @@
+Project Context
+
+Name: Teddy Shop E-commerce Platform
+
+Stack: Next.js 16 (App Router), React 19, TypeScript 5, MongoDB (Native Driver), NextAuth v5.
+
+Styling: Tailwind CSS, Radix UI, Lucide Icons.
+
+State Management: Zustand, React Hook Form.
+
+Key Features: Author Management (E-E-A-T), Blog, Product Management, SEO Tools.
+
+Core Principles
+
+Strict TypeScript: No any. Always define or import interfaces.
+
+Server-Side First: Prioritize Server Components. Use 'use client' only when interactivity (state, hooks) is needed.
+
+Clean Architecture: Separation of concerns. UI in components, logic in lib/hooks, data access in lib/db.
+
+Security First: Validate all inputs. Check auth/roles on every protected route.
+
+Architecture & Directory Structure
+
+src/app: App Router structure.
+
+src/app/(shop): Public facing shop pages.
+
+src/app/admin: Protected admin dashboard pages.
+
+src/app/api: API Routes (Next.js Route Handlers).
+
+src/components:
+
+src/components/ui: Atomic, reusable UI components (shadcn/ui style). Prefer reusing these over creating new raw HTML elements.
+
+src/components/admin: Complex admin widgets (e.g., AuthorBoxWidget, RowActions).
+
+src/components/blog: Blog-specific components.
+
+src/lib:
+
+src/lib/db.ts: Database connection and helper functions.
+
+src/lib/types: Centralized TypeScript definitions.
+
+src/lib/schemas: Zod validation schemas.
+
+src/lib/auth.ts: NextAuth configuration.
+
+Coding Standards
+
+1. Database Access (CRITICAL)
+
+Pattern: Repository Pattern via getCollections().
+
+FORBIDDEN: Do NOT use Mongoose Models (e.g., User.find()) or Prisma.
+
+Correct Usage:
+
+import { getCollections } from '@/lib/db';
+import { ObjectId } from 'mongodb';
+
+// Inside async function
+const { users, posts } = await getCollections();
+// Always convert string ID to ObjectId for queries
+const result = await users.findOne({ \_id: new ObjectId(id) });
+
+ID Handling: Always validate IDs using ObjectId.isValid(id) before creating new ObjectId(id).
+
+2. API Routes (Next.js Route Handlers)
+
+Location: src/app/api/.../route.ts
+
+Response Format: Always return NextResponse.json.
+
+Validation: Use Zod schemas from @/lib/schemas to parse await request.json().
+
+Error Handling: Use try/catch blocks. Return standard error objects: { error: string }.
+
+Status Codes: 200 (OK), 201 (Created), 400 (Bad Request), 401 (Unauthorized), 403 (Forbidden), 404 (Not Found), 500 (Internal Server Error).
+
+3. Authentication & Authorization
+
+Import: import { auth } from '@/lib/auth';
+
+Pattern: Check session at the start of every protected API route/Server Action.
+
+const session = await auth();
+if (!session?.user || session.user.role !== 'admin') {
+return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+}
+
+4. Component Implementation
+
+Function Components: Use export function ComponentName({ prop }: Props) {}. Avoid const ComponentName: React.FC = ....
+
+Props Interface: explicitly define props interface above the component.
+
+Icons: Use lucide-react. Example: import { UserIcon } from 'lucide-react';
+
+Styling: Tailwind CSS classes via className. Use cn() utility for conditional classes if available.
+
+5. Date & Time
+
+Library: Use date-fns for formatting and manipulation.
+
+Storage: Store dates as Date objects in MongoDB, not strings.
+
+Specific Feature Guidelines
+
+Author Management (E-E-A-T)
+
+When touching posts collection, remember authorInfo object structure (authorId, reviewerId, guestAuthor).
+
+Always sync postCount in authors collection when publishing/deleting posts.
+
+Image Handling
+
+Use next/image for optimization.
+
+External images must be configured in next.config.ts (remotePatterns).
+
+Testing & Quality
+
+Type Check: Ensure code passes npm run type-check.
+
+Lint: Ensure code passes npm run lint.
+
+No Console Logs: Remove console.log in production code. Use proper error logging if needed.
