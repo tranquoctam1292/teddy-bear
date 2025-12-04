@@ -20,6 +20,16 @@ Strict TypeScript: No any. Always define or import interfaces.
 
 Security First: Validate all inputs (Zod). Check auth/roles on every protected route.
 
+# 📖 Documentation Enforcement (Mandatory Context)
+
+> **CRITICAL:** When performing tasks, the AI MUST automatically load these documents into its context.
+
+1. **Schema Check:** When creating, modifying, or deleting data (DB Queries, Zod Schemas, API Body validation), the AI **MUST** reference the `@DATABASE_SCHEMA.md` file to verify field names, data types, and existing constraints (indexes).
+
+2. **Flow Check:** When working on complex business logic (e.g., Checkout, Order Status Update, Author Sync), the AI **MUST** reference the `@FLOW.md` file to ensure compliance with the sequential steps and state transitions defined.
+
+3. **Master Context:** The `@CONTEXT.md` file serves as the overarching reference for core Business Rules and architectural decisions not covered in Schema or Flow files.
+
 🛡️ QA & Safety Protocols (CI/CD Protection)
 
 CRITICAL: The AI must follow these rules to prevent build/lint failures.
