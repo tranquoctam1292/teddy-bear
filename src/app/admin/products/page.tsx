@@ -1,7 +1,7 @@
 'use client';
 
 // Enhanced Products List Page - WordPress Style
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Plus, Edit, Trash2, Eye, EyeOff, RotateCcw } from 'lucide-react';
 import Link from 'next/link';
@@ -19,7 +19,7 @@ import {
   TableRow,
 } from '@/components/admin/ui/table';
 
-export default function AdminProductsPageV2() {
+function ProductsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
@@ -340,3 +340,14 @@ export default function AdminProductsPageV2() {
   );
 }
 
+export default function AdminProductsPageV2() {
+  return (
+    <Suspense fallback={
+      <div className="p-8">
+        <div className="animate-pulse">Loading products...</div>
+      </div>
+    }>
+      <ProductsContent />
+    </Suspense>
+  );
+}

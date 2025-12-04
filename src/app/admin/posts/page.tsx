@@ -1,7 +1,7 @@
 'use client';
 
 // Enhanced Posts List Page - WordPress Style
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Plus, Edit, Trash2, RotateCcw } from 'lucide-react';
 import Link from 'next/link';
@@ -28,7 +28,7 @@ import {
   TableRow,
 } from '@/components/admin/ui/table';
 
-export default function AdminPostsPageV2() {
+function PostsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [posts, setPosts] = useState<Post[]>([]);
@@ -439,4 +439,14 @@ export default function AdminPostsPageV2() {
   );
 }
 
-
+export default function AdminPostsPageV2() {
+  return (
+    <Suspense fallback={
+      <div className="p-8">
+        <div className="animate-pulse">Loading posts...</div>
+      </div>
+    }>
+      <PostsContent />
+    </Suspense>
+  );
+}

@@ -26,8 +26,8 @@ const MAX_URLS_PER_SITEMAP = 50000; // Sitemap protocol limit
  */
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const type = searchParams.get('type'); // 'products', 'posts', 'pages', or null for index
+    // Use nextUrl instead of request.url for better Next.js compatibility
+    const type = request.nextUrl.searchParams.get('type'); // 'products', 'posts', 'pages', or null for index
 
     // If type is specified, generate specific sitemap
     if (type === 'products') {

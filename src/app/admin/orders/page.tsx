@@ -1,7 +1,7 @@
 'use client';
 
 // Admin Order Listing Page
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import {
@@ -36,7 +36,7 @@ const ORDER_STATUSES: { value: Order['orderStatus']; label: string; color: strin
   { value: 'cancelled', label: 'Đã hủy', color: 'bg-red-100 text-red-800', icon: XCircle },
 ];
 
-export default function AdminOrdersPage() {
+function OrdersContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -381,3 +381,14 @@ export default function AdminOrdersPage() {
   );
 }
 
+export default function AdminOrdersPage() {
+  return (
+    <Suspense fallback={
+      <div className="p-8">
+        <div className="animate-pulse">Loading orders...</div>
+      </div>
+    }>
+      <OrdersContent />
+    </Suspense>
+  );
+}

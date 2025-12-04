@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { FeaturedProductsContent } from '@/lib/types/homepage';
-import { ProductCard } from '@/components/shop/ProductCard';
+import ProductCard from '@/components/shop/ProductCard';
 import { getCollections } from '@/lib/db';
 
 interface FeaturedProductsProps {
