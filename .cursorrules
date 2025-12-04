@@ -88,7 +88,8 @@ import { ObjectId } from 'mongodb';
 // Inside async function
 const { users, posts } = await getCollections();
 // Always convert string ID to ObjectId for queries
-const result = await users.findOne({ \_id: new ObjectId(id) });
+const result = await users.findOne({ _id: new ObjectId(id) });
+
 
 ID Handling: Always validate IDs using ObjectId.isValid(id) before creating new ObjectId(id).
 
@@ -112,8 +113,9 @@ Pattern: Check session at the start of every protected API route/Server Action.
 
 const session = await auth();
 if (!session?.user || session.user.role !== 'admin') {
-return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 }
+
 
 4. Component Implementation
 
@@ -133,17 +135,25 @@ Storage: Store dates as Date objects in MongoDB, not strings.
 
 Specific Feature Guidelines
 
-Author Management (E-E-A-T)
+1. Author Management (E-E-A-T)
 
 When touching posts collection, remember authorInfo object structure (authorId, reviewerId, guestAuthor).
 
 Always sync postCount in authors collection when publishing/deleting posts.
 
-Image Handling
+2. Image Handling
 
 Use next/image for optimization.
 
 External images must be configured in next.config.ts (remotePatterns).
+
+3. Documentation Management (NEW RULE)
+
+Organization: All core documentation files (README, CONTEXT, DEPLOYMENT, SCHEMA) MUST be kept at the project root or in the docs/ folder.
+
+Redundancy Check: BEFORE starting a major new task or finishing a feature, AI MUST identify and recommend DELETING redundant or obsolete documentation files (e.g., old roadmaps, archived meeting notes) to keep the @Codebase context clean.
+
+Priority: Prioritize reading and tagging @CONTEXT.md over generic, non-structured documentation files.
 
 Testing & Quality
 

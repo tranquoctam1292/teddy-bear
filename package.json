@@ -10,6 +10,7 @@
     "type-check": "tsc --noEmit",
     "authors:create": "tsx scripts/create-sample-authors.ts",
     "authors:migrate": "tsx scripts/migrate-author-info.ts",
+    "authors:indexes": "tsx scripts/create-author-indexes.ts",
     "test:db": "tsx scripts/test-cms-connections.js",
     "test:homepage": "tsx scripts/test-homepage-system.ts",
     "homepage:schedule": "tsx scripts/process-scheduled-configs.ts"
