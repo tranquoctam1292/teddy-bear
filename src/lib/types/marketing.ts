@@ -81,3 +81,4 @@ export const COUPON_TYPES = [
   { value: 'free_shipping', label: 'Freeship', icon: '🚚' },
 ];
 
+

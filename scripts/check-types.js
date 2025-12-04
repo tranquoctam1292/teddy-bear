@@ -28,3 +28,4 @@ try {
   console.log('\n📚 See: TYPESCRIPT_PREVENTION_GUIDE.md\n');
   process.exit(1);
 }
+

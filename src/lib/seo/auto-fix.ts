@@ -123,3 +123,4 @@ export function getFixableIssuesCount(issues: SEOIssue[]): number {
 }
 
 
+

@@ -146,3 +146,4 @@ async function getTopProducts(orders: any[], productsCollection: any) {
     .slice(0, 10);
 }
 
+

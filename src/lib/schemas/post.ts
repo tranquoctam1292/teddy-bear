@@ -1,6 +1,7 @@
 // Blog Post Schema
 import type { ObjectId } from 'mongodb';
 import type { SEOConfig } from './seo';
+import type { PostAuthorInfo } from '../types/author';
 
 /**
  * Blog Post Schema
@@ -31,7 +32,10 @@ export interface Post {
   // Status & Publishing
   status: 'draft' | 'published' | 'archived';
   publishedAt?: Date; // When the post was published
-  author?: string; // Author name or ID
+  author?: string; // Author name or ID (legacy)
+  
+  // Author Info (E-E-A-T SEO)
+  authorInfo?: PostAuthorInfo; // New author system
   
   // Analytics
   views?: number; // Number of views

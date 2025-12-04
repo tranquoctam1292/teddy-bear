@@ -217,8 +217,13 @@ export function generateBlogPostingSchema(
   baseUrl: string = process.env.NEXT_PUBLIC_SITE_URL || 'https://emotionalhouse.vn',
   slug: string
 ): BlogPostingSchema {
-  const publishedDate = post.publishedAt || new Date();
-  const modifiedDate = post.updatedAt || publishedDate;
+  // Ensure dates are Date objects
+  const publishedDate = post.publishedAt 
+    ? (post.publishedAt instanceof Date ? post.publishedAt : new Date(post.publishedAt))
+    : new Date();
+  const modifiedDate = post.updatedAt
+    ? (post.updatedAt instanceof Date ? post.updatedAt : new Date(post.updatedAt))
+    : publishedDate;
 
   const schema: BlogPostingSchema = {
     '@context': 'https://schema.org',

@@ -40,3 +40,4 @@ export interface MediaListResponse {
   totalPages: number;
 }
 
+

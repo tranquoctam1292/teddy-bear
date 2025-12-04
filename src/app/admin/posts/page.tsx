@@ -5,8 +5,19 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Plus, Edit, Trash2, RotateCcw } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import type { Post } from '@/lib/schemas/post';
 import { Button } from '@/components/admin/ui/button';
+import RowActions, {
+  createEditAction,
+  createQuickEditAction,
+  createTrashAction,
+  createPreviewAction,
+  createDuplicateAction,
+  createRestoreAction,
+  createDeleteAction,
+} from '@/components/admin/RowActions';
+import QuickEditModal from '@/components/admin/QuickEditModal';
 import { StatusTabs, BulkActions, FilterBar, Pagination } from '@/components/admin/list';
 import {
   Table,
@@ -19,9 +30,11 @@ import {
 
 export default function AdminPostsPageV2() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPosts, setSelectedPosts] = useState<Set<string>>(new Set());
+  const [quickEditPost, setQuickEditPost] = useState<Post | null>(null);
   
   // Filters
   const statusFilter = searchParams.get('status') || '';
@@ -151,21 +164,54 @@ export default function AdminPostsPageV2() {
     setSelectedPosts(newSelected);
   };
 
+  const handleQuickEdit = async (updates: Partial<Post>) => {
+    if (!quickEditPost) return;
+    
+    try {
+      const res = await fetch(`/api/admin/posts/${quickEditPost.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+
+      if (res.ok) {
+        alert('✅ Đã cập nhật!');
+        setQuickEditPost(null);
+        fetchPosts();
+      } else {
+        alert('❌ Lỗi khi cập nhật');
+      }
+    } catch (error) {
+      console.error('Quick edit error:', error);
+      alert('❌ Lỗi khi cập nhật');
+    }
+  };
+
   return (
-    <div className="p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Quản lý Bài viết</h1>
-          <p className="text-gray-600 mt-1">Tổng cộng {pagination.total} bài viết</p>
+    <>
+      {/* Quick Edit Modal */}
+      {quickEditPost && (
+        <QuickEditModal
+          post={quickEditPost}
+          onClose={() => setQuickEditPost(null)}
+          onSave={handleQuickEdit}
+        />
+      )}
+      
+      <div className="p-6">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Quản lý Bài viết</h1>
+            <p className="text-gray-600 mt-1">Tổng cộng {pagination.total} bài viết</p>
+          </div>
+          <Link href="/admin/posts/new">
+            <Button className="bg-gray-900 hover:bg-gray-800">
+              <Plus className="w-4 h-4 mr-2" />
+              Thêm bài viết mới
+            </Button>
+          </Link>
         </div>
-        <Link href="/admin/posts/new">
-          <Button className="bg-gray-900 hover:bg-gray-800">
-            <Plus className="w-4 h-4 mr-2" />
-            Thêm bài viết mới
-          </Button>
-        </Link>
-      </div>
 
       {/* Status Tabs */}
       <StatusTabs
@@ -259,12 +305,59 @@ export default function AdminPostsPageV2() {
                   </TableCell>
                   <TableCell>
                     <div>
-                      <Link
-                        href={`/admin/posts/${post.id}/edit`}
-                        className="font-medium text-blue-600 hover:underline"
-                      >
-                        {post.title}
-                      </Link>
+                      <RowActions
+                        title={post.title}
+                        titleHref={`/admin/posts/${post.id}/edit`}
+                        status={
+                          post.status === 'published'
+                            ? 'Đã xuất bản'
+                            : post.status === 'draft'
+                            ? 'Bản nháp'
+                            : 'Lưu trữ'
+                        }
+                        actions={
+                          post.status === 'archived'
+                            ? [
+                                createRestoreAction(async () => {
+                                  await fetch(`/api/admin/posts/${post.id}`, {
+                                    method: 'PATCH',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ status: 'draft' }),
+                                  });
+                                  fetchPosts();
+                                }),
+                                createDeleteAction(async () => {
+                                  await fetch(`/api/admin/posts/${post.id}`, {
+                                    method: 'DELETE',
+                                  });
+                                  fetchPosts();
+                                }, post.title),
+                              ]
+                            : [
+                                createEditAction(`/admin/posts/${post.id}/edit`),
+                                createQuickEditAction(() => setQuickEditPost(post)),
+                                createTrashAction(async () => {
+                                  await fetch(`/api/admin/posts/${post.id}`, {
+                                    method: 'PATCH',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ status: 'archived' }),
+                                  });
+                                  fetchPosts();
+                                }, post.title),
+                                createPreviewAction(`/blog/${post.slug}`),
+                                createDuplicateAction(async () => {
+                                  const res = await fetch(`/api/admin/posts/${post.id}/duplicate`, {
+                                    method: 'POST',
+                                  });
+                                  if (res.ok) {
+                                    const data = await res.json();
+                                    alert('✅ Đã nhân đôi bài viết!');
+                                    router.push(`/admin/posts/${data.post.id}/edit`);
+                                  }
+                                }),
+                              ]
+                        }
+                      />
                       {post.excerpt && (
                         <p className="text-sm text-gray-500 mt-1 line-clamp-1">
                           {post.excerpt}
@@ -331,17 +424,19 @@ export default function AdminPostsPageV2() {
           </TableBody>
         </Table>
 
-        {/* Pagination */}
-        <div className="p-4">
-          <Pagination
-            currentPage={pagination.page}
-            totalPages={pagination.totalPages}
-            total={pagination.total}
-            onPageChange={setCurrentPage}
-          />
+          {/* Pagination */}
+          <div className="p-4">
+            <Pagination
+              currentPage={pagination.page}
+              totalPages={pagination.totalPages}
+              total={pagination.total}
+              onPageChange={setCurrentPage}
+            />
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
+
 

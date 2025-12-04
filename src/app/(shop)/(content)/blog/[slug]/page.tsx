@@ -6,9 +6,13 @@ import Link from 'next/link';
 import { Calendar, User, ArrowLeft, Share2 } from 'lucide-react';
 import JsonLd from '@/components/seo/JsonLd';
 import { generateBlogPostingSchema } from '@/lib/seo/schemas';
+import { generateArticleWithAuthorSchema } from '@/lib/seo/author-schema';
 import Breadcrumb from '@/components/navigation/Breadcrumb';
 import RelatedProducts from '@/components/blog/RelatedProducts';
+import AuthorBox from '@/components/blog/AuthorBox';
+import ReviewerBox from '@/components/blog/ReviewerBox';
 import type { Post } from '@/lib/schemas/post';
+import type { Author } from '@/lib/types/author';
 
 interface BlogPostPageProps {
   params: Promise<{ slug: string }>;
@@ -17,6 +21,8 @@ interface BlogPostPageProps {
 export default function BlogPostPage({ params }: BlogPostPageProps) {
   const { slug } = use(params);
   const [post, setPost] = useState<Post | null>(null);
+  const [author, setAuthor] = useState<Author | null>(null);
+  const [reviewer, setReviewer] = useState<Author | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,7 +35,34 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
         if (response.ok) {
           const data = await response.json();
           if (data.success && data.data?.post) {
-            setPost(data.data.post);
+            const postData = data.data.post;
+            setPost(postData);
+            
+            // Fetch author data if exists
+            if (postData.authorInfo?.authorId) {
+              try {
+                const authorRes = await fetch(`/api/admin/authors/${postData.authorInfo.authorId}`);
+                if (authorRes.ok) {
+                  const authorData = await authorRes.json();
+                  setAuthor(authorData);
+                }
+              } catch (err) {
+                console.error('Error fetching author:', err);
+              }
+            }
+            
+            // Fetch reviewer data if exists
+            if (postData.authorInfo?.reviewerId) {
+              try {
+                const reviewerRes = await fetch(`/api/admin/authors/${postData.authorInfo.reviewerId}`);
+                if (reviewerRes.ok) {
+                  const reviewerData = await reviewerRes.json();
+                  setReviewer(reviewerData);
+                }
+              } catch (err) {
+                console.error('Error fetching reviewer:', err);
+              }
+            }
           } else {
             setError('Post not found');
           }
@@ -81,19 +114,35 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
 
   // Generate JSON-LD schemas
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_SITE_URL || 'https://emotionalhouse.vn');
-  const blogPostingSchema = generateBlogPostingSchema(
-    {
-      title: post.title,
-      excerpt: post.excerpt,
-      content: post.content,
-      featuredImage: post.featuredImage,
-      author: post.author,
-      publishedAt: post.publishedAt,
-      updatedAt: post.updatedAt,
-    },
-    baseUrl,
-    slug
-  );
+  
+  // Use new author schema if author exists, otherwise fallback to old schema
+  const blogPostingSchema = author 
+    ? generateArticleWithAuthorSchema(
+        {
+          title: post.title,
+          slug,
+          excerpt: post.excerpt,
+          featuredImage: post.featuredImage,
+          publishedAt: post.publishedAt,
+          updatedAt: post.updatedAt,
+          category: post.category,
+        },
+        author,
+        reviewer || undefined
+      )
+    : generateBlogPostingSchema(
+        {
+          title: post.title,
+          excerpt: post.excerpt,
+          content: post.content,
+          featuredImage: post.featuredImage,
+          author: post.author,
+          publishedAt: post.publishedAt,
+          updatedAt: post.updatedAt,
+        },
+        baseUrl,
+        slug
+      );
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-pink-50 to-white">
@@ -141,16 +190,58 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
 
           {/* Meta */}
           <div className="flex flex-wrap items-center gap-6 text-sm text-gray-600">
-            {post.author && (
+            {/* Author Info (E-E-A-T) */}
+            {author ? (
+              <div className="flex items-center gap-2">
+                <User className="w-4 h-4" />
+                <span>
+                  Đăng bởi:{' '}
+                  <Link 
+                    href={`/author/${author.slug}`}
+                    className="text-pink-600 hover:text-pink-700 font-medium"
+                  >
+                    {author.name}
+                  </Link>
+                  {author.credentials && (
+                    <span className="text-gray-500 ml-1">({author.credentials})</span>
+                  )}
+                </span>
+              </div>
+            ) : (post.authorInfo?.guestAuthor ? (
+              <div className="flex items-center gap-2">
+                <User className="w-4 h-4" />
+                <span>
+                  Đăng bởi: {post.authorInfo.guestAuthor.name}
+                  {post.authorInfo.guestAuthor.credentials && (
+                    <span className="text-gray-500 ml-1">
+                      ({post.authorInfo.guestAuthor.credentials})
+                    </span>
+                  )}
+                </span>
+              </div>
+            ) : post.author ? (
               <div className="flex items-center gap-2">
                 <User className="w-4 h-4" />
                 <span>{post.author}</span>
               </div>
+            ) : null)}
+            
+            {/* Reviewer (YMYL) */}
+            {reviewer && (
+              <div className="flex items-center gap-2 text-green-700">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="font-medium">
+                  Kiểm duyệt bởi: {reviewer.name} {reviewer.credentials && `(${reviewer.credentials})`}
+                </span>
+              </div>
             )}
+            
             {post.publishedAt && (
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
-                <time dateTime={post.publishedAt.toISOString()}>
+                <time dateTime={typeof post.publishedAt === 'string' ? post.publishedAt : new Date(post.publishedAt).toISOString()}>
                   {new Date(post.publishedAt).toLocaleDateString('vi-VN', {
                     year: 'numeric',
                     month: 'long',
@@ -197,6 +288,29 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
                 </span>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Author Box (E-E-A-T SEO) */}
+        {(author || post.authorInfo?.guestAuthor) && (
+          <div className="mt-12 pt-8 border-t border-gray-200">
+            <AuthorBox
+              author={author || post.authorInfo!.guestAuthor!}
+              variant="detailed"
+              showBio={true}
+              showSocial={true}
+              showCredentials={true}
+            />
+          </div>
+        )}
+
+        {/* Reviewer Box (YMYL Compliance) */}
+        {reviewer && (
+          <div className="mt-8">
+            <ReviewerBox
+              reviewer={reviewer}
+              reviewDate={post.authorInfo?.lastReviewedDate}
+            />
           </div>
         )}
       </article>

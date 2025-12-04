@@ -15,6 +15,8 @@ import RichTextEditor from './RichTextEditor';
 import GoogleSnippetPreview from './seo/GoogleSnippetPreview';
 import SchemaBuilder from './seo/SchemaBuilder';
 import { PublishBox, FeaturedImageBox, GalleryBox, CategoryBox, TagBox, SEOScoreBox } from './sidebar';
+import AuthorBoxWidget from './posts/AuthorBoxWidget';
+import { PostAuthorInfo } from '@/lib/types/author';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card, CardContent } from './ui/card';
@@ -77,6 +79,11 @@ export default function PostEditorV3({
   const [showDraftModal, setShowDraftModal] = useState(false);
   const [draftData, setDraftData] = useState<any>(null);
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Author Info (E-E-A-T SEO)
+  const [authorInfo, setAuthorInfo] = useState<PostAuthorInfo | undefined>(
+    (post as any)?.authorInfo
+  );
 
   // Form
   const {
@@ -230,6 +237,7 @@ export default function PostEditorV3({
       ...data,
       keywords: keywordsArray,
       publishedAt: data.publishDate ? new Date(data.publishDate) : undefined,
+      authorInfo, // Add author information (E-E-A-T SEO)
     };
 
     const result = await onSubmit(submitData);
@@ -441,6 +449,11 @@ export default function PostEditorV3({
         tags={watchedValues.tags}
         onChange={(t) => setValue('tags', t)}
         suggestions={['gấu bông', 'quà tặng', 'teddy', 'plush', 'handmade']}
+      />
+
+      <AuthorBoxWidget
+        value={authorInfo}
+        onChange={setAuthorInfo}
       />
 
       <SEOScoreBox

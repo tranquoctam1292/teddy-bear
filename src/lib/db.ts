@@ -55,6 +55,7 @@ export async function getDatabase(dbName: string = 'teddy-shop'): Promise<Db> {
 export async function getCollections() {
   const db = await getDatabase();
   return {
+    db, // Add db instance to the return object
     products: db.collection('products'),
     orders: db.collection('orders'),
     carts: db.collection('carts'),
@@ -112,6 +113,10 @@ export async function getCollections() {
     emailCampaigns: db.collection('emailCampaigns'),
     campaigns: db.collection('campaigns'),
     promotions: db.collection('promotions'),
+    // Author Management collections (E-E-A-T SEO)
+    authors: db.collection('authors'),
+    // Homepage Configuration collections
+    homepage_configs: db.collection('homepage_configs'),
   };
 }
 

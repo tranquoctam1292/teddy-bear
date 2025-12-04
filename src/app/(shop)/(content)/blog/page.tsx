@@ -1,12 +1,13 @@
 // Trang tin tức (Góc của Gấu)
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Calendar, User, ArrowRight } from 'lucide-react';
 import type { Metadata } from 'next';
 
-export const metadata: Metadata = {
-  title: 'Góc của Gấu - Blog The Emotional House',
-  description: 'Những câu chuyện, mẹo vặt và tin tức về gấu bông từ The Emotional House.',
-};
+// NOTE: Metadata moved to client component state
+// If you need static metadata, convert this back to server component
 
 // Mock blog posts data
 const blogPosts = [
@@ -51,6 +52,40 @@ const blogPosts = [
 const categories = ['Tất cả', 'Mẹo vặt', 'Kiến thức', 'Chăm sóc', 'Sản phẩm'];
 
 export default function BlogPage() {
+  const [selectedCategory, setSelectedCategory] = useState('Tất cả');
+  const [selectedAuthor, setSelectedAuthor] = useState('all');
+  const [authors, setAuthors] = useState<any[]>([]);
+
+  // Fetch featured authors
+  useEffect(() => {
+    async function fetchAuthors() {
+      try {
+        const res = await fetch('/api/authors?featured=true&limit=20');
+        if (res.ok) {
+          const data = await res.json();
+          setAuthors(data.authors || []);
+        }
+      } catch (error) {
+        console.error('Error fetching authors:', error);
+      }
+    }
+    fetchAuthors();
+  }, []);
+
+  // Filter posts based on selected category and author
+  const filteredPosts = blogPosts.filter((post) => {
+    // Filter by category
+    const categoryMatch =
+      selectedCategory === 'Tất cả' || post.category === selectedCategory;
+
+    // Filter by author
+    // Note: selectedAuthor is author name from dropdown (not slug)
+    const authorMatch =
+      selectedAuthor === 'all' || post.author === selectedAuthor;
+
+    return categoryMatch && authorMatch;
+  });
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-pink-50 to-white">
       {/* Hero Section */}
@@ -65,34 +100,81 @@ export default function BlogPage() {
         </div>
       </section>
 
-      {/* Categories Filter */}
+      {/* Filters */}
       <section className="py-8 px-4 sm:px-6 lg:px-8 bg-white border-b border-gray-200">
         <div className="max-w-6xl mx-auto">
-          <div className="flex flex-wrap gap-2 justify-center">
-            {categories.map((category) => (
-              <button
-                key={category}
-                className={`
-                  px-4 py-2 rounded-full text-sm font-medium transition-colors
-                  ${
-                    category === 'Tất cả'
-                      ? 'bg-pink-600 text-white'
-                      : 'bg-pink-50 text-gray-700 hover:bg-pink-100'
-                  }
-                `}
-              >
-                {category}
-              </button>
-            ))}
+          {/* Categories */}
+          <div className="mb-4">
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">Danh mục:</h3>
+            <div className="flex flex-wrap gap-2">
+              {categories.map((category) => (
+                <button
+                  key={category}
+                  onClick={() => setSelectedCategory(category)}
+                  className={`
+                    px-4 py-2 rounded-full text-sm font-medium transition-colors
+                    ${
+                      category === selectedCategory
+                        ? 'bg-pink-600 text-white'
+                        : 'bg-pink-50 text-gray-700 hover:bg-pink-100'
+                    }
+                  `}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
           </div>
+
+          {/* Author Filter (E-E-A-T) */}
+          {authors.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-2">Tác giả:</h3>
+              <select
+                value={selectedAuthor}
+                onChange={(e) => setSelectedAuthor(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+              >
+                <option value="all">Tất cả tác giả</option>
+                {authors.map((author) => (
+                  <option key={author.id} value={author.name}>
+                    {author.name}
+                    {author.credentials && ` (${author.credentials})`}
+                    {author.postCount && ` - ${author.postCount} bài`}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
       </section>
 
       {/* Blog Posts Grid */}
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
+          {/* Results count */}
+          <div className="mb-6 text-sm text-gray-600">
+            Hiển thị {filteredPosts.length} / {blogPosts.length} bài viết
+            {selectedCategory !== 'Tất cả' && ` trong "${selectedCategory}"`}
+            {selectedAuthor !== 'all' && ` của "${authors.find(a => a.slug === selectedAuthor)?.name}"`}
+          </div>
+          
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {blogPosts.map((post) => (
+            {filteredPosts.length === 0 ? (
+              <div className="col-span-full text-center py-12">
+                <p className="text-gray-500 text-lg">Không tìm thấy bài viết nào</p>
+                <button
+                  onClick={() => {
+                    setSelectedCategory('Tất cả');
+                    setSelectedAuthor('all');
+                  }}
+                  className="mt-4 text-pink-600 hover:text-pink-700 font-medium"
+                >
+                  Xóa bộ lọc
+                </button>
+              </div>
+            ) : (
+              filteredPosts.map((post) => (
               <article
                 key={post.id}
                 className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-shadow overflow-hidden group"
@@ -139,7 +221,8 @@ export default function BlogPage() {
                   </div>
                 </Link>
               </article>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </section>

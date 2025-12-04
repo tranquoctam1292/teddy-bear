@@ -190,21 +190,23 @@ See `ENV_SETUP.md` for complete list
 
 ## 📚 Documentation
 
-**🌟 START HERE:** `📚_START_HERE.md`
+### 🚀 Quick Start
+- **[QUICK_START.md](./QUICK_START.md)** ⭐ - Get running in 5 minutes!
+- **[ENV_SETUP.md](./ENV_SETUP.md)** - Environment configuration
 
-### Essential Docs
+### 📖 Complete Guides
+- **[MASTER_DOCUMENTATION.md](./MASTER_DOCUMENTATION.md)** - Complete reference
+- **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** - Deploy to production
+- **[TROUBLESHOOTING.md](./TROUBLESHOOTING.md)** - Fix common issues
 
-- **MASTER_DOCUMENTATION.md** - Complete guide
-- **DEPLOYMENT_GUIDE.md** - Deploy instructions
-- **TESTING_CHECKLIST.md** - Testing guide
-- **COMPLETE_IMPLEMENTATION_SUMMARY.md** - All features
-- **DATABASE_SCHEMA.md** - Database structure
+### 📊 Reference
+- **[DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md)** - Database structure
+- **[TESTING_CHECKLIST.md](./TESTING_CHECKLIST.md)** - Testing guide
+- **[ADMIN_FEATURES_ROADMAP.md](./ADMIN_FEATURES_ROADMAP.md)** - Features list
+- **[SECURITY.md](./SECURITY.md)** - Security documentation
 
-### Quick Reference
-
-- **Build issues?** → `BUILD_FIXES_NEEDED.md`
-- **Security?** → `SECURITY_FIXES_APPLIED.md`
-- **Deployment?** → `🚀_READY_TO_DEPLOY.md`
+### 📦 Archive
+Historical documentation in `docs/archive/` folder
 
 ---
 

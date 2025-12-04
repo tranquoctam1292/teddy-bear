@@ -14,6 +14,7 @@ import {
   Search,
   Paintbrush,
   Settings,
+  Home,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -52,7 +53,15 @@ export const ADMIN_MENU: MenuItem[] = [
       { label: 'Thêm Bài Viết', href: '/admin/posts/new' },
       { label: 'Danh mục', href: '/admin/posts/categories' },
       { label: 'Thẻ', href: '/admin/posts/tags' },
+      { label: 'Hồ sơ Tác giả', href: '/admin/authors' },
     ],
+  },
+  
+  {
+    id: 'homepage',
+    icon: Home,
+    label: 'Trang chủ',
+    href: '/admin/homepage',
   },
   
   {
@@ -204,4 +213,5 @@ export const ADMIN_MENU: MenuItem[] = [
     ],
   },
 ];
+
 

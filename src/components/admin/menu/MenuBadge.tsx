@@ -24,3 +24,4 @@ export default function MenuBadge({ value }: MenuBadgeProps) {
   return null;
 }
 
+

@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "../styles/globals.css";
-import HeaderWithMenu from "@/components/layout/HeaderWithMenu";
-import Footer from "@/components/layout/Footer";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
-import { headers } from "next/headers";
 import { getCollections } from "@/lib/db";
 
 const geistSans = Geist({
@@ -41,24 +38,18 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const headersList = await headers();
-  const pathname = headersList.get('x-pathname') || '';
-  const isAdminRoute = pathname.startsWith('/admin');
-
   return (
     <html lang="vi">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ThemeProvider>
-          {!isAdminRoute && <HeaderWithMenu />}
-          <main className="flex-1">{children}</main>
-          {!isAdminRoute && <Footer />}
+          {children}
         </ThemeProvider>
       </body>
     </html>

@@ -1,5 +1,8 @@
 /* Global CSS (Tailwind directives) */
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 @import "./admin-sidebar.css";
 
 /* "Emotional House" Theme - Pastel Colors */
