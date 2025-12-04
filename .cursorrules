@@ -12,13 +12,37 @@ Key Features: Author Management (E-E-A-T), Blog, Product Management, SEO Tools.
 
 Core Principles
 
-Strict TypeScript: No any. Always define or import interfaces.
-
-Server-Side First: Prioritize Server Components. Use 'use client' only when interactivity (state, hooks) is needed.
+Server-Side First: Prioritize Server Components. Use 'use client' ONLY when interactivity (state, hooks) is needed.
 
 Clean Architecture: Separation of concerns. UI in components, logic in lib/hooks, data access in lib/db.
 
-Security First: Validate all inputs. Check auth/roles on every protected route.
+Strict TypeScript: No any. Always define or import interfaces.
+
+Security First: Validate all inputs (Zod). Check auth/roles on every protected route.
+
+🛡️ QA & Safety Protocols (CI/CD Protection)
+
+CRITICAL: The AI must follow these rules to prevent build/lint failures.
+
+1. Zero-Tolerance Linter Rules
+
+No Unused Variables: Never declare a variable/import that is not used. Remove them if they become redundant during refactoring.
+
+No any Type: STRICTLY forbidden. Use unknown or define a proper Interface.
+
+Exhaustive Dependencies: In useEffect, useCallback, useMemo, ALWAYS include all variables used inside the hook in the dependency array. Do not suppress warnings with eslint-disable.
+
+No Console Logs: Do not leave console.log in the final code output.
+
+2. Build Safety (Server vs Client)
+
+Import Guards: NEVER import server-only code (e.g., lib/db.ts, environment secrets) directly into a file marked 'use client'.
+
+Type Imports: When importing Interfaces/Types from a file that might have side effects, always use import type { ... }.
+
+Image Optimization: ALWAYS use next/image. Never use standard <img> tags unless explicitly requested for raw HTML rendering.
+
+Alt Text: All <Image /> components MUST have a meaningful alt prop.
 
 Architecture & Directory Structure
 
@@ -128,3 +152,13 @@ Type Check: Ensure code passes npm run type-check.
 Lint: Ensure code passes npm run lint.
 
 No Console Logs: Remove console.log in production code. Use proper error logging if needed.
+
+Final Vibe Check
+
+Before outputting code, ask yourself:
+
+Did I remove all unused imports?
+
+Did I strictly type all variables (no any)?
+
+Did I mix Server/Client logic incorrectly?

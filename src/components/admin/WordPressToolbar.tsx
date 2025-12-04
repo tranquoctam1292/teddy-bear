@@ -53,10 +53,11 @@ export default function WordPressToolbar({
   const colorPickerRef = useRef<HTMLDivElement>(null);
   const tableMenuRef = useRef<HTMLDivElement>(null);
 
-  if (!editor) return null;
-
   // Close color picker when clicking outside
+  // Move useEffect BEFORE early return to follow Rules of Hooks
   useEffect(() => {
+    if (!editor) return;
+    
     const handleClickOutside = (event: MouseEvent) => {
       if (colorPickerRef.current && !colorPickerRef.current.contains(event.target as Node)) {
         setShowColorPicker(false);
@@ -73,7 +74,10 @@ export default function WordPressToolbar({
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showColorPicker, showTableMenu]);
+  }, [showColorPicker, showTableMenu, editor]);
+
+  // Early return after hooks
+  if (!editor) return null;
 
   const ToolbarButton = ({
     icon: Icon,
