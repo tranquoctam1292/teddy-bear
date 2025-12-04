@@ -1,190 +1,925 @@
-Project Context
+# 🐻 Teddy Shop - AI Coding Rules & Guidelines
 
-Name: Teddy Shop E-commerce Platform
+**Project:** Teddy Shop E-commerce Platform  
+**Purpose:** Ensure code quality, consistency, and production readiness  
+**Enforcement:** AI must follow these rules strictly
 
-Stack: Next.js 16 (App Router), React 19, TypeScript 5, MongoDB (Native Driver), NextAuth v5.
+---
 
-Styling: Tailwind CSS, Radix UI, Lucide Icons.
+## 📋 Table of Contents
 
-State Management: Zustand, React Hook Form.
+1. [Project Context](#1-project-context)
+2. [Core Principles](#2-core-principles)
+3. [Documentation Enforcement](#3-documentation-enforcement-mandatory)
+4. [QA & Safety Protocols](#4-qa--safety-protocols)
+5. [Architecture & Directory](#5-architecture--directory-structure)
+6. [Coding Standards](#6-coding-standards)
+7. [Specific Features](#7-specific-feature-guidelines)
+8. [Testing & Quality](#8-testing--quality)
+9. [Git Protocols](#9-git--project-management-protocols)
 
-Key Features: Author Management (E-E-A-T), Blog, Product Management, SEO Tools.
+---
 
-Core Principles
+## 1. Project Context
 
-Server-Side First: Prioritize Server Components. Use 'use client' ONLY when interactivity (state, hooks) is needed.
+### 🏷️ Basic Info
 
-Clean Architecture: Separation of concerns. UI in components, logic in lib/hooks, data access in lib/db.
+| Property      | Value                                |
+| ------------- | ------------------------------------ |
+| **Name**      | Teddy Shop E-commerce Platform       |
+| **Framework** | Next.js 16 (App Router)              |
+| **Frontend**  | React 19, TypeScript 5               |
+| **Database**  | MongoDB (Native Driver)              |
+| **Auth**      | NextAuth v5                          |
+| **Styling**   | Tailwind CSS, Radix UI, Lucide Icons |
+| **State**     | Zustand, React Hook Form             |
 
-Strict TypeScript: No any. Always define or import interfaces.
+### 🎯 Key Features
 
-Security First: Validate all inputs (Zod). Check auth/roles on every protected route.
+- Author Management (E-E-A-T compliance)
+- Blog with Tiptap editor
+- Product Management
+- SEO Tools (Keywords, Schema.org, Audit)
+- Homepage Configuration System (15 sections)
 
-# 📖 Documentation Enforcement (Mandatory Context)
+---
 
-> **CRITICAL:** When performing tasks, the AI MUST automatically load these documents into its context.
+## 2. Core Principles
 
-1. **Schema Check:** When creating, modifying, or deleting data (DB Queries, Zod Schemas, API Body validation), the AI **MUST** reference the `@DATABASE_SCHEMA.md` file to verify field names, data types, and existing constraints (indexes).
+### 🎯 The Four Pillars:
 
-2. **Flow Check:** When working on complex business logic (e.g., Checkout, Order Status Update, Author Sync), the AI **MUST** reference the `@FLOW.md` file to ensure compliance with the sequential steps and state transitions defined.
+#### 1️⃣ Server-Side First
 
-3. **Master Context:** The `@CONTEXT.md` file serves as the overarching reference for core Business Rules and architectural decisions not covered in Schema or Flow files.
+```
+Prioritize Server Components by default.
+Use 'use client' ONLY when absolutely needed:
+  ✅ When: useState, useEffect, event handlers
+  ❌ When: Just rendering static content
+```
 
-🛡️ QA & Safety Protocols (CI/CD Protection)
+#### 2️⃣ Clean Architecture
 
-CRITICAL: The AI must follow these rules to prevent build/lint failures.
+```
+Separation of Concerns:
+  📄 UI components    → src/components/
+  🧠 Business logic   → src/lib/
+  🗄️ Data access      → src/lib/db.ts
+  ✅ Validation       → src/lib/schemas/
+```
 
-1. Zero-Tolerance Linter Rules
+#### 3️⃣ Strict TypeScript
 
-No Unused Variables: Never declare a variable/import that is not used. Remove them if they become redundant during refactoring.
+```
+❌ FORBIDDEN: any type
+✅ REQUIRED: Always define or import interfaces
+✅ USE: unknown for uncertain types
+✅ DEFINE: Proper interfaces for all data
+```
 
-No any Type: STRICTLY forbidden. Use unknown or define a proper Interface.
+#### 4️⃣ Security First
 
-Exhaustive Dependencies: In useEffect, useCallback, useMemo, ALWAYS include all variables used inside the hook in the dependency array. Do not suppress warnings with eslint-disable.
+```
+✅ Validate ALL inputs with Zod
+✅ Check auth/roles on EVERY protected route
+✅ Never trust client data
+✅ Always recalculate prices server-side
+```
 
-No Console Logs: Do not leave console.log in the final code output.
+---
 
-2. Build Safety (Server vs Client)
+## 3. Documentation Enforcement (MANDATORY)
 
-Import Guards: NEVER import server-only code (e.g., lib/db.ts, environment secrets) directly into a file marked 'use client'.
+### 🚨 CRITICAL RULE:
 
-Type Imports: When importing Interfaces/Types from a file that might have side effects, always use import type { ... }.
+When performing tasks, AI **MUST** automatically load these documents:
 
-Image Optimization: ALWAYS use next/image. Never use standard <img> tags unless explicitly requested for raw HTML rendering.
+| Task Type                               | Required Document     | Purpose                       |
+| --------------------------------------- | --------------------- | ----------------------------- |
+| **DB Queries, Schemas, API validation** | `@DATABASE_SCHEMA.md` | Verify fields, types, indexes |
+| **Complex business logic**              | `@FLOW.md`            | Follow sequential steps       |
+| **Everything else**                     | `@CONTEXT.md`         | Core business rules           |
 
-Alt Text: All <Image /> components MUST have a meaningful alt prop.
+### 📖 Document Priority:
 
-Architecture & Directory Structure
+**Before creating/modifying data:**
 
-src/app: App Router structure.
+1. ✅ Read `DATABASE_SCHEMA.md` → Check schema, field names, indexes
+2. ✅ Use correct field types
+3. ✅ Follow existing constraints
 
-src/app/(shop): Public facing shop pages.
+**Before implementing checkout/order logic:**
 
-src/app/admin: Protected admin dashboard pages.
+1. ✅ Read `FLOW.md` → Follow defined flow
+2. ✅ Implement rollback strategies
+3. ✅ Follow state transitions
 
-src/app/api: API Routes (Next.js Route Handlers).
+**Always:**
 
-src/components:
+- ✅ Reference `@CONTEXT.md` for architecture decisions
+- ✅ Follow patterns defined in documentation
 
-src/components/ui: Atomic, reusable UI components (shadcn/ui style). Prefer reusing these over creating new raw HTML elements.
+---
 
-src/components/admin: Complex admin widgets (e.g., AuthorBoxWidget, RowActions).
+## 4. QA & Safety Protocols
 
-src/components/blog: Blog-specific components.
+### 🛡️ Zero-Tolerance Linter Rules
 
-src/lib:
+#### ❌ Rule 1: No Unused Variables
 
-src/lib/db.ts: Database connection and helper functions.
+```typescript
+// ❌ WRONG: Unused import
+import { UserIcon, HomeIcon } from 'lucide-react';
+export function Header() {
+  return <UserIcon />; // HomeIcon not used!
+}
 
-src/lib/types: Centralized TypeScript definitions.
+// ✅ CORRECT: Remove unused
+import { UserIcon } from 'lucide-react';
+export function Header() {
+  return <UserIcon />;
+}
+```
 
-src/lib/schemas: Zod validation schemas.
+**Action:** Remove ALL unused variables/imports during refactoring
 
-src/lib/auth.ts: NextAuth configuration.
+---
 
-Coding Standards
+#### ❌ Rule 2: No 'any' Type
 
-1. Database Access (CRITICAL)
+```typescript
+// ❌ STRICTLY FORBIDDEN
+function processData(data: any) {
+  return data.something;
+}
 
-Pattern: Repository Pattern via getCollections().
+// ✅ CORRECT: Define proper interface
+interface User {
+  id: string;
+  name: string;
+}
 
-FORBIDDEN: Do NOT use Mongoose Models (e.g., User.find()) or Prisma.
+function processData(data: User) {
+  return data.name;
+}
 
-Correct Usage:
+// ✅ ACCEPTABLE: Use unknown for uncertain types
+function processData(data: unknown) {
+  if (typeof data === 'object' && data !== null) {
+    // Type guard
+  }
+}
+```
 
+**Rule:** NEVER use `any`. Use `unknown` or define interface.
+
+---
+
+#### ❌ Rule 3: Exhaustive Dependencies
+
+```typescript
+// ❌ WRONG: Missing dependency
+useEffect(() => {
+  fetchData(userId);
+}, []); // userId not in deps!
+
+// ✅ CORRECT: Include all deps
+useEffect(() => {
+  fetchData(userId);
+}, [userId]);
+
+// ❌ NEVER suppress warnings
+useEffect(() => {
+  fetchData(userId);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, []); // BAD PRACTICE!
+```
+
+**Rule:** Always include ALL variables used inside hooks in dependency array.
+
+---
+
+#### ❌ Rule 4: No Console Logs
+
+```typescript
+// ❌ WRONG: Leave console.log
+export function Component() {
+  console.log('Debug info');
+  return <div>Hello</div>;
+}
+
+// ✅ CORRECT: Remove or use proper logging
+export function Component() {
+  // console.log removed
+  return <div>Hello</div>;
+}
+
+// ✅ ACCEPTABLE: Proper error logging
+try {
+  // ...
+} catch (error) {
+  console.error('Critical error:', error); // OK for errors
+}
+```
+
+**Rule:** No `console.log` in production code. Use proper error logging if needed.
+
+---
+
+### 🏗️ Build Safety (Server vs Client)
+
+#### Import Guards
+
+```typescript
+// ❌ WRONG: Import server code in client component
+'use client';
+
+import { getCollections } from '@/lib/db'; // Server-only!
+
+export function ClientComponent() {
+  // This will fail!
+}
+
+// ✅ CORRECT: Call API instead
+('use client');
+
+export function ClientComponent() {
+  useEffect(() => {
+    fetch('/api/data').then((r) => r.json());
+  }, []);
+}
+```
+
+**Rule:** NEVER import server-only code (db.ts, env secrets) in 'use client' files.
+
+---
+
+#### Type Imports
+
+```typescript
+// ✅ CORRECT: Use 'import type' for types only
+import type { User } from '@/lib/types/user';
+import { formatUser } from '@/lib/utils/user';
+
+// ❌ AVOID: Regular import for types
+import { User } from '@/lib/types/user'; // May cause side effects
+```
+
+**Rule:** Use `import type { }` when importing interfaces/types only.
+
+---
+
+#### Image Optimization
+
+```typescript
+// ❌ WRONG: Standard img tag
+<img src="/photo.jpg" />;
+
+// ✅ CORRECT: Next.js Image component
+import Image from 'next/image';
+
+<Image
+  src="/photo.jpg"
+  alt="Product photo" // Alt REQUIRED
+  width={500}
+  height={300}
+/>;
+```
+
+**Rules:**
+
+- ✅ ALWAYS use `next/image`
+- ✅ ALWAYS provide meaningful `alt` prop
+- ❌ NEVER use `<img>` tag (unless raw HTML)
+
+---
+
+## 5. Architecture & Directory Structure
+
+```
+src/
+│
+├── app/
+│   ├── (shop)/              # 🛍️ Public pages (with Header/Footer)
+│   │   ├── page.tsx         # Homepage (dynamic from config)
+│   │   ├── products/        # Product listing & detail
+│   │   ├── cart/            # Shopping cart
+│   │   ├── checkout/        # Checkout process
+│   │   └── (content)/       # Blog, About, Store
+│   │
+│   ├── admin/               # 🔒 Protected admin (Sidebar only)
+│   │   ├── authors/         # Author CRUD
+│   │   ├── posts/           # Blog CRUD
+│   │   ├── products/        # Product CRUD
+│   │   ├── homepage/        # Homepage config
+│   │   ├── seo/             # SEO tools
+│   │   └── settings/        # System settings
+│   │
+│   └── api/                 # 🔌 API Routes (Route Handlers)
+│       ├── admin/           # Admin-only endpoints
+│       ├── authors/         # Public author API
+│       ├── homepage/        # Public homepage API
+│       └── checkout/        # Checkout API
+│
+├── components/
+│   ├── ui/                  # ⚛️ Atomic components (Shadcn style)
+│   │   ├── button.tsx       # Reuse these!
+│   │   ├── input.tsx
+│   │   ├── table.tsx
+│   │   └── ... (11 total)
+│   │
+│   ├── admin/               # 🛠️ Admin widgets
+│   │   ├── AuthorBoxWidget.tsx
+│   │   ├── RowActions.tsx
+│   │   └── homepage/        # Homepage builder
+│   │
+│   ├── blog/                # 📝 Blog components
+│   │   ├── AuthorBox.tsx
+│   │   └── ReviewerBox.tsx
+│   │
+│   └── homepage/            # 🏠 Homepage sections
+│       ├── HomepageRenderer.tsx
+│       └── sections/        # 15 section types
+│
+├── lib/
+│   ├── db.ts                # 🗄️ MongoDB connection
+│   ├── auth.ts              # 🔐 NextAuth config
+│   ├── types/               # TypeScript interfaces
+│   ├── schemas/             # Zod validation
+│   ├── payment/             # Payment gateways
+│   ├── stock/               # Stock management
+│   └── email/               # Email service
+│
+└── store/
+    └── useCartStore.ts      # Zustand cart state
+```
+
+### 📁 Key Directories:
+
+| Directory           | Purpose         | Pattern                      |
+| ------------------- | --------------- | ---------------------------- |
+| `src/app/(shop)`    | Public pages    | Server Components preferred  |
+| `src/app/admin`     | Admin dashboard | Authentication required      |
+| `src/app/api`       | REST endpoints  | Return NextResponse.json     |
+| `src/components/ui` | Reusable UI     | Prefer reusing over creating |
+| `src/lib`           | Business logic  | No React code                |
+| `src/lib/schemas`   | Validation      | Zod schemas                  |
+
+---
+
+## 6. Coding Standards
+
+### 1️⃣ Database Access (CRITICAL)
+
+#### ✅ CORRECT Pattern: Repository via getCollections()
+
+```typescript
 import { getCollections } from '@/lib/db';
 import { ObjectId } from 'mongodb';
 
-// Inside async function
-const { users, posts } = await getCollections();
-// Always convert string ID to ObjectId for queries
-const result = await users.findOne({ _id: new ObjectId(id) });
+async function getUser(id: string) {
+  // Step 1: Get collections
+  const { users, posts } = await getCollections();
 
+  // Step 2: Validate ID
+  if (!ObjectId.isValid(id)) {
+    throw new Error('Invalid ID');
+  }
 
-ID Handling: Always validate IDs using ObjectId.isValid(id) before creating new ObjectId(id).
+  // Step 3: Query with ObjectId
+  const user = await users.findOne({
+    _id: new ObjectId(id),
+  });
 
-2. API Routes (Next.js Route Handlers)
+  return user;
+}
+```
 
-Location: src/app/api/.../route.ts
+#### ❌ FORBIDDEN Patterns:
 
-Response Format: Always return NextResponse.json.
+```typescript
+// ❌ DON'T: Mongoose Models
+const user = await User.findOne({ _id: id });
 
-Validation: Use Zod schemas from @/lib/schemas to parse await request.json().
+// ❌ DON'T: Prisma
+const user = await prisma.user.findUnique({ where: { id } });
 
-Error Handling: Use try/catch blocks. Return standard error objects: { error: string }.
+// ❌ DON'T: Query without ObjectId conversion
+const user = await users.findOne({ _id: id }); // String won't work!
+```
 
-Status Codes: 200 (OK), 201 (Created), 400 (Bad Request), 401 (Unauthorized), 403 (Forbidden), 404 (Not Found), 500 (Internal Server Error).
+#### 🔑 ID Handling Rules:
 
-3. Authentication & Authorization
-
-Import: import { auth } from '@/lib/auth';
-
-Pattern: Check session at the start of every protected API route/Server Action.
-
-const session = await auth();
-if (!session?.user || session.user.role !== 'admin') {
-  return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+```typescript
+// Always validate before converting
+if (!ObjectId.isValid(id)) {
+  return NextResponse.json({ error: 'Invalid ID' }, { status: 400 });
 }
 
+// Then convert for query
+const doc = await collection.findOne({
+  _id: new ObjectId(id),
+});
+```
 
-4. Component Implementation
+---
 
-Function Components: Use export function ComponentName({ prop }: Props) {}. Avoid const ComponentName: React.FC = ....
+### 2️⃣ API Routes (Next.js Route Handlers)
 
-Props Interface: explicitly define props interface above the component.
+#### Pattern:
 
-Icons: Use lucide-react. Example: import { UserIcon } from 'lucide-react';
+```typescript
+// Location: src/app/api/[feature]/route.ts
 
-Styling: Tailwind CSS classes via className. Use cn() utility for conditional classes if available.
+import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
+import { getCollections } from '@/lib/db';
+import { schemaName } from '@/lib/schemas/feature';
 
-5. Date & Time
+export async function GET(request: NextRequest) {
+  try {
+    // 1. Check authentication (if protected)
+    const session = await auth();
+    if (!session?.user || session.user.role !== 'admin') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-Library: Use date-fns for formatting and manipulation.
+    // 2. Get data
+    const { collection } = await getCollections();
+    const data = await collection.find({}).toArray();
 
-Storage: Store dates as Date objects in MongoDB, not strings.
+    // 3. Return JSON
+    return NextResponse.json({ data }, { status: 200 });
+  } catch (error) {
+    // 4. Error handling
+    console.error('Error:', error);
+    return NextResponse.json({ error: 'Failed to fetch data' }, { status: 500 });
+  }
+}
 
-Specific Feature Guidelines
+export async function POST(request: NextRequest) {
+  try {
+    // 1. Auth check
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-1. Author Management (E-E-A-T)
+    // 2. Parse body
+    const body = await request.json();
 
-When touching posts collection, remember authorInfo object structure (authorId, reviewerId, guestAuthor).
+    // 3. Validate with Zod
+    const validatedData = schemaName.parse(body);
 
-Always sync postCount in authors collection when publishing/deleting posts.
+    // 4. Process & save
+    const { collection } = await getCollections();
+    const result = await collection.insertOne(validatedData);
 
-2. Image Handling
+    // 5. Return success
+    return NextResponse.json(
+      { message: 'Created successfully', id: result.insertedId },
+      { status: 201 }
+    );
+  } catch (error) {
+    if (error.name === 'ZodError') {
+      return NextResponse.json({ error: 'Invalid data', details: error }, { status: 400 });
+    }
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+  }
+}
+```
 
-Use next/image for optimization.
+#### Status Codes:
 
-External images must be configured in next.config.ts (remotePatterns).
+| Code | Meaning               | When to Use                 |
+| ---- | --------------------- | --------------------------- |
+| 200  | OK                    | Successful GET/PATCH        |
+| 201  | Created               | Successful POST             |
+| 400  | Bad Request           | Invalid input               |
+| 401  | Unauthorized          | Not logged in               |
+| 403  | Forbidden             | Logged in but no permission |
+| 404  | Not Found             | Resource doesn't exist      |
+| 500  | Internal Server Error | Server/DB error             |
 
-3. Documentation Management (NEW RULE)
+---
 
-Organization: All core documentation files (README, CONTEXT, DEPLOYMENT, SCHEMA) MUST be kept at the project root or in the docs/ folder.
+### 3️⃣ Authentication & Authorization
 
-Redundancy Check: BEFORE starting a major new task or finishing a feature, AI MUST identify and recommend DELETING redundant or obsolete documentation files (e.g., old roadmaps, archived meeting notes) to keep the @Codebase context clean.
+```typescript
+// Import auth
+import { auth } from '@/lib/auth';
 
-Priority: Prioritize reading and tagging @CONTEXT.md over generic, non-structured documentation files.
+// Check at START of every protected route
+export async function POST(request: NextRequest) {
+  // Step 1: Get session
+  const session = await auth();
 
-Testing & Quality
+  // Step 2: Check authentication
+  if (!session?.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
-Type Check: Ensure code passes npm run type-check.
+  // Step 3: Check role (if admin-only)
+  if (session.user.role !== 'admin') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
 
-Lint: Ensure code passes npm run lint.
+  // Proceed with logic...
+}
+```
 
-No Console Logs: Remove console.log in production code. Use proper error logging if needed.
+**Rules:**
 
-Final Vibe Check
+- ✅ Check at the START of route
+- ✅ Check both user AND role
+- ✅ Return proper status codes
 
-Before outputting code, ask yourself:
+---
 
-Did I remove all unused imports?
+### 4️⃣ Component Implementation
 
-Did I strictly type all variables (no any)?
+#### Function Components (Preferred):
 
-Did I mix Server/Client logic incorrectly?
+```typescript
+// ✅ CORRECT: Named export function
+interface Props {
+  name: string;
+  age: number;
+}
 
-# 🔒 Git & Project Management Protocols
-1. **Commit Policy:** NEVER perform or suggest a Git operation (`git commit`, `git push`, `git rebase`) unless explicitly asked by the user.
-2. **Atomic Commits:** When asked to commit, the commit message MUST be descriptive, atomic (chỉ mô tả một thay đổi duy nhất), and follow the Conventional Commit pattern if possible (e.g., `feat: add coupon system` or `fix: resolve hydration error`).
-3. **Draft Mode:** All code outputted is considered a DRAFT and MUST be reviewed by the user before final deployment or integration.
-4. **No Automated Deployment:** AI must assume that CI/CD is the user's responsibility. Do not initiate deployment or mention automated deployment processes unless instructed.
+export function UserCard({ name, age }: Props) {
+  return (
+    <div>
+      {name} - {age}
+    </div>
+  );
+}
+
+// ❌ AVOID: const with React.FC
+export const UserCard: React.FC<Props> = ({ name, age }) => {
+  return (
+    <div>
+      {name} - {age}
+    </div>
+  );
+};
+```
+
+#### Props Interface:
+
+```typescript
+// ✅ ALWAYS define props interface ABOVE component
+interface ButtonProps {
+  label: string;
+  onClick: () => void;
+  variant?: 'primary' | 'secondary';
+}
+
+export function Button({ label, onClick, variant = 'primary' }: ButtonProps) {
+  // Component logic
+}
+```
+
+#### Icons:
+
+```typescript
+// ✅ Use lucide-react
+import { UserIcon, ShoppingCart, Heart } from 'lucide-react';
+
+<UserIcon className="w-5 h-5" />;
+```
+
+#### Styling:
+
+```typescript
+// ✅ Tailwind classes via className
+<div className="flex items-center gap-4 p-6 bg-white rounded-lg shadow-md">
+
+// ✅ Use cn() for conditional classes
+import { cn } from '@/lib/utils';
+
+<div className={cn(
+  'base-class',
+  isActive && 'active-class',
+  variant === 'primary' && 'primary-class'
+)}>
+```
+
+---
+
+### 5️⃣ Date & Time
+
+```typescript
+// ✅ Use date-fns for formatting
+import { format, formatDistanceToNow } from 'date-fns';
+
+// Display dates
+format(new Date(), 'dd/MM/yyyy'); // 04/12/2025
+formatDistanceToNow(date, { addSuffix: true }); // "2 hours ago"
+
+// ✅ Store as Date objects in MongoDB
+const document = {
+  createdAt: new Date(), // ✅ Date object
+  updatedAt: new Date(),
+};
+
+// ❌ NEVER store as strings
+const document = {
+  createdAt: '2025-12-04', // ❌ WRONG!
+};
+```
+
+---
+
+## 7. Specific Feature Guidelines
+
+### 1️⃣ Author Management (E-E-A-T)
+
+#### Key Rules:
+
+**When working with posts collection:**
+
+```typescript
+// Remember authorInfo structure
+interface Post {
+  authorInfo: {
+    authorId: string; // Ref to authors._id
+    reviewerId?: string; // For YMYL content
+    guestAuthor?: {
+      // For non-DB authors
+      name: string;
+      credentials?: string;
+    };
+  };
+}
+```
+
+**Post Count Synchronization:**
+
+```typescript
+// When publishing a post:
+await posts.updateOne({ _id: postId }, { $set: { status: 'published' } });
+
+// MUST also update author postCount
+await authors.updateOne({ _id: new ObjectId(authorId) }, { $inc: { postCount: 1 } });
+
+// When deleting a post:
+await posts.deleteOne({ _id: postId });
+
+// MUST also decrement postCount
+await authors.updateOne({ _id: new ObjectId(authorId) }, { $inc: { postCount: -1 } });
+```
+
+**⚠️ CRITICAL:** Always sync postCount when publishing/unpublishing/deleting posts!
+
+---
+
+### 2️⃣ Image Handling
+
+```typescript
+// ✅ ALWAYS use next/image
+import Image from 'next/image';
+
+<Image
+  src="/images/product.jpg"
+  alt="Product name" // REQUIRED
+  width={500}
+  height={300}
+  priority={false} // true for above-fold
+/>;
+
+// External images configuration
+// File: next.config.ts
+export default {
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'your-blob-storage.com',
+      },
+    ],
+  },
+};
+```
+
+---
+
+### 3️⃣ Documentation Management
+
+#### Rules:
+
+**Organization:**
+
+```
+✅ Keep core docs at root: README, @CONTEXT, FLOW
+✅ Keep detailed docs in: docs/ folder
+✅ Use logical subfolders: guides/, reports/, etc.
+```
+
+**Redundancy Check:**
+
+```
+BEFORE starting major task:
+  1. Scan for duplicate/obsolete docs
+  2. Recommend deletion of:
+     - Old roadmaps
+     - Archived meeting notes
+     - Outdated status reports
+  3. Keep codebase context clean
+```
+
+**Priority:**
+
+```
+When AI needs context:
+  1️⃣ @CONTEXT.md (highest priority)
+  2️⃣ FLOW.md (for business logic)
+  3️⃣ DATABASE_SCHEMA.md (for data)
+  4️⃣ Other specific docs
+```
+
+---
+
+## 8. Testing & Quality
+
+### ✅ Pre-Commit Checklist:
+
+```typescript
+// Before committing, verify:
+
+1. Type Check
+   → npm run type-check
+   → Should pass (or have documented known issues)
+
+2. Lint Check
+   → npm run lint
+   → 0 errors (warnings acceptable if documented)
+
+3. Remove Console Logs
+   → No console.log in production code
+
+4. Unused Imports
+   → All imports are used
+
+5. TypeScript
+   → No 'any' types
+   → All variables properly typed
+```
+
+### 🎯 Final Vibe Check:
+
+**Before outputting code, ask yourself:**
+
+- [ ] Did I remove ALL unused imports/variables?
+- [ ] Did I strictly type ALL variables (no `any`)?
+- [ ] Did I mix Server/Client logic incorrectly?
+- [ ] Did I add proper error handling?
+- [ ] Did I validate all inputs with Zod?
+- [ ] Did I check authentication on protected routes?
+- [ ] Did I use `next/image` instead of `<img>`?
+- [ ] Did I add alt text to all images?
+- [ ] Did I follow the patterns in documentation?
+
+**If any answer is NO → Fix it before submitting!**
+
+---
+
+## 9. Git & Project Management Protocols
+
+### 🔒 Commit Policy
+
+#### Rule 1: Never Auto-Commit
+
+```
+❌ AI MUST NOT run git commands automatically
+❌ Never: git add, git commit, git push, git rebase
+
+✅ Only when user EXPLICITLY asks:
+   "commit this"
+   "push to GitHub"
+   "create a commit"
+```
+
+#### Rule 2: Atomic Commits
+
+```
+✅ GOOD commit message:
+   feat: add coupon system
+   fix: resolve hydration error
+   docs: update flow.md for checkout
+
+❌ BAD commit message:
+   update files
+   fix bugs
+   changes
+```
+
+**Pattern:** Conventional Commits
+
+- `feat:` - New feature
+- `fix:` - Bug fix
+- `docs:` - Documentation
+- `style:` - Formatting
+- `refactor:` - Code restructure
+- `test:` - Tests
+- `chore:` - Maintenance
+
+#### Rule 3: Draft Mode
+
+```
+⚠️ All code outputted is considered DRAFT
+✅ User MUST review before deployment
+✅ AI should not assume code is final
+```
+
+#### Rule 4: No Automated Deployment
+
+```
+❌ AI must NOT initiate deployment
+❌ Don't mention "auto-deploy" unless asked
+✅ Assume CI/CD is user's responsibility
+```
+
+#### Rule 5: Execution Lock
+
+```
+When user asks for git command:
+
+❌ WRONG: Run the command
+   git commit -m "..."
+
+✅ CORRECT: Display command for user
+   "Please run: git commit -m '...'"
+```
+
+#### Rule 6: Commit Message Format
+
+```
+Professional + Atomic + Conventional Commit pattern
+
+Example:
+docs: update flow.md for new feature
+
+Added comprehensive checkout flow diagram including:
+- Mermaid sequence diagram
+- Error handling strategies
+- Performance metrics
+```
+
+---
+
+## 📊 QUICK REFERENCE CARD
+
+### Must Do ✅
+
+| Category       | Rule                                   |
+| -------------- | -------------------------------------- |
+| **Types**      | No `any`, always define interfaces     |
+| **DB**         | Use getCollections(), ObjectId for IDs |
+| **Validation** | Zod schemas for all inputs             |
+| **Auth**       | Check session on protected routes      |
+| **Images**     | Use next/image with alt                |
+| **Imports**    | Remove unused, use `import type`       |
+| **Hooks**      | Include all deps in array              |
+| **Components** | export function pattern                |
+| **Errors**     | Try-catch with proper status codes     |
+
+### Must Not ❌
+
+| Category       | Rule                              |
+| -------------- | --------------------------------- |
+| **Types**      | Never use `any`                   |
+| **Console**    | No console.log in production      |
+| **Images**     | No `<img>` tags                   |
+| **Client**     | No server imports in 'use client' |
+| **Validation** | Never trust client data           |
+| **Commits**    | Never auto-commit without asking  |
+| **DB**         | No Mongoose/Prisma patterns       |
+| **Secrets**    | Never commit credentials          |
+
+---
+
+## 🎯 AI BEHAVIOR REQUIREMENTS
+
+When coding, AI must:
+
+1. ✅ Follow all rules in this file
+2. ✅ Reference @CONTEXT.md for architecture
+3. ✅ Reference FLOW.md for business logic
+4. ✅ Reference DATABASE_SCHEMA.md for schemas
+5. ✅ Ask before committing code
+6. ✅ Remove unused imports automatically
+7. ✅ Use proper TypeScript types
+8. ✅ Add error handling
+9. ✅ Validate all inputs
+10. ✅ Follow established patterns
+
+**Violations of these rules = Code quality failure!**
+
+---
+
+**Rules Version:** 2.0  
+**Last Updated:** December 4, 2025  
+**Status:** Active & Enforced  
+**Compliance:** Mandatory for all AI-generated code
+
+🎯 **AI: I have read and memorized all rules in this file!**

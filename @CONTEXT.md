@@ -23,18 +23,19 @@
 ### 🎯 What is Teddy Shop?
 
 A **full-stack E-commerce platform** combined with a **headless CMS**, focusing on:
+
 - 🔍 **SEO Excellence** (E-E-A-T standards)
 - ⚡ **Performance** (Next.js 15 with ISR)
 - 🛠️ **Admin Control** (Complete CMS)
 
 ### 🏗️ Core Domains
 
-| Domain | Description | Key Features |
-|--------|-------------|--------------|
+| Domain            | Description         | Key Features                               |
+| ----------------- | ------------------- | ------------------------------------------ |
 | **Shop (Public)** | E-commerce frontend | Product browsing, cart, checkout, payments |
-| **CMS (Admin)** | Content management | Blog (Tiptap), Page builder, Media library |
-| **Author System** | E-E-A-T compliance | Advanced profiles, credentials, expertise |
-| **SEO Tools** | Search optimization | Keyword tracking, Schema.org, Audits |
+| **CMS (Admin)**   | Content management  | Blog (Tiptap), Page builder, Media library |
+| **Author System** | E-E-A-T compliance  | Advanced profiles, credentials, expertise  |
+| **SEO Tools**     | Search optimization | Keyword tracking, Schema.org, Audits       |
 
 ---
 
@@ -42,40 +43,40 @@ A **full-stack E-commerce platform** combined with a **headless CMS**, focusing 
 
 ### 🎨 Core Framework
 
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| **Next.js** | 15.5.7 | App Router, SSR, ISR |
-| **React** | 19.2.1 | UI framework |
-| **TypeScript** | 5+ | Type safety |
-| **MongoDB** | 6.3 | Database (Native Driver) |
-| **NextAuth** | v5 | Authentication |
+| Technology     | Version | Purpose                  |
+| -------------- | ------- | ------------------------ |
+| **Next.js**    | 15.5.7  | App Router, SSR, ISR     |
+| **React**      | 19.2.1  | UI framework             |
+| **TypeScript** | 5+      | Type safety              |
+| **MongoDB**    | 6.3     | Database (Native Driver) |
+| **NextAuth**   | v5      | Authentication           |
 
 ### 🔧 State & Logic
 
-| Library | Purpose | Location |
-|---------|---------|----------|
-| **Zustand** | Global state (Cart, UI) | `src/store/` |
-| **React Hook Form** | Form management | Throughout components |
-| **Zod** | Schema validation | `src/lib/schemas/` |
-| **date-fns** | Date formatting | Date utilities |
+| Library             | Purpose                 | Location              |
+| ------------------- | ----------------------- | --------------------- |
+| **Zustand**         | Global state (Cart, UI) | `src/store/`          |
+| **React Hook Form** | Form management         | Throughout components |
+| **Zod**             | Schema validation       | `src/lib/schemas/`    |
+| **date-fns**        | Date formatting         | Date utilities        |
 
 ### 🎨 UI/UX
 
-| Library | Purpose | Usage |
-|---------|---------|-------|
-| **Tailwind CSS** | Styling | All components |
-| **Radix UI** | Headless primitives | Base components |
-| **Lucide React** | Icons | UI icons |
-| **Tiptap** | Rich text editor | Blog posts |
-| **@hello-pangea/dnd** | Drag & drop | Section builder |
-| **Framer Motion** | Animations | Smooth transitions |
+| Library               | Purpose             | Usage              |
+| --------------------- | ------------------- | ------------------ |
+| **Tailwind CSS**      | Styling             | All components     |
+| **Radix UI**          | Headless primitives | Base components    |
+| **Lucide React**      | Icons               | UI icons           |
+| **Tiptap**            | Rich text editor    | Blog posts         |
+| **@hello-pangea/dnd** | Drag & drop         | Section builder    |
+| **Framer Motion**     | Animations          | Smooth transitions |
 
 ### 🚀 Infrastructure
 
-| Service | Purpose |
-|---------|---------|
-| **Vercel Blob** | Image/media storage |
-| **Vercel** | Hosting & deployment |
+| Service         | Purpose              |
+| --------------- | -------------------- |
+| **Vercel Blob** | Image/media storage  |
+| **Vercel**      | Hosting & deployment |
 
 ---
 
@@ -105,19 +106,19 @@ const user = await User.findOne({ _id: id }); // Mongoose style
 interface Author {
   _id: ObjectId;
   name: string;
-  slug: string;              // Unique, for SEO URLs
+  slug: string; // Unique, for SEO URLs
   type: 'staff' | 'contributor' | 'guest' | 'expert';
-  bio: string;               // Short bio
-  bioFull: string;           // Long HTML bio
-  credentials: string;       // "MD, PhD", etc.
+  bio: string; // Short bio
+  bioFull: string; // Long HTML bio
+  credentials: string; // "MD, PhD", etc.
   socialLinks: {
     linkedin?: string;
     twitter?: string;
     website?: string;
   };
   status: 'active' | 'inactive';
-  postCount: number;         // Syncs with published posts
-  reviewedCount: number;     // Posts reviewed
+  postCount: number; // Syncs with published posts
+  reviewedCount: number; // Posts reviewed
   createdAt: Date;
   updatedAt: Date;
 }
@@ -133,41 +134,42 @@ interface Author {
 interface Post {
   _id: ObjectId;
   title: string;
-  slug: string;              // Unique, for SEO
+  slug: string; // Unique, for SEO
   excerpt?: string;
-  content: string;           // HTML from Tiptap
-  
+  content: string; // HTML from Tiptap
+
   // SEO
   metaTitle?: string;
   metaDescription?: string;
   keywords?: string[];
-  
+
   // Media
   featuredImage?: string;
   images?: string[];
-  
+
   // Categorization
   category?: string;
   tags: string[];
-  
+
   // Status
   status: 'draft' | 'published' | 'archived';
   publishedAt?: Date;
-  
+
   // Author (E-E-A-T)
   authorInfo: {
-    authorId: string;        // Ref to authors._id
-    reviewerId?: string;     // For YMYL content
-    guestAuthor?: {          // For non-DB authors
+    authorId: string; // Ref to authors._id
+    reviewerId?: string; // For YMYL content
+    guestAuthor?: {
+      // For non-DB authors
       name: string;
       credentials?: string;
     };
   };
-  
+
   // Analytics
   views?: number;
   likes?: number;
-  
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -184,40 +186,40 @@ interface Product {
   _id: ObjectId;
   id: string;
   name: string;
-  slug: string;              // Unique, for SEO
+  slug: string; // Unique, for SEO
   description: string;
   category: string;
   tags: string[];
-  
+
   // Pricing
-  minPrice: number;          // From variants
-  maxPrice?: number;         // From variants
-  
+  minPrice: number; // From variants
+  maxPrice?: number; // From variants
+
   // Media
   images: string[];
-  
+
   // Variants (nested)
   variants: ProductVariant[];
-  
+
   // Status
   isHot: boolean;
   isActive: boolean;
-  
+
   // Analytics
   rating?: number;
   reviewCount?: number;
-  
+
   // SEO
   metaTitle?: string;
   metaDescription?: string;
-  
+
   createdAt: Date;
   updatedAt: Date;
 }
 
 interface ProductVariant {
   id: string;
-  size: string;              // "80cm", "1m2", "2m"
+  size: string; // "80cm", "1m2", "2m"
   price: number;
   stock: number;
   image?: string;
@@ -231,12 +233,12 @@ interface ProductVariant {
 
 ```typescript
 interface Order {
-  orderId: string;           // "ORD-{timestamp}-{random}"
+  orderId: string; // "ORD-{timestamp}-{random}"
   guestEmail: string;
   userId?: string;
-  
+
   items: CartItem[];
-  
+
   shippingAddress: {
     fullName: string;
     phone: string;
@@ -247,10 +249,10 @@ interface Order {
     city: string;
     note?: string;
   };
-  
+
   shippingMethod: 'standard' | 'express';
   shippingFee: number;
-  
+
   // Upsell services
   upsellServices: {
     vacuumSealing: boolean;
@@ -258,22 +260,22 @@ interface Order {
     giftWrapFee: number;
     expressShipping: boolean;
   };
-  
+
   // Pricing
   subtotal: number;
   upsellTotal: number;
   shippingTotal: number;
   total: number;
-  
+
   // Payment
   paymentDetails: {
     method: 'cod' | 'momo' | 'vnpay' | 'bank_transfer';
     status: 'pending' | 'completed' | 'failed';
     transactionId?: string;
   };
-  
+
   orderStatus: 'pending' | 'confirmed' | 'processing' | 'shipping' | 'delivered' | 'cancelled';
-  
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -289,13 +291,13 @@ interface HomepageConfig {
   name: string;
   slug: string;
   description?: string;
-  
+
   status: 'draft' | 'published' | 'archived' | 'scheduled';
   publishedAt?: Date;
   scheduledAt?: Date;
-  
-  sections: HomepageSection[];  // 15 section types
-  
+
+  sections: HomepageSection[]; // 15 section types
+
   seo: {
     title: string;
     description: string;
@@ -303,10 +305,10 @@ interface HomepageConfig {
     ogImage?: string;
     // ... more SEO fields
   };
-  
+
   version: number;
   previousVersionId?: string;
-  
+
   createdBy: string;
   updatedBy: string;
   createdAt: Date;
@@ -323,8 +325,8 @@ interface HomepageConfig {
 ```typescript
 interface User {
   _id: ObjectId;
-  email: string;             // Unique
-  password: string;          // Bcrypt hash
+  email: string; // Unique
+  password: string; // Bcrypt hash
   name: string;
   role: 'admin' | 'editor' | 'user';
   avatar?: string;
@@ -373,7 +375,7 @@ When writing a post, admin can:
 
 Option 1: Select existing Author from DB
    └─ Populates authorInfo.authorId
-   
+
 Option 2: Input Guest Author manually
    └─ Stores in authorInfo.guestAuthor
 ```
@@ -432,6 +434,7 @@ User sees success page or payment gateway
 ```
 
 **Features:**
+
 - ✅ 15 section types
 - ✅ Version control
 - ✅ A/B testing
@@ -458,6 +461,7 @@ Upload Flow:
 ### 📝 Row Actions (Admin UI)
 
 Admin tables support quick actions:
+
 - **Quick Edit** - Edit inline without leaving page
 - **Duplicate** - Clone item
 - **Trash** - Soft delete (move to trash)
@@ -568,19 +572,19 @@ teddy-shop/
 // ✅ ALWAYS cast string IDs to ObjectId
 import { ObjectId } from 'mongodb';
 
-const id = "507f1f77bcf86cd799439011";  // String from request
+const id = '507f1f77bcf86cd799439011'; // String from request
 
 // Before querying:
 if (!ObjectId.isValid(id)) {
   return { error: 'Invalid ID' };
 }
 
-const user = await users.findOne({ 
-  _id: new ObjectId(id)  // ✅ Correct
+const user = await users.findOne({
+  _id: new ObjectId(id), // ✅ Correct
 });
 
 // ❌ WRONG:
-const user = await users.findOne({ _id: id });  // Won't work
+const user = await users.findOne({ _id: id }); // Won't work
 ```
 
 ---
@@ -599,10 +603,7 @@ try {
   const validatedData = authorSchema.parse(body);
   // Use validatedData (type-safe!)
 } catch (error) {
-  return NextResponse.json(
-    { error: 'Invalid data', details: error },
-    { status: 400 }
-  );
+  return NextResponse.json({ error: 'Invalid data', details: error }, { status: 400 });
 }
 ```
 
@@ -654,7 +655,7 @@ format(date, 'dd/MM/yyyy');
 formatDistanceToNow(date, { addSuffix: true }); // "2 hours ago"
 
 // Storage in MongoDB
-createdAt: new Date()  // ✅ Always Date objects, not strings
+createdAt: new Date(); // ✅ Always Date objects, not strings
 ```
 
 ---
@@ -668,12 +669,14 @@ createdAt: new Date()  // ✅ Always Date objects, not strings
 #### Schema Changes:
 
 **New Collection:** `homepage_configs`
+
 - Stores homepage configurations
 - Supports 15 section types
 - Version control built-in
 - A/B testing support
 
 **New Interface:** `HomepageSection`
+
 - Layout options (full-width, contained, split)
 - Visibility rules (date range, device type)
 - Custom styling & animations
@@ -681,24 +684,25 @@ createdAt: new Date()  // ✅ Always Date objects, not strings
 
 #### API Routes (12 new):
 
-| Method | Endpoint | Purpose |
-|--------|----------|---------|
-| GET | `/api/homepage` | 🌐 Public - Get active config |
-| GET | `/api/admin/homepage/configs` | List all configs |
-| POST | `/api/admin/homepage/configs` | Create new config |
-| GET | `/api/admin/homepage/configs/[id]` | Get single config |
-| PATCH | `/api/admin/homepage/configs/[id]` | Update config |
-| DELETE | `/api/admin/homepage/configs/[id]` | Delete config |
-| POST | `/api/admin/homepage/configs/[id]/publish` | Publish (go live) |
-| POST | `/api/admin/homepage/configs/[id]/duplicate` | Clone config |
-| POST | `/api/admin/homepage/configs/[id]/schedule` | Schedule publish |
-| POST | `/api/admin/homepage/configs/[id]/variant` | Create A/B variant |
-| GET | `/api/admin/homepage/configs/[id]/versions` | Version history |
-| POST | `/api/admin/homepage/configs/[id]/restore` | Rollback version |
+| Method | Endpoint                                     | Purpose                       |
+| ------ | -------------------------------------------- | ----------------------------- |
+| GET    | `/api/homepage`                              | 🌐 Public - Get active config |
+| GET    | `/api/admin/homepage/configs`                | List all configs              |
+| POST   | `/api/admin/homepage/configs`                | Create new config             |
+| GET    | `/api/admin/homepage/configs/[id]`           | Get single config             |
+| PATCH  | `/api/admin/homepage/configs/[id]`           | Update config                 |
+| DELETE | `/api/admin/homepage/configs/[id]`           | Delete config                 |
+| POST   | `/api/admin/homepage/configs/[id]/publish`   | Publish (go live)             |
+| POST   | `/api/admin/homepage/configs/[id]/duplicate` | Clone config                  |
+| POST   | `/api/admin/homepage/configs/[id]/schedule`  | Schedule publish              |
+| POST   | `/api/admin/homepage/configs/[id]/variant`   | Create A/B variant            |
+| GET    | `/api/admin/homepage/configs/[id]/versions`  | Version history               |
+| POST   | `/api/admin/homepage/configs/[id]/restore`   | Rollback version              |
 
 #### Components (27 new):
 
 **Admin Components (12):**
+
 - `HomepageEditor.tsx` - Main editor interface
 - `SectionBuilder.tsx` - Drag & drop builder
 - `SectionEditorPanel.tsx` - Section content editor
@@ -713,6 +717,7 @@ createdAt: new Date()  // ✅ Always Date objects, not strings
 - `HomepageForm.tsx` - Basic config form
 
 **Frontend Components (15):**
+
 - `HeroBanner.tsx` - Hero section
 - `HeroSlider.tsx` - Rotating heroes
 - `FeaturedProducts.tsx` - Product showcase
@@ -741,23 +746,23 @@ createdAt: new Date()  // ✅ Always Date objects, not strings
 
 #### Authors Collection (7 indexes):
 
-| Index | Type | Purpose | Performance Gain |
-|-------|------|---------|------------------|
-| `slug` | Unique | SEO URLs | 100ms → 9.9ms (**10x**) |
-| `email` | Unique, Sparse | Validation | 50ms → 2ms (**25x**) |
-| `status` | Single | Filtering | 5x faster |
-| `status + type` | Compound | Type filtering | 5x faster |
-| `status + name` | Compound | Sorted lists | 5x faster |
-| `text search` | Text | Full-text search | 500ms → 7.3ms (**70x**) |
-| `createdAt` | Single | Date sorting | 5x faster |
+| Index           | Type           | Purpose          | Performance Gain        |
+| --------------- | -------------- | ---------------- | ----------------------- |
+| `slug`          | Unique         | SEO URLs         | 100ms → 9.9ms (**10x**) |
+| `email`         | Unique, Sparse | Validation       | 50ms → 2ms (**25x**)    |
+| `status`        | Single         | Filtering        | 5x faster               |
+| `status + type` | Compound       | Type filtering   | 5x faster               |
+| `status + name` | Compound       | Sorted lists     | 5x faster               |
+| `text search`   | Text           | Full-text search | 500ms → 7.3ms (**70x**) |
+| `createdAt`     | Single         | Date sorting     | 5x faster               |
 
 #### Posts Collection (3 indexes):
 
-| Index | Purpose | Performance Gain |
-|-------|---------|------------------|
-| `authorInfo.authorId + status` | Post counts | 200ms → 5.8ms (**35x**) |
-| `authorInfo.reviewerId + status` | Review counts | 35x faster |
-| `authorInfo.authorId + status + publishedAt` | Recent posts | 20x faster |
+| Index                                        | Purpose       | Performance Gain        |
+| -------------------------------------------- | ------------- | ----------------------- |
+| `authorInfo.authorId + status`               | Post counts   | 200ms → 5.8ms (**35x**) |
+| `authorInfo.reviewerId + status`             | Review counts | 35x faster              |
+| `authorInfo.authorId + status + publishedAt` | Recent posts  | 20x faster              |
 
 **Total Indexes Created:** 10  
 **Average Performance Improvement:** 38x faster  
@@ -774,17 +779,17 @@ createdAt: new Date()  // ✅ Always Date objects, not strings
 
 #### Vulnerabilities Fixed:
 
-| CVE | Component | Severity | Fix |
-|-----|-----------|----------|-----|
-| CVE-2025-55182 | React Server Components | 🔴 Critical | React 19.2.1 |
-| CVE-2025-66478 | Next.js | 🔴 Critical | Next.js 15.5.7 |
+| CVE            | Component               | Severity    | Fix            |
+| -------------- | ----------------------- | ----------- | -------------- |
+| CVE-2025-55182 | React Server Components | 🔴 Critical | React 19.2.1   |
+| CVE-2025-66478 | Next.js                 | 🔴 Critical | Next.js 15.5.7 |
 
 #### Version Updates:
 
 ```json
 {
   "react": "19.0.0" → "19.2.1",
-  "react-dom": "19.0.0" → "19.2.1", 
+  "react-dom": "19.0.0" → "19.2.1",
   "next": "15.0.3" → "15.5.7"
 }
 ```
@@ -800,6 +805,7 @@ createdAt: new Date()  // ✅ Always Date objects, not strings
 **Status:** ✅ Implemented | **Date:** Dec 4, 2025
 
 #### Problem:
+
 Admin panel was displaying public header/footer → Confusing UX
 
 #### Solution:
@@ -823,6 +829,7 @@ src/app/
 ```
 
 #### Result:
+
 - ✅ Admin = Clean sidebar interface
 - ✅ Public = Full header + footer
 - ✅ No UI conflicts
@@ -835,21 +842,22 @@ src/app/
 
 #### Components Added (11):
 
-| Component | File | Based On | Usage |
-|-----------|------|----------|-------|
-| Table | `table.tsx` | Radix - | Data tables |
-| Card | `card.tsx` | Radix - | Containers |
-| Dialog | `dialog.tsx` | Radix Dialog | Modals |
-| Skeleton | `skeleton.tsx` | Radix - | Loading states |
-| Label | `label.tsx` | Radix Label | Form labels |
-| Select | `select.tsx` | Radix Select | Dropdowns |
-| Dropdown Menu | `dropdown-menu.tsx` | Radix Dropdown | Context menus |
-| Textarea | `textarea.tsx` | Native | Text areas |
-| Switch | `switch.tsx` | Radix Switch | Toggles |
-| Button | `button.tsx` | Radix Slot | Buttons (updated) |
-| Input | `input.tsx` | Native | Inputs (updated) |
+| Component     | File                | Based On       | Usage             |
+| ------------- | ------------------- | -------------- | ----------------- |
+| Table         | `table.tsx`         | Radix -        | Data tables       |
+| Card          | `card.tsx`          | Radix -        | Containers        |
+| Dialog        | `dialog.tsx`        | Radix Dialog   | Modals            |
+| Skeleton      | `skeleton.tsx`      | Radix -        | Loading states    |
+| Label         | `label.tsx`         | Radix Label    | Form labels       |
+| Select        | `select.tsx`        | Radix Select   | Dropdowns         |
+| Dropdown Menu | `dropdown-menu.tsx` | Radix Dropdown | Context menus     |
+| Textarea      | `textarea.tsx`      | Native         | Text areas        |
+| Switch        | `switch.tsx`        | Radix Switch   | Toggles           |
+| Button        | `button.tsx`        | Radix Slot     | Buttons (updated) |
+| Input         | `input.tsx`         | Native         | Inputs (updated)  |
 
 **Style System:**
+
 - Base: Radix UI primitives (headless, accessible)
 - Styling: Tailwind CSS utilities
 - Theming: CSS variables + Tailwind theme
@@ -866,6 +874,7 @@ src/app/
 #### Created: `FLOW.md` (1,175 lines)
 
 **Contents:**
+
 1. **Mermaid Sequence Diagram** - Visual flow
 2. **ASCII Flowchart** - Text-based diagram
 3. **9-Phase Breakdown** - Detailed steps
@@ -877,23 +886,27 @@ src/app/
 #### Key Insights:
 
 **Collections Used:**
+
 - `products` → Stock verification
 - `stockReservations` → Temporary locks (TTL: 15 min)
 - `orders` → Final storage
 - `carts` → User state
 
 **Services:**
+
 - Stock Service → Reserve/release inventory
 - Payment Service → MoMo, VNPay, VietQR integration
 - Email Service → Order confirmation (async)
 
 **Performance:**
+
 - COD orders: ~20ms
 - Online payment: ~320ms
 - Database ops: ~10ms
 - Success rate: 99%+ (with rollback)
 
 **Security:**
+
 - ✅ Server-side price recalculation
 - ✅ Stock reservation locks
 - ✅ Multi-layer validation
@@ -909,11 +922,11 @@ src/app/
 
 ```json
 {
-  "@hookform/resolvers": "^5.2.2",      // Zod + React Hook Form
-  "framer-motion": "^12.23.25",         // Animations
-  "zustand": "^5.0.9",                  // State management
-  "recharts": "^3.5.1",                 // Charts (analytics)
-  
+  "@hookform/resolvers": "^5.2.2", // Zod + React Hook Form
+  "framer-motion": "^12.23.25", // Animations
+  "zustand": "^5.0.9", // State management
+  "recharts": "^3.5.1", // Charts (analytics)
+
   // Tiptap extensions (8):
   "@tiptap/extension-placeholder": "^2.27.1",
   "@tiptap/extension-highlight": "^2.27.1",
@@ -923,25 +936,25 @@ src/app/
   "@tiptap/extension-table-header": "^2.27.1",
   "@tiptap/extension-font-family": "^2.27.1",
   "@tiptap/extension-youtube": "^2.27.1",
-  
+
   // Radix UI (2):
   "@radix-ui/react-accordion": "^1.2.12",
   "@radix-ui/react-tooltip": "^1.2.8",
-  
+
   // Dev tools:
-  "dotenv": "^17.0.0",                  // Env loading for scripts
-  "@eslint/eslintrc": "^3.0.0"          // ESLint compat
+  "dotenv": "^17.0.0", // Env loading for scripts
+  "@eslint/eslintrc": "^3.0.0" // ESLint compat
 }
 ```
 
 #### Configuration Files:
 
-| File | Purpose | Status |
-|------|---------|--------|
-| `.npmrc` | Enable `legacy-peer-deps` | ✅ Created |
-| `.eslintrc.json` | ESLint config (replaced .mjs) | ✅ Migrated |
-| `tailwind.config.ts` | Tailwind theme | ✅ Created |
-| `.lintstagedrc.json` | Pre-commit linting | ✅ Created |
+| File                 | Purpose                       | Status      |
+| -------------------- | ----------------------------- | ----------- |
+| `.npmrc`             | Enable `legacy-peer-deps`     | ✅ Created  |
+| `.eslintrc.json`     | ESLint config (replaced .mjs) | ✅ Migrated |
+| `tailwind.config.ts` | Tailwind theme                | ✅ Created  |
+| `.lintstagedrc.json` | Pre-commit linting            | ✅ Created  |
 
 **React 19 Compatibility:** Handled via `.npmrc` legacy-peer-deps
 
@@ -953,14 +966,14 @@ src/app/
 
 #### Issues Fixed (6):
 
-| Issue | Fix | File |
-|-------|-----|------|
-| Missing imports | Added Label, Loader2 | `VersionHistory.tsx`, `ABTestingPanel.tsx` |
-| useEffect hook order | Moved before return | `WordPressToolbar.tsx` |
-| useSearchParams | Wrapped in Suspense | 5 pages (orders, posts, products, login, checkout/success) |
-| ESLint config | Migrated to .eslintrc.json | `.eslintrc.json` |
-| Sitemap dynamic | Use nextUrl.searchParams | `sitemap.xml/route.ts` |
-| Peer deps | Added .npmrc | `.npmrc` |
+| Issue                | Fix                        | File                                                       |
+| -------------------- | -------------------------- | ---------------------------------------------------------- |
+| Missing imports      | Added Label, Loader2       | `VersionHistory.tsx`, `ABTestingPanel.tsx`                 |
+| useEffect hook order | Moved before return        | `WordPressToolbar.tsx`                                     |
+| useSearchParams      | Wrapped in Suspense        | 5 pages (orders, posts, products, login, checkout/success) |
+| ESLint config        | Migrated to .eslintrc.json | `.eslintrc.json`                                           |
+| Sitemap dynamic      | Use nextUrl.searchParams   | `sitemap.xml/route.ts`                                     |
+| Peer deps            | Added .npmrc               | `.npmrc`                                                   |
 
 #### Build Metrics:
 
@@ -974,10 +987,10 @@ src/app/
 
 #### CI/CD Status:
 
-| Check | Status | Time |
-|-------|--------|------|
-| TypeScript | ✅ Pass | ~30s |
-| ESLint | ✅ Pass | ~30s |
+| Check            | Status  | Time |
+| ---------------- | ------- | ---- |
+| TypeScript       | ✅ Pass | ~30s |
+| ESLint           | ✅ Pass | ~30s |
 | Production Build | ✅ Pass | ~60s |
 
 **GitHub Actions:** `.github/workflows/ci.yml` (updated with --legacy-peer-deps)
@@ -1025,12 +1038,12 @@ docs/
 
 #### Key Documents Created:
 
-| Document | Lines | Purpose |
-|----------|-------|---------|
-| `FLOW.md` | 1,175 | Checkout data flow (NEW) |
-| `DATABASE_SCHEMA.md` | 676 | Schema + indexes analysis |
-| `DOCUMENTATION_INDEX.md` | 220 | Master navigation |
-| `@CONTEXT.md` | 525 | This file (updated) |
+| Document                 | Lines | Purpose                   |
+| ------------------------ | ----- | ------------------------- |
+| `FLOW.md`                | 1,175 | Checkout data flow (NEW)  |
+| `DATABASE_SCHEMA.md`     | 676   | Schema + indexes analysis |
+| `DOCUMENTATION_INDEX.md` | 220   | Master navigation         |
+| `@CONTEXT.md`            | 525   | This file (updated)       |
 
 **Total:** 33 documents organized into 4 logical categories
 
@@ -1042,17 +1055,17 @@ docs/
 
 ### New Collections (2):
 
-| Collection | Purpose | Documents | TTL |
-|------------|---------|-----------|-----|
-| `homepage_configs` | Homepage storage | ~50 | - |
-| `stockReservations` | Stock locks | ~1000/day | 15 min |
+| Collection          | Purpose          | Documents | TTL    |
+| ------------------- | ---------------- | --------- | ------ |
+| `homepage_configs`  | Homepage storage | ~50       | -      |
+| `stockReservations` | Stock locks      | ~1000/day | 15 min |
 
 ### Enhanced Collections (2):
 
-| Collection | Enhancement | Benefit |
-|------------|-------------|---------|
-| `authors` | 7 indexes | 10-70x faster |
-| `posts` | 3 author indexes | 20-35x faster |
+| Collection | Enhancement      | Benefit       |
+| ---------- | ---------------- | ------------- |
+| `authors`  | 7 indexes        | 10-70x faster |
+| `posts`    | 3 author indexes | 20-35x faster |
 
 ### New API Routes (13):
 
@@ -1070,6 +1083,7 @@ docs/
 ## 🎯 Business Logic Enhancements
 
 ### 1. Checkout (See FLOW.md):
+
 - ✅ Multi-layer validation
 - ✅ Stock reservation system
 - ✅ Server-side price validation
@@ -1077,6 +1091,7 @@ docs/
 - ✅ Payment gateway integration
 
 ### 2. Homepage:
+
 - ✅ Dynamic rendering
 - ✅ Section visibility rules
 - ✅ Version control
@@ -1084,6 +1099,7 @@ docs/
 - ✅ ISR caching (1 hour)
 
 ### 3. Authors:
+
 - ✅ E-E-A-T compliance
 - ✅ Post count sync
 - ✅ Reviewer system (YMYL)
@@ -1093,27 +1109,27 @@ docs/
 
 ## 📈 Performance Metrics
 
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| **Slug Lookup** | 100ms | 9.9ms | 10x faster ⚡ |
-| **Author Search** | 500ms | 7.3ms | 70x faster ⚡ |
-| **Post Counts** | 200ms | 5.8ms | 35x faster ⚡ |
-| **Build Time** | N/A | 24-29s | ✅ Fast |
-| **Page Load** | N/A | <2s | ✅ Excellent |
+| Metric            | Before | After  | Improvement   |
+| ----------------- | ------ | ------ | ------------- |
+| **Slug Lookup**   | 100ms  | 9.9ms  | 10x faster ⚡ |
+| **Author Search** | 500ms  | 7.3ms  | 70x faster ⚡ |
+| **Post Counts**   | 200ms  | 5.8ms  | 35x faster ⚡ |
+| **Build Time**    | N/A    | 24-29s | ✅ Fast       |
+| **Page Load**     | N/A    | <2s    | ✅ Excellent  |
 
 ---
 
 ## 🎊 CURRENT STATUS (December 4, 2025)
 
-| Category | Status | Details |
-|----------|--------|---------|
-| **Build** | ✅ Passing | 24s, 183 pages, exit 0 |
-| **Security** | ✅ Patched | 0 vulnerabilities |
-| **Performance** | ⚡ Optimized | 10-70x faster queries |
-| **Documentation** | 📚 Complete | 33 files organized |
-| **CI/CD** | ✅ Passing | All checks green |
-| **Deployment** | 🚀 Ready | Vercel auto-deploy |
-| **Features** | ✅ Complete | Homepage system 100% |
+| Category          | Status       | Details                |
+| ----------------- | ------------ | ---------------------- |
+| **Build**         | ✅ Passing   | 24s, 183 pages, exit 0 |
+| **Security**      | ✅ Patched   | 0 vulnerabilities      |
+| **Performance**   | ⚡ Optimized | 10-70x faster queries  |
+| **Documentation** | 📚 Complete  | 33 files organized     |
+| **CI/CD**         | ✅ Passing   | All checks green       |
+| **Deployment**    | 🚀 Ready     | Vercel auto-deploy     |
+| **Features**      | ✅ Complete  | Homepage system 100%   |
 
 ---
 
@@ -1121,23 +1137,23 @@ docs/
 
 ### Essential Files:
 
-| File | Purpose | When to Read |
-|------|---------|--------------|
-| `README.md` | Project overview | First time setup |
-| `@CONTEXT.md` | This file | Always (AI context) |
-| `FLOW.md` | Checkout flow | Working on orders |
-| `DATABASE_SCHEMA.md` | Schema + indexes | DB queries |
-| `.cursorrules` | Coding standards | Before coding |
+| File                 | Purpose          | When to Read        |
+| -------------------- | ---------------- | ------------------- |
+| `README.md`          | Project overview | First time setup    |
+| `@CONTEXT.md`        | This file        | Always (AI context) |
+| `FLOW.md`            | Checkout flow    | Working on orders   |
+| `DATABASE_SCHEMA.md` | Schema + indexes | DB queries          |
+| `.cursorrules`       | Coding standards | Before coding       |
 
 ### Essential Commands:
 
-| Command | Purpose |
-|---------|---------|
-| `npm run dev` | Start dev server |
-| `npm run build` | Production build |
-| `npm run lint` | Check code quality |
-| `npm run type-check` | TypeScript check |
-| `npm run authors:indexes` | Create DB indexes |
+| Command                   | Purpose            |
+| ------------------------- | ------------------ |
+| `npm run dev`             | Start dev server   |
+| `npm run build`           | Production build   |
+| `npm run lint`            | Check code quality |
+| `npm run type-check`      | TypeScript check   |
+| `npm run authors:indexes` | Create DB indexes  |
 
 ---
 
