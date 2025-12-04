@@ -8,16 +8,16 @@ import { AnalyticsDashboard } from '@/lib/types/analytics';
 import { ChartSkeleton, PieChartSkeleton } from '@/components/admin/analytics/ChartSkeleton';
 
 // Dynamic imports for Recharts - only load when needed (~150KB savings on other pages)
-const RevenueChart = dynamic<{ data: Array<{ date: string; revenue: number }>; formatCurrency: (amount: number) => string }>(
-  () => import('@/components/admin/analytics/AnalyticsCharts').then((mod) => mod.RevenueChart),
+const RevenueChart = dynamic(
+  () => import('@/components/admin/analytics/AnalyticsCharts').then((mod) => ({ default: mod.RevenueChart })),
   {
     loading: () => <ChartSkeleton height={300} />,
     ssr: false,
   }
 );
 
-const TrafficChart = dynamic<{ data: Array<{ source: string; visitors: number; percentage: number }> }>(
-  () => import('@/components/admin/analytics/AnalyticsCharts').then((mod) => mod.TrafficChart),
+const TrafficChart = dynamic(
+  () => import('@/components/admin/analytics/AnalyticsCharts').then((mod) => ({ default: mod.TrafficChart })),
   {
     loading: () => <PieChartSkeleton />,
     ssr: false,
