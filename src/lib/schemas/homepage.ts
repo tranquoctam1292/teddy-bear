@@ -2,11 +2,28 @@
 import { z } from 'zod';
 
 /**
- * SEO Schema
+ * SEO Schema (Strict - for published content)
  */
 export const seoSchema = z.object({
   title: z.string().min(10, 'Title must be at least 10 characters').max(60, 'Title should not exceed 60 characters'),
   description: z.string().min(50, 'Description must be at least 50 characters').max(160, 'Description should not exceed 160 characters'),
+  keywords: z.array(z.string()).optional(),
+  ogImage: z.string().url().optional().or(z.literal('')),
+  ogTitle: z.string().max(60).optional(),
+  ogDescription: z.string().max(160).optional(),
+  twitterCard: z.enum(['summary', 'summary_large_image']).optional(),
+  canonicalUrl: z.string().url().optional().or(z.literal('')),
+  noindex: z.boolean().optional(),
+  nofollow: z.boolean().optional(),
+});
+
+/**
+ * SEO Form Schema (Relaxed - for draft creation)
+ * Allows shorter titles/descriptions during initial creation
+ */
+export const seoFormSchema = z.object({
+  title: z.string().min(3, 'Title must be at least 3 characters').max(60, 'Title should not exceed 60 characters'),
+  description: z.string().min(20, 'Description must be at least 20 characters').max(160, 'Description should not exceed 160 characters'),
   keywords: z.array(z.string()).optional(),
   ogImage: z.string().url().optional().or(z.literal('')),
   ogTitle: z.string().max(60).optional(),
@@ -185,7 +202,7 @@ export const sectionSchema = z.object({
 });
 
 /**
- * Homepage Config Schema
+ * Homepage Config Schema (Strict - for published content)
  */
 export const homepageConfigSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(100),
@@ -199,6 +216,18 @@ export const homepageConfigSchema = z.object({
     maxWidth: z.number().int().min(768).max(1920).optional(),
     backgroundColor: z.string().optional(),
   }).optional(),
+});
+
+/**
+ * Homepage Form Schema (Relaxed - for draft creation/editing)
+ * Uses relaxed SEO validation for better UX during initial creation
+ * SEO fields are optional during creation - user can optimize later in SEO editor
+ */
+export const homepageFormSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters').max(100),
+  description: z.string().max(500).optional(),
+  seoTitle: z.string().min(1, 'SEO title is required').max(60, 'SEO title should not exceed 60 characters'),
+  seoDescription: z.string().min(1, 'SEO description is required').max(160, 'SEO description should not exceed 160 characters'),
 });
 
 /**
@@ -239,5 +268,6 @@ export function generateSlug(name: string): string {
  * Type exports
  */
 export type HomepageConfigFormData = z.infer<typeof homepageConfigSchema>;
+export type HomepageFormFormData = z.infer<typeof homepageFormSchema>;
 export type SectionFormData = z.infer<typeof sectionSchema>;
 

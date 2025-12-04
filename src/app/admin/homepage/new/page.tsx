@@ -1,6 +1,5 @@
 // Admin: Create New Homepage Configuration
 import { Metadata } from 'next';
-import { redirect } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -45,12 +44,17 @@ export default function NewHomepageConfigPage() {
         }
       );
 
-      if (!response.ok) {
-        throw new Error('Failed to create configuration');
+      const data = await response.json();
+
+      // Handle standardized error response
+      if (!response.ok || !data.success) {
+        const errorMessage =
+          data.error?.message || 'Failed to create configuration';
+        throw new Error(errorMessage);
       }
 
-      const data = await response.json();
-      redirect(`/admin/homepage/${data.config._id}/edit`);
+      // Return id instead of redirect (redirect doesn't work from Client Component)
+      return { success: true, id: data.data.config._id };
     } catch (error) {
       console.error('Error creating config:', error);
       throw error;

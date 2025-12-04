@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,9 +16,13 @@ import {
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2 } from 'lucide-react';
+import { homepageFormSchema, type HomepageFormFormData } from '@/lib/schemas/homepage';
+import { useToast } from '@/hooks/use-toast';
 
 interface HomepageFormProps {
-  action: (formData: FormData) => Promise<void>;
+  action: (
+    formData: FormData
+  ) => Promise<{ success: true; id: string } | void>;
   defaultValues?: {
     name?: string;
     description?: string;
@@ -28,60 +33,91 @@ interface HomepageFormProps {
 
 export function HomepageForm({ action, defaultValues }: HomepageFormProps) {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const { toast } = useToast();
+  
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting, isValid, touchedFields },
+    watch,
+  } = useForm<HomepageFormFormData>({
+    resolver: zodResolver(homepageFormSchema),
+    mode: 'onChange', // Validate on change for better UX
+    reValidateMode: 'onChange', // Re-validate on change
+    shouldFocusError: true, // Focus first error field on submit
+    defaultValues: {
+      name: defaultValues?.name || '',
+      description: defaultValues?.description || '',
+      seoTitle: defaultValues?.seoTitle || '',
+      seoDescription: defaultValues?.seoDescription || '',
+    },
+  });
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setLoading(true);
-    setErrors({});
-
-    const formData = new FormData(e.currentTarget);
-
-    // Client-side validation
-    const name = formData.get('name') as string;
-    const seoTitle = formData.get('seoTitle') as string;
-    const seoDescription = formData.get('seoDescription') as string;
-
-    const newErrors: Record<string, string> = {};
-
-    if (!name || name.length < 2) {
-      newErrors.name = 'Name must be at least 2 characters';
-    }
-
-    if (!seoTitle || seoTitle.length < 10) {
-      newErrors.seoTitle = 'SEO title must be at least 10 characters';
-    }
-
-    if (seoTitle && seoTitle.length > 60) {
-      newErrors.seoTitle = 'SEO title should not exceed 60 characters';
-    }
-
-    if (!seoDescription || seoDescription.length < 50) {
-      newErrors.seoDescription = 'SEO description must be at least 50 characters';
-    }
-
-    if (seoDescription && seoDescription.length > 160) {
-      newErrors.seoDescription = 'SEO description should not exceed 160 characters';
-    }
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      await action(formData);
-    } catch (error) {
-      console.error('Form submission error:', error);
-      alert('Failed to save configuration. Please try again.');
-      setLoading(false);
-    }
+  // Debug: Only log when there are errors or during submission
+  if (Object.keys(errors).length > 0) {
+    console.log('[HomepageForm] Validation errors:', errors);
   }
 
+  const seoTitleLength = watch('seoTitle')?.length || 0;
+  const seoDescriptionLength = watch('seoDescription')?.length || 0;
+
+  const onSubmit = async (data: HomepageFormFormData) => {
+    console.log('[HomepageForm] ✅ Form is valid, submitting with data:', data);
+
+    try {
+      // Convert form data to FormData for Server Action compatibility
+      const formData = new FormData();
+      formData.append('name', data.name);
+      if (data.description) {
+        formData.append('description', data.description);
+      }
+      formData.append('seoTitle', data.seoTitle);
+      formData.append('seoDescription', data.seoDescription);
+
+      console.log('[HomepageForm] Calling action...');
+      const result = await action(formData);
+      console.log('[HomepageForm] API Response:', result);
+
+      // Handle redirect for create flow (when id is returned)
+      if (result && typeof result === 'object' && 'id' in result && result.id) {
+        console.log('[HomepageForm] Redirecting to edit page:', `/admin/homepage/${result.id}/edit`);
+        // Show success toast
+        toast({
+          variant: 'success',
+          title: 'Thành công!',
+          description: 'Cấu hình trang chủ đã được tạo. Đang chuyển đến trang chỉnh sửa...',
+        });
+        // Small delay to show toast before redirect
+        setTimeout(() => {
+          router.push(`/admin/homepage/${result.id}/edit`);
+        }, 500);
+      } else {
+        // For update flow (no redirect needed)
+        console.log('[HomepageForm] Configuration saved successfully');
+        toast({
+          variant: 'success',
+          title: 'Đã lưu!',
+          description: 'Cấu hình đã được cập nhật thành công.',
+        });
+      }
+    } catch (error) {
+      console.error('[HomepageForm] Form submission error:', error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : 'Không thể lưu cấu hình. Vui lòng thử lại.';
+      
+      // Show error toast
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi',
+        description: errorMessage,
+      });
+    }
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <Tabs defaultValue="basic" className="w-full">
         <TabsList>
           <TabsTrigger value="basic">Basic Info</TabsTrigger>
@@ -105,13 +141,15 @@ export function HomepageForm({ action, defaultValues }: HomepageFormProps) {
                 </Label>
                 <Input
                   id="name"
-                  name="name"
                   placeholder="e.g., Summer Sale 2024"
-                  defaultValue={defaultValues?.name}
-                  required
+                  {...register('name')}
+                  aria-invalid={errors.name ? 'true' : 'false'}
+                  className={errors.name ? 'border-red-500 focus-visible:ring-red-500' : ''}
                 />
                 {errors.name && (
-                  <p className="text-sm text-red-500">{errors.name}</p>
+                  <p className="text-sm font-medium text-red-600 mt-1" role="alert">
+                    ⚠️ {errors.name.message}
+                  </p>
                 )}
                 <p className="text-sm text-muted-foreground">
                   A descriptive name to identify this configuration
@@ -123,9 +161,8 @@ export function HomepageForm({ action, defaultValues }: HomepageFormProps) {
                 <Label htmlFor="description">Description (Optional)</Label>
                 <Textarea
                   id="description"
-                  name="description"
                   placeholder="Brief description of this homepage configuration..."
-                  defaultValue={defaultValues?.description}
+                  {...register('description')}
                   rows={3}
                 />
                 <p className="text-sm text-muted-foreground">
@@ -153,19 +190,21 @@ export function HomepageForm({ action, defaultValues }: HomepageFormProps) {
                 </Label>
                 <Input
                   id="seoTitle"
-                  name="seoTitle"
                   placeholder="Best Teddy Shop - Quality Toys for Kids"
-                  defaultValue={defaultValues?.seoTitle}
                   maxLength={60}
-                  required
+                  {...register('seoTitle')}
+                  aria-invalid={errors.seoTitle ? 'true' : 'false'}
+                  className={errors.seoTitle ? 'border-red-500 focus-visible:ring-red-500' : ''}
                 />
                 {errors.seoTitle && (
-                  <p className="text-sm text-red-500">{errors.seoTitle}</p>
+                  <p className="text-sm font-medium text-red-600 mt-1" role="alert">
+                    ⚠️ {errors.seoTitle.message}
+                  </p>
                 )}
                 <div className="flex justify-between text-sm text-muted-foreground">
                   <span>Appears in search results and browser tab</span>
-                  <span>
-                    {(defaultValues?.seoTitle?.length || 0)}/60
+                  <span className={seoTitleLength > 60 ? 'text-red-500' : ''}>
+                    {seoTitleLength}/60
                   </span>
                 </div>
               </div>
@@ -177,20 +216,22 @@ export function HomepageForm({ action, defaultValues }: HomepageFormProps) {
                 </Label>
                 <Textarea
                   id="seoDescription"
-                  name="seoDescription"
                   placeholder="Shop our collection of high-quality teddy bears and toys for children of all ages. Free shipping on orders over $50."
-                  defaultValue={defaultValues?.seoDescription}
                   maxLength={160}
                   rows={3}
-                  required
+                  {...register('seoDescription')}
+                  aria-invalid={errors.seoDescription ? 'true' : 'false'}
+                  className={errors.seoDescription ? 'border-red-500 focus-visible:ring-red-500' : ''}
                 />
                 {errors.seoDescription && (
-                  <p className="text-sm text-red-500">{errors.seoDescription}</p>
+                  <p className="text-sm font-medium text-red-600 mt-1" role="alert">
+                    ⚠️ {errors.seoDescription.message}
+                  </p>
                 )}
                 <div className="flex justify-between text-sm text-muted-foreground">
                   <span>Appears below title in search results</span>
-                  <span>
-                    {(defaultValues?.seoDescription?.length || 0)}/160
+                  <span className={seoDescriptionLength > 160 ? 'text-red-500' : ''}>
+                    {seoDescriptionLength}/160
                   </span>
                 </div>
               </div>
@@ -210,18 +251,48 @@ export function HomepageForm({ action, defaultValues }: HomepageFormProps) {
         </TabsContent>
       </Tabs>
 
+      {/* Validation Summary - Always visible when errors exist */}
+      {Object.keys(errors).length > 0 && (
+        <div className="rounded-lg border-2 border-red-300 bg-red-50 p-4 shadow-sm">
+          <div className="flex items-start gap-2">
+            <span className="text-red-600 text-xl">⚠️</span>
+            <div className="flex-1">
+              <h4 className="font-semibold text-red-900 mb-2">
+                Vui lòng sửa các lỗi sau để tiếp tục:
+              </h4>
+              <ul className="list-disc list-inside space-y-1 text-sm text-red-800">
+                {errors.name && <li><strong>Configuration Name:</strong> {errors.name.message}</li>}
+                {errors.seoTitle && <li><strong>Page Title:</strong> {errors.seoTitle.message}</li>}
+                {errors.seoDescription && (
+                  <li><strong>Meta Description:</strong> {errors.seoDescription.message}</li>
+                )}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Actions */}
       <div className="flex justify-end gap-4">
         <Button
           type="button"
           variant="outline"
           onClick={() => router.back()}
-          disabled={loading}
+          disabled={isSubmitting}
         >
           Cancel
         </Button>
-        <Button type="submit" disabled={loading}>
-          {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        <Button 
+          type="submit" 
+          disabled={isSubmitting}
+          onClick={() => {
+            // Log for debugging if needed
+            if (Object.keys(errors).length > 0) {
+              console.log('[HomepageForm] Submit blocked - validation errors:', errors);
+            }
+          }}
+        >
+          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {defaultValues ? 'Save Changes' : 'Create & Continue'}
         </Button>
       </div>
