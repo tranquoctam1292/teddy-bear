@@ -8,9 +8,10 @@ import type { FeaturedProductsContent } from '@/lib/types/homepage';
 import type { SectionComponentProps } from '@/lib/types/homepage';
 import { MOCK_PRODUCTS } from '@/lib/mock-data';
 
-export async function FeaturedProducts({
-  content,
-}: SectionComponentProps<FeaturedProductsContent>) {
+export async function FeaturedProducts(
+  props: SectionComponentProps<FeaturedProductsContent> | { content: FeaturedProductsContent }
+) {
+  const { content } = props;
   // Fetch products based on selection method
   // For Phase 3 demo, use mock data. In production, uncomment database fetch below
   // TODO: Uncomment when ready to use database

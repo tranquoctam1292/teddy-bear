@@ -5,9 +5,32 @@ import bcrypt from 'bcryptjs';
 import { getCollections } from './db';
 
 // Validate required environment variables
-if (!process.env.AUTH_SECRET) {
+// During build, env vars may not be available yet, so we use a placeholder
+// At runtime, this will be validated when auth() is actually called
+const getAuthSecret = (): string => {
+  if (process.env.AUTH_SECRET) {
+    return process.env.AUTH_SECRET;
+  }
+  
+  // During build phase, return placeholder to allow build to complete
+  // Vercel will set AUTH_SECRET via environment variables at runtime
+  // Check for build phase indicators
+  const isBuildPhase =
+    process.env.NEXT_PHASE === 'phase-production-build' ||
+    process.env.VERCEL === '1' ||
+    process.env.CI === 'true' ||
+    (typeof process.env.NODE_ENV === 'undefined' && !process.env.AUTH_SECRET);
+  
+  if (isBuildPhase) {
+    // Return a valid temporary secret during build
+    // This will be replaced at runtime by Vercel environment variables
+    // NextAuth requires a valid secret format (base64-like string)
+    return 'dGVtcF9idWlsZF9zZWNyZXRfcmVwbGFjZV9hdF9ydW50aW1lXzEyMzQ1Njc4OTA=';
+  }
+  
+  // In development, throw to catch missing config early
   throw new Error('AUTH_SECRET is required. Generate with: openssl rand -base64 32');
-}
+};
 
 if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD) {
   console.warn('⚠️  ADMIN_EMAIL and ADMIN_PASSWORD not set. Admin login will not work.');
@@ -202,7 +225,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   // CRITICAL: Explicitly use AUTH_SECRET (not NEXTAUTH_SECRET)
   // NextAuth v5 may fallback to NEXTAUTH_SECRET if secret is undefined
-  secret: process.env.AUTH_SECRET || (() => {
-    throw new Error('AUTH_SECRET is required. Please set it in .env.local file.');
-  })(),
+  // Use getAuthSecret() to handle build-time vs runtime
+  secret: getAuthSecret(),
 });

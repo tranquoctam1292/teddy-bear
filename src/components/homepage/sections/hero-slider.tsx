@@ -49,7 +49,10 @@ interface HeroSliderContent {
   transition?: 'fade' | 'slide';
 }
 
-export function HeroSlider({ content }: SectionComponentProps<HeroSliderContent>) {
+export function HeroSlider(
+  props: SectionComponentProps<HeroSliderContent> | { content: HeroSliderContent }
+) {
+  const { content } = props;
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const slides = content.slides || [];
