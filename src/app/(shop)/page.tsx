@@ -8,7 +8,7 @@ import { FeaturedProducts } from '@/components/homepage/sections/FeaturedProduct
 import { GiftGuide } from '@/components/homepage/sections/gift-guide';
 import { AgeRecommendation } from '@/components/homepage/sections/age-recommendation';
 import { BlogPosts } from '@/components/homepage/sections/blog-posts';
-import { Newsletter } from '@/components/homepage/sections/newsletter';
+import { Newsletter } from '@/components/homepage/sections/Newsletter';
 import {
   MOCK_PRODUCTS,
   NEWSLETTER_CONTENT,
