@@ -83,9 +83,26 @@ This will create an admin account with credentials shown in the terminal output.
 - Inventory tracking
 - Transaction management
 
+### 🎁 New Features (Dec 2025 Upgrade)
+
+- **Gifting System**: Gift wrapping options, gift messages, special occasions
+- **360° Product View**: Interactive 360-degree image viewer
+- **Combo Products**: Bundle products with automatic discount calculation
+- **Advanced CMS**: Enhanced product form with detailed specs, media management
+- **Product Tabs**: Organized product information (Description, Specs, Reviews, Care)
+- **Enhanced Gallery**: Image zoom, video support, lifestyle images
+- **Cross-sell**: Related products and combo recommendations
+
 ### 📝 Content Management System
 
-- Blog posts with rich text editor (Tiptap)
+- **Blog System (v2.0 - Dec 2025):**
+  - Rich text editor (Tiptap) with 5 template types
+  - Gift Guide, Review, Care Guide, Story templates
+  - Product linking (inline, sidebar, bottom)
+  - Reading time calculation
+  - Table of contents generator
+  - Spam-filtered comment system with CAPTCHA
+  - SEO tools (Schema.org, Meta tags, Open Graph)
 - Landing pages (hierarchical structure)
 - Media library (drag & drop upload)
 - Comments system with moderation
@@ -163,9 +180,36 @@ npm run dev              # Development server
 npm run build            # Production build
 npm run start            # Start production
 npm run lint             # Run linter
+npm run type-check       # TypeScript type check
+npm run test             # Run unit tests (watch mode)
+npm run test:run         # Run unit tests (once)
 npm run test:db          # Test MongoDB
 npm run reset:admin      # Reset admin password
 ```
+
+### Pre-Deployment Check
+
+```bash
+# Run comprehensive pre-deployment checks
+npm run pre-deploy
+
+# Blog-specific pre-deployment check
+npm run blog:pre-deploy
+```
+
+**General Pre-Deploy Check:**
+- TypeScript type errors
+- ESLint errors
+- Unit tests
+- Production build
+
+**Blog Pre-Deploy Check:**
+- TypeScript type check
+- ESLint check
+- Blog schema tests
+- Blog utils tests (spam detection)
+- Blog component tests
+- Next.js build check
 
 ---
 

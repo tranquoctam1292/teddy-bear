@@ -31,12 +31,13 @@ export default function AdminPostNewPage() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to create post');
+        const errorData = await response.json();
+        const errorMessage = errorData.error?.message || errorData.message || 'Failed to create post';
+        throw new Error(errorMessage);
       }
 
       const result = await response.json();
-      const post = result.post;
+      const post = result.data?.post || result.post;
 
       // Return response for PostEditor to extract ID and save analysis
       // Note: SEO analysis will be saved by PostEditor component

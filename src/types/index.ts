@@ -32,6 +32,9 @@ export type CartItem = {
   price: number;
   quantity: number;
   image: string;
+  // Gift options (optional)
+  giftWrappingOption?: string;
+  giftMessage?: string;
 };
 
 // Upsell Services Types

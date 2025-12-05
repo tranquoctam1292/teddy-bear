@@ -3,14 +3,21 @@
 // Trang chi tiết sản phẩm (Dynamic Route)
 import { useState, useCallback, use, useEffect } from 'react';
 import Link from 'next/link';
-import { ShoppingCart, Heart, Share2, Ruler, Star, Check } from 'lucide-react';
-import ProductGallery from '@/components/product/ProductGallery';
+import { ShoppingCart, Heart, Ruler, Star, Check } from 'lucide-react';
+import ProductGalleryEnhanced from '@/components/product/product-gallery-enhanced';
+import ProductTabs from '@/components/product/product-tabs';
+import GiftFeaturesSection from '@/components/product/gift-features-section';
+import ComboProducts from '@/components/product/combo-products';
+import RelatedProducts from '@/components/product/related-products';
+import SocialShare from '@/components/product/social-share';
 import VariantSelector from '@/components/product/VariantSelector';
 import SizeGuideModal from '@/components/product/SizeGuideModal.lazy';
 import MobileBuyButton from '@/components/product/MobileBuyButton';
 import { useCartStore } from '@/store/useCartStore';
-import { formatCurrency } from '@/lib/utils';
-import type { Variant, Product } from '@/types';
+import { useToast } from '@/hooks/use-toast';
+import { formatCurrency } from '@/lib/utils/format';
+import type { Variant } from '@/types';
+import type { Product } from '@/lib/schemas/product';
 import JsonLd from '@/components/seo/JsonLd';
 import { generateProductSchema } from '@/lib/seo/schemas';
 import Breadcrumb from '@/components/navigation/Breadcrumb';
@@ -28,7 +35,12 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
   const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
+  const [giftOptions, setGiftOptions] = useState<{
+    wrappingOption?: string;
+    message?: string;
+  }>({});
   const { addItem } = useCartStore();
+  const { toast } = useToast();
 
   // Fetch product from API
   useEffect(() => {
@@ -95,7 +107,23 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   }
 
   const handleAddToCart = () => {
-    if (!selectedVariant) return;
+    if (!selectedVariant) {
+      toast({
+        title: 'Vui lòng chọn biến thể',
+        description: 'Bạn cần chọn kích thước trước khi thêm vào giỏ hàng',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (selectedVariant.stock === 0) {
+      toast({
+        title: 'Hết hàng',
+        description: 'Sản phẩm này hiện đang hết hàng',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     addItem({
       productId: product.id,
@@ -105,10 +133,19 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
       price: selectedVariant.price,
       quantity,
       image: selectedVariant.image || product.images[0],
+      giftWrappingOption: giftOptions.wrappingOption,
+      giftMessage: giftOptions.message,
+    });
+
+    toast({
+      title: 'Đã thêm vào giỏ hàng',
+      description: `${product.name} (${selectedVariant.size}) đã được thêm vào giỏ hàng`,
     });
   };
 
-  const currentPrice = selectedVariant?.price || product.basePrice;
+  // Handle both Product types (from @/types and @/lib/schemas/product)
+  const productMinPrice = 'minPrice' in product ? product.minPrice : ('basePrice' in product ? product.basePrice : 0);
+  const currentPrice = selectedVariant?.price || productMinPrice || 0;
 
   // Generate JSON-LD schema
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_SITE_URL || 'https://emotionalhouse.vn');
@@ -148,8 +185,8 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
           {/* Left: Product Gallery */}
           <div>
-            <ProductGallery
-              images={product.images}
+            <ProductGalleryEnhanced
+              product={product}
               selectedVariant={selectedVariant || undefined}
             />
           </div>
@@ -192,18 +229,14 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
               <span className="text-4xl font-bold text-pink-600">
                 {formatCurrency(currentPrice)}
               </span>
-              {product.maxPrice && product.maxPrice > product.basePrice && (
+              {product.maxPrice && product.maxPrice > productMinPrice && (
                 <span className="text-xl text-gray-400 line-through">
                   {formatCurrency(product.maxPrice)}
                 </span>
               )}
             </div>
 
-            {/* Description */}
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-2">Mô tả sản phẩm</h3>
-              <p className="text-gray-600 leading-relaxed">{product.description}</p>
-            </div>
+            {/* Description - Moved to Tabs below */}
 
             {/* Tags */}
             {product.tags.length > 0 && (
@@ -277,6 +310,12 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
               </div>
             </div>
 
+            {/* Gift Features Section */}
+            <GiftFeaturesSection
+              product={product}
+              onGiftOptionChange={setGiftOptions}
+            />
+
             {/* Action Buttons - Hidden on mobile (using MobileBuyButton instead) */}
             <div className="hidden lg:block space-y-3">
               <button
@@ -293,10 +332,13 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                   <Heart className="w-5 h-5" />
                   Yêu thích
                 </button>
-                <button className="flex items-center justify-center gap-2 py-3 px-4 border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                  <Share2 className="w-5 h-5" />
-                  Chia sẻ
-                </button>
+                <div className="flex items-center justify-center">
+                  <SocialShare
+                    productName={product.name}
+                    productSlug={product.slug}
+                    productImage={product.images[0]}
+                  />
+                </div>
               </div>
             </div>
 
@@ -320,6 +362,21 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
             </div>
           </div>
         </div>
+
+        {/* Product Tabs - Full Width */}
+        <div className="mt-12 lg:col-span-2">
+          <ProductTabs product={product} />
+        </div>
+
+        {/* Combo Products - Full Width */}
+        <div className="mt-8 lg:col-span-2">
+          <ComboProducts product={product} />
+        </div>
+      </div>
+
+      {/* Related Products - Full Width */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <RelatedProducts product={product} />
       </div>
 
       {/* Size Guide Modal */}

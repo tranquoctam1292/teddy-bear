@@ -1,9 +1,9 @@
 # 🐻 Teddy Shop - Project Context & Architecture
 
 **Last Updated:** December 5, 2025  
-**Status:** Production Ready (Phase 14 Complete - Architect & Performance Pass)  
+**Status:** Production Ready (Phase 15 Complete - Blog System & Comment System)  
 **Build:** ✅ Passing | **Security:** ✅ CVEs Patched | **Performance:** ⚡ Highly Optimized (-44% bundle)  
-**Recent Updates:** Product Variants System | Cart Integration | Documentation Cleanup (40% reduction)
+**Recent Updates:** Blog System (Templates, Product Linking, Reading Time) | Comment System (Spam Detection, CAPTCHA, Moderation) | Pre-Deploy Checks
 
 ---
 
@@ -174,6 +174,20 @@ interface Post {
     };
   };
 
+  // Blog Enhancements (NEW - Dec 2025)
+  readingTime?: number; // Minutes to read
+  tableOfContents?: TOCItem[]; // Auto-generated from headings
+  linkedProducts?: LinkedProduct[]; // Product linking
+  template?: 'standard' | 'comparison' | 'gift-guide'; // Template type
+  templateData?: {
+    // For comparison template
+    comparisonTable?: ComparisonTable;
+    // For gift-guide template
+    occasion?: string;
+    priceRange?: string;
+    deliveryOptions?: string[];
+  };
+
   // Analytics
   views?: number;
   likes?: number;
@@ -184,6 +198,36 @@ interface Post {
 ```
 
 **Indexes:** 3 author-related indexes for fast queries
+
+---
+
+#### `comments` Collection (NEW - Dec 2025)
+
+```typescript
+interface Comment {
+  _id: ObjectId;
+  postId: string; // Reference to Post
+  authorName: string;
+  authorEmail: string;
+  content: string; // Sanitized HTML
+  parentId?: string; // For nested replies
+  status: 'approved' | 'pending' | 'spam' | 'auto-spam';
+  spamScore?: number; // 0-100, higher = more likely spam
+  spamReasons?: string[]; // Reasons why marked as spam
+  ipAddress?: string; // For rate limiting
+  userAgent?: string; // For bot detection
+  likes?: number;
+  dislikes?: number;
+  createdAt: Date;
+  updatedAt?: Date;
+}
+```
+
+**Indexes:**
+
+- `postId + status` - Fast comment queries per post
+- `status` - Admin moderation filtering
+- `createdAt` - Date sorting
 
 ---
 
@@ -453,6 +497,49 @@ User sees success page or payment gateway
 
 ---
 
+### 💬 Comment System (NEW - Dec 2025)
+
+```
+User submits comment
+   ↓
+1. Validate input (Zod schema)
+2. Sanitize content (XSS prevention)
+3. Run spam detection (keywords, links, caps, blacklist)
+4. Verify CAPTCHA (Cloudflare Turnstile)
+5. Set status: 'approved' | 'pending' | 'auto-spam'
+6. Insert into MongoDB
+   ↓
+7. Admin moderation dashboard
+   ├─ View all comments (pending/spam/approved)
+   ├─ Approve pending comments
+   ├─ Mark spam
+   └─ Delete comments
+   ↓
+8. Frontend displays approved comments
+   ├─ Nested replies (parentId)
+   ├─ Gravatar avatars
+   └─ Reply functionality
+```
+
+**Features:**
+
+- ✅ Automatic spam detection (keywords, links, all caps, blacklisted emails)
+- ✅ CAPTCHA protection (Cloudflare Turnstile)
+- ✅ Admin moderation dashboard
+- ✅ Nested replies support
+- ✅ XSS protection (content sanitization)
+- ✅ Rate limiting (IP tracking)
+
+**Spam Detection Rules:**
+
+- Blocked keywords: "buy now", "click here", "free money", etc.
+- Multiple links (>2) → Higher spam score
+- All caps content → Spam indicator
+- Blacklisted email domains → Auto-spam
+- Spam score 0-100: <30 = approved, 30-79 = pending, ≥80 = auto-spam
+
+---
+
 ### 🖼️ Media Handling
 
 ```
@@ -513,9 +600,11 @@ teddy-shop/
 │   │   │   │   ├── authors/          # Author CRUD API
 │   │   │   │   ├── posts/            # Post CRUD API
 │   │   │   │   ├── homepage/         # 🆕 Homepage API
+│   │   │   │   ├── comments/         # 🆕 Comment moderation API
 │   │   │   │   └── ...
 │   │   │   ├── authors/              # Public author API
 │   │   │   ├── homepage/             # 🆕 Public homepage API
+│   │   │   ├── comments/             # 🆕 Public comment API
 │   │   │   ├── checkout/             # Checkout API
 │   │   │   └── cart/                 # Cart API
 │   │   │
@@ -535,7 +624,20 @@ teddy-shop/
 │   │   │
 │   │   ├── blog/                     # Blog frontend
 │   │   │   ├── AuthorBox.tsx         # Author display
-│   │   │   └── ReviewerBox.tsx       # Reviewer display
+│   │   │   ├── ReviewerBox.tsx       # Reviewer display
+│   │   │   ├── blog-filters.tsx      # Filter & search
+│   │   │   ├── table-of-contents.tsx  # TOC sidebar
+│   │   │   ├── social-share-buttons.tsx # Share buttons
+│   │   │   ├── reading-time-badge.tsx # Reading time
+│   │   │   ├── product-link-card.tsx  # Product cards
+│   │   │   ├── product-comparison-view.tsx # Comparison table
+│   │   │   ├── gift-guide-view.tsx    # Gift guide template
+│   │   │   ├── blog-post-renderer.tsx # Main renderer
+│   │   │   └── comments/              # Comment components
+│   │   │       ├── comment-form.tsx   # Comment submission
+│   │   │       ├── comment-list.tsx   # Comment list
+│   │   │       ├── comment-item.tsx   # Single comment
+│   │   │       └── comment-section.tsx # Wrapper
 │   │   │
 │   │   ├── homepage/                 # 🆕 Homepage sections
 │   │   │   ├── HomepageRenderer.tsx  # Main renderer
@@ -562,10 +664,13 @@ teddy-shop/
 │   │   ├── schemas/                  # Zod validation
 │   │   │   ├── author.ts
 │   │   │   ├── homepage.ts           # 🆕
+│   │   │   ├── post.ts               # Blog post schema
+│   │   │   ├── comment.ts            # 🆕 Comment schema
 │   │   │   └── ...
 │   │   ├── utils/                    # 🆕 Centralized utilities
 │   │   │   ├── slug.ts               # Slug generation
-│   │   │   └── format.ts             # Date/currency formatting
+│   │   │   ├── format.ts             # Date/currency formatting
+│   │   │   └── spam-detection.ts     # 🆕 Spam detection logic
 │   │   ├── payment/                  # Payment gateways
 │   │   ├── stock/                    # Stock management
 │   │   └── email/                    # Email service
@@ -1466,6 +1571,24 @@ teddy-shop/
 - ✅ Reviewer system (YMYL)
 - ✅ Fast search (text indexes)
 
+### 4. Blog System (NEW - Dec 2025):
+
+- ✅ Template system (standard, comparison, gift-guide)
+- ✅ Product linking (inline, sidebar, bottom)
+- ✅ Reading time calculation
+- ✅ Table of contents (auto-generated)
+- ✅ Social sharing (Facebook, Zalo, Copy Link)
+- ✅ SEO optimized (meta tags, structured data)
+
+### 5. Comment System (NEW - Dec 2025):
+
+- ✅ Automatic spam detection (keywords, links, all caps, blacklist)
+- ✅ CAPTCHA protection (Cloudflare Turnstile)
+- ✅ Admin moderation dashboard
+- ✅ Nested replies support
+- ✅ XSS protection (content sanitization)
+- ✅ Status workflow (pending → approved/spam)
+
 ---
 
 ## 📈 Performance Metrics
@@ -1539,9 +1662,9 @@ teddy-shop/
 
 ---
 
-**Document Version:** 3.1  
-**Last Major Update:** December 5, 2025 (Homepage Toolbar & UI Components)  
-**Phase:** 14 - Performance Optimization Complete  
+**Document Version:** 3.2  
+**Last Major Update:** December 5, 2025 (Blog System & Comment System Integration)  
+**Phase:** 15 - Blog System Complete  
 **Next Review:** When major features added  
 **Maintained By:** AI + Developer collaboration
 

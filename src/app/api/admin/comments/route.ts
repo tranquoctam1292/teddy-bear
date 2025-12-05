@@ -1,11 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCollections } from '@/lib/db';
+import { auth } from '@/lib/auth';
 import { CommentFilter, CommentStats } from '@/lib/types/comment';
 import { ObjectId } from 'mongodb';
 
 // GET /api/admin/comments - List all comments
 export async function GET(request: NextRequest) {
   try {
+    // Check authentication
+    const session = await auth();
+    if (!session || session.user?.role !== 'admin') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'AUTH_ERROR',
+            message: 'Unauthorized',
+          },
+        },
+        { status: 401 }
+      );
+    }
     const { searchParams } = new URL(request.url);
 
     const filter: CommentFilter = {
@@ -115,7 +130,7 @@ export async function GET(request: NextRequest) {
       all: await comments.countDocuments({}),
       pending: await comments.countDocuments({ status: 'pending' }),
       approved: await comments.countDocuments({ status: 'approved' }),
-      spam: await comments.countDocuments({ status: 'spam' }),
+      spam: await comments.countDocuments({ status: { $in: ['spam', 'auto-spam'] } }),
       trash: await comments.countDocuments({ status: 'trash' }),
     };
 
@@ -139,6 +154,21 @@ export async function GET(request: NextRequest) {
 // PATCH /api/admin/comments - Bulk actions
 export async function PATCH(request: NextRequest) {
   try {
+    // Check authentication
+    const session = await auth();
+    if (!session || session.user?.role !== 'admin') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'AUTH_ERROR',
+            message: 'Unauthorized',
+          },
+        },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const { ids, action } = body;
 
@@ -196,6 +226,21 @@ export async function PATCH(request: NextRequest) {
 // DELETE /api/admin/comments - Bulk delete
 export async function DELETE(request: NextRequest) {
   try {
+    // Check authentication
+    const session = await auth();
+    if (!session || session.user?.role !== 'admin') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'AUTH_ERROR',
+            message: 'Unauthorized',
+          },
+        },
+        { status: 401 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const ids = searchParams.get('ids')?.split(',') || [];
 

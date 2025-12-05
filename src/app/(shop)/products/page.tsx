@@ -7,6 +7,9 @@ import ProductCard from '@/components/product/ProductCard';
 import FilterSidebar, { type FilterState } from '@/components/filter/FilterSidebar';
 import { mockProducts, filterProducts } from '@/lib/data/mock-products';
 
+// Ensure mockProducts is always an array
+const safeMockProducts = Array.isArray(mockProducts) ? mockProducts : [];
+
 export default function ProductsPage() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
@@ -19,7 +22,14 @@ export default function ProductsPage() {
 
   // Apply filters
   const filteredProducts = useMemo(() => {
-    return filterProducts(mockProducts, filters);
+    // Ensure filters object has all required properties
+    const safeFilters = {
+      priceRange: Array.isArray(filters.priceRange) ? filters.priceRange : [],
+      categories: Array.isArray(filters.categories) ? filters.categories : [],
+      sizes: Array.isArray(filters.sizes) ? filters.sizes : [],
+      occasions: Array.isArray(filters.occasions) ? filters.occasions : [],
+    };
+    return filterProducts(safeMockProducts, safeFilters);
   }, [filters]);
 
   const activeFilterCount = Object.values(filters).flat().length;
@@ -134,9 +144,23 @@ export default function ProductsPage() {
                     : 'space-y-6'
                 }
               >
-                {filteredProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
+                {filteredProducts.map((product) => {
+                  // Convert MockProduct to Product type with defaults
+                  const productForCard: Product = {
+                    ...product,
+                    id: product.id,
+                    name: product.name,
+                    slug: product.slug,
+                    basePrice: product.minPrice || 0,
+                    images: product.images || [],
+                    variants: [], // Mock products don't have variants
+                    tags: [],
+                    category: product.category || '',
+                    description: product.description || '',
+                    isActive: true,
+                  };
+                  return <ProductCard key={product.id} product={productForCard} />;
+                })}
               </div>
             )}
           </div>

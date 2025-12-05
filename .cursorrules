@@ -34,11 +34,14 @@
 | **Auth**      | NextAuth v5                          |
 | **Styling**   | Tailwind CSS, Radix UI, Lucide Icons |
 | **State**     | Zustand, React Hook Form             |
+| **Blog**      | Tiptap, date-fns                     |
+| **Security**  | Cloudflare Turnstile (CAPTCHA)        |
 
 ### 🎯 Key Features
 
 - Author Management (E-E-A-T compliance)
-- Blog with Tiptap editor
+- Blog System with Tiptap editor, templates, product linking, reading time, table of contents
+- Comment System with spam detection, CAPTCHA (Cloudflare Turnstile), and admin moderation
 - Product Management
 - SEO Tools (Keywords, Schema.org, Audit)
 - Homepage Configuration System (15 sections)
@@ -293,6 +296,122 @@ export function ClientComponent() {
 ```
 
 **Rule:** NEVER import server-only code (db.ts, env secrets) in 'use client' files.
+
+---
+
+#### Environment Variables in Build Phase (CRITICAL - Dec 2025)
+
+**Problem:** Next.js build phase (especially on Vercel) may not have access to environment variables. Code that validates env vars at module import time will fail during build.
+
+**Rule:** Environment variables MUST be validated at runtime, not at module import time.
+
+```typescript
+// ❌ WRONG: Validate at import time
+// src/lib/auth.ts
+if (!process.env.AUTH_SECRET) {
+  throw new Error('AUTH_SECRET is required'); // ❌ Fails during build!
+}
+
+export const auth = NextAuth({
+  secret: process.env.AUTH_SECRET, // May be undefined during build
+});
+
+// ✅ CORRECT: Validate at runtime with build phase detection
+// src/lib/auth.ts
+const getAuthSecret = (): string => {
+  if (process.env.AUTH_SECRET) {
+    return process.env.AUTH_SECRET;
+  }
+  
+  // Detect build phase
+  const isBuildPhase =
+    process.env.NEXT_PHASE === 'phase-production-build' ||
+    process.env.VERCEL === '1' ||
+    process.env.CI === 'true' ||
+    (typeof process.env.NODE_ENV === 'undefined' && !process.env.AUTH_SECRET);
+  
+  if (isBuildPhase) {
+    // Return temporary valid secret during build
+    // Vercel will inject real secret at runtime
+    return 'dGVtcF9idWlsZF9zZWNyZXRfcmVwbGFjZV9hdF9ydW50aW1lXzEyMzQ1Njc4OTA=';
+  }
+  
+  // In development, throw to catch missing config early
+  throw new Error('AUTH_SECRET is required. Generate with: openssl rand -base64 32');
+};
+
+export const auth = NextAuth({
+  secret: getAuthSecret(), // Safe during build, validated at runtime
+});
+```
+
+**Build Phase Detection:**
+
+```typescript
+// Detect if we're in build phase
+const isBuildPhase =
+  process.env.NEXT_PHASE === 'phase-production-build' || // Next.js build
+  process.env.VERCEL === '1' ||                          // Vercel build
+  process.env.CI === 'true' ||                            // CI/CD environment
+  (typeof process.env.NODE_ENV === 'undefined' && !process.env.AUTH_SECRET); // Fallback
+```
+
+**Pattern for Env Var Validation:**
+
+```typescript
+// ✅ CORRECT: Lazy validation function
+const getRequiredEnv = (key: string, defaultValue?: string): string => {
+  const value = process.env[key];
+  
+  if (value) {
+    return value;
+  }
+  
+  // During build, return placeholder if default provided
+  const isBuildPhase = 
+    process.env.NEXT_PHASE === 'phase-production-build' ||
+    process.env.VERCEL === '1' ||
+    process.env.CI === 'true';
+  
+  if (isBuildPhase && defaultValue) {
+    return defaultValue; // Temporary placeholder
+  }
+  
+  // In development/runtime, throw if missing
+  throw new Error(`${key} is required. Set it in .env.local or environment variables.`);
+};
+
+// Usage
+const dbUri = getRequiredEnv('MONGODB_URI');
+const authSecret = getRequiredEnv('AUTH_SECRET', 'temp_build_secret');
+```
+
+**When to Apply:**
+
+- ✅ NextAuth secret configuration
+- ✅ Database connection strings
+- ✅ API keys used in server-side code
+- ✅ Any env var validated at module level
+
+**When NOT to Apply:**
+
+- ❌ Client-side env vars (`NEXT_PUBLIC_*`) - available during build
+- ❌ Runtime-only validation (inside API routes) - safe to validate immediately
+- ❌ Optional env vars - can use `process.env.VAR || 'default'`
+
+**Vercel-Specific Notes:**
+
+- Vercel injects env vars at runtime, not build time
+- Build phase uses placeholder values
+- Runtime phase uses actual env vars from Vercel dashboard
+- Always configure env vars in Vercel project settings
+
+**Benefits:**
+
+- ✅ Build succeeds on Vercel/CI
+- ✅ Runtime validation catches missing config
+- ✅ Development fails fast with clear error messages
+- ✅ No breaking changes to existing code
 
 ---
 
@@ -784,6 +903,84 @@ import { cn } from '@/lib/utils';
 
 ---
 
+#### Component Props Flexibility (CRITICAL - Dec 2025)
+
+**Problem:** Components used in multiple contexts (HomepageRenderer vs direct usage) may receive different prop structures.
+
+**Rule:** Components that can be used both via HomepageRenderer and directly MUST support flexible props.
+
+```typescript
+// ❌ WRONG: Strict props only
+interface SectionComponentProps<T> {
+  section: Section;
+  content: T;
+  layout: Layout;
+}
+
+export function HeroSlider({ content }: SectionComponentProps<HeroSliderContent>) {
+  // Only works with HomepageRenderer
+}
+
+// ✅ CORRECT: Flexible props with union type
+interface SectionComponentProps<T> {
+  section: Section;
+  content: T;
+  layout: Layout;
+}
+
+export function HeroSlider({
+  content,
+  section, // Optional for direct usage
+  layout, // Optional for direct usage
+}: SectionComponentProps<HeroSliderContent> | { content: HeroSliderContent }) {
+  // Extract content based on prop structure
+  const sliderContent = 'section' in arguments[0] 
+    ? (arguments[0] as SectionComponentProps<HeroSliderContent>).content 
+    : content;
+  
+  // Use sliderContent instead of content
+  const slides = sliderContent.slides || [];
+}
+```
+
+**Pattern for Flexible Components:**
+
+```typescript
+// 1. Define both prop types
+type FullProps<T> = SectionComponentProps<T>;
+type DirectProps<T> = { content: T };
+
+// 2. Use union type in function signature
+export function Component<T>(props: FullProps<T> | DirectProps<T>) {
+  // 3. Extract content safely
+  const content = 'section' in props ? props.content : props.content;
+  
+  // 4. Use content normally
+  return <div>{content.title}</div>;
+}
+```
+
+**When to Apply:**
+
+- ✅ Homepage section components (HeroSlider, FeaturedProducts, etc.)
+- ✅ Components used in both admin editor and public pages
+- ✅ Reusable components with different contexts
+
+**When NOT to Apply:**
+
+- ❌ Simple UI components (Button, Input) - keep strict props
+- ❌ Internal-only components - no need for flexibility
+- ❌ API-only components - single context
+
+**Benefits:**
+
+- ✅ Single component works in multiple contexts
+- ✅ No duplicate component code
+- ✅ Type-safe with union types
+- ✅ Backward compatible with existing code
+
+---
+
 ### 5️⃣ Utility Functions (NEW - Dec 2025)
 
 #### Centralized Utilities:
@@ -923,12 +1120,37 @@ git mv button-temp.tsx button.tsx
 - 🔴 **CI (Linux/Docker):** Case-sensitive → Module not found errors
 - 🚨 **Production:** Same as CI → Deploy will fail
 
-**Recent Case Sensitivity Fix (Dec 2025):**
+**Import Path Verification (CRITICAL):**
+
+```typescript
+// ❌ WRONG: Case mismatch between file and import
+// File: src/components/homepage/sections/Newsletter.tsx
+import { Newsletter } from '@/components/homepage/sections/newsletter'; // ❌ Fails on Linux!
+
+// ✅ CORRECT: Match exact case
+// File: src/components/homepage/sections/newsletter.tsx (lowercase)
+import { Newsletter } from '@/components/homepage/sections/newsletter'; // ✅ Works everywhere
+
+// ✅ CORRECT: Or use exact case match
+// File: src/components/homepage/sections/Newsletter.tsx (PascalCase)
+import { Newsletter } from '@/components/homepage/sections/Newsletter'; // ✅ Works if file is PascalCase
+```
+
+**Pre-commit Checklist for Imports:**
+
+1. ✅ Verify import path matches actual filename (case-sensitive)
+2. ✅ Use lowercase filenames to avoid issues
+3. ✅ Test imports on case-sensitive filesystem (Linux/CI)
+4. ✅ Check for `Module not found` errors in build logs
+
+**Recent Case Sensitivity Fixes (Dec 2025):**
 
 - Fixed: `Button.tsx` → `button.tsx`
 - Fixed: `Input.tsx` → `input.tsx`
-- Issue: CI build failed with "Module not found"
-- Lesson: ALWAYS use lowercase filenames
+- Fixed: `Newsletter.tsx` → `newsletter.tsx` (import path mismatch)
+- Issue: CI build failed with "Module not found: Can't resolve '@/components/homepage/sections/newsletter'"
+- Root Cause: Import used lowercase `newsletter` but file was `Newsletter.tsx`
+- Lesson: ALWAYS use lowercase filenames AND verify import paths match exactly
 
 ---
 
@@ -1071,7 +1293,90 @@ import SizeGuideModal from '@/components/product/SizeGuideModal.lazy';
 
 ---
 
-### 4️⃣ Documentation Management
+### 4️⃣ Comment System (NEW - Dec 2025)
+
+#### Key Rules:
+
+**Spam Detection:**
+
+```typescript
+// ✅ ALWAYS run spam detection on comment submission
+import { detectSpam } from '@/lib/utils/spam-detection';
+
+const spamResult = detectSpam({
+  content: commentContent,
+  authorEmail: email,
+  authorName: name,
+});
+
+// Set status based on spam score
+if (spamResult.isSpam) {
+  status = spamResult.score >= 80 ? 'auto-spam' : 'pending';
+}
+```
+
+**CAPTCHA Integration (Cloudflare Turnstile):**
+
+```typescript
+// ✅ ALWAYS require CAPTCHA token for comment submission
+import { Turnstile } from '@marsidev/react-turnstile';
+
+// In CommentForm component:
+<Turnstile
+  siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '1x00000000000000000000AA'}
+  onSuccess={handleCaptchaSuccess}
+  onError={handleCaptchaError}
+/>
+
+// Submit button disabled until CAPTCHA solved
+<Button disabled={!isCaptchaSolved || isSubmitting}>
+  Gửi bình luận
+</Button>
+```
+
+**Comment Status Flow:**
+
+```typescript
+// Status transitions:
+'pending' → Admin approves → 'approved'
+'pending' → Admin marks spam → 'spam'
+'auto-spam' → Admin approves → 'approved'
+'approved' → Admin deletes → Deleted from DB
+```
+
+**Nested Comments:**
+
+```typescript
+// ✅ Support nested replies via parentId
+interface Comment {
+  postId: string;
+  parentId?: string; // For replies
+  // ... other fields
+}
+
+// Build nested tree structure
+function buildCommentTree(comments: Comment[]): CommentTree {
+  // Group by parentId, build hierarchy
+}
+```
+
+**Admin Moderation:**
+
+```typescript
+// ✅ Admin can approve, mark spam, or delete
+// Location: src/components/admin/comments/comment-moderation-table.tsx
+
+// Actions:
+- Approve: status = 'approved'
+- Mark Spam: status = 'spam', update spamScore
+- Delete: Remove from DB (cascade to replies)
+```
+
+**⚠️ CRITICAL:** Always sanitize comment content to prevent XSS attacks!
+
+---
+
+### 5️⃣ Documentation Management
 
 #### Rules:
 
@@ -1240,6 +1545,9 @@ describe('generateSlug', () => {
 - [ ] Did I use `next/image` instead of `<img>`?
 - [ ] Did I add alt text to all images?
 - [ ] Did I follow the patterns in documentation?
+- [ ] **Did I verify import paths match filenames (case-sensitive)?**
+- [ ] **Did I handle env vars at runtime, not import time?**
+- [ ] **Did I make components flexible if used in multiple contexts?**
 
 **If any answer is NO → Fix it before submitting!**
 
@@ -1348,6 +1656,9 @@ Added comprehensive checkout flow diagram including:
 | **Performance**   | 🆕 Dynamic import heavy libraries      |
 | **Server/Client** | 🆕 Justify every 'use client'          |
 | **File Naming**   | 🆕 Lowercase filenames (button.tsx)    |
+| **Component Props** | 🆕 Flexible props for multi-context components |
+| **Env Vars**      | 🆕 Validate at runtime, not import time |
+| **Import Paths**  | 🆕 Verify case-sensitive import paths |
 
 ### Must Not ❌
 
@@ -1386,12 +1697,24 @@ When coding, AI must:
 
 ---
 
-**Rules Version:** 3.4  
-**Last Updated:** December 4, 2025 (Anti-Lazy Policy & Full Implementation Protocol)  
+**Rules Version:** 3.6  
+**Last Updated:** December 5, 2025 (Blog System & Comment System Integration)  
 **Status:** Active & Enforced  
 **Compliance:** Mandatory for all AI-generated code
 
-**Recent Updates (Version 3.4):**
+**Recent Updates (Version 3.6):**
+
+- ✅ **Blog System Integration** - NEW: Added Blog System with templates, product linking, reading time, table of contents
+- ✅ **Comment System Rules** - NEW: Added Comment System guidelines with spam detection, CAPTCHA (Cloudflare Turnstile), and admin moderation
+- ✅ **Tech Stack Updates** - NEW: Added Tiptap, date-fns, Cloudflare Turnstile to tech stack
+
+**Previous Updates (Version 3.5):**
+
+- ✅ **Component Props Flexibility** - CRITICAL: Components used in multiple contexts must support flexible props (HomepageRenderer vs direct usage)
+- ✅ **Environment Variables in Build Phase** - CRITICAL: Env vars must be validated at runtime, not import time. Use build phase detection for Vercel/CI compatibility
+- ✅ **Import Path Verification** - Enhanced: Verify case-sensitive import paths match actual filenames. Pre-commit checklist for imports
+
+**Previous Updates (Version 3.4):**
 
 - ✅ **Anti-Lazy Mode** - CRITICAL: AI must output FULL, COMPLETE code files. No tutorials or partial snippets.
 - ✅ **Full Implementation Protocol** - New 6th Pillar: Always write actionable, copy-pasteable, COMPLETE code.

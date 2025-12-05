@@ -9,11 +9,7 @@ import { GiftGuide } from '@/components/homepage/sections/gift-guide';
 import { AgeRecommendation } from '@/components/homepage/sections/age-recommendation';
 import { BlogPosts } from '@/components/homepage/sections/blog-posts';
 import { Newsletter } from '@/components/homepage/sections/Newsletter';
-import {
-  MOCK_PRODUCTS,
-  NEWSLETTER_CONTENT,
-  HERO_SLIDES,
-} from '@/lib/mock-data';
+import { MOCK_PRODUCTS, NEWSLETTER_CONTENT, HERO_SLIDES } from '@/lib/mock-data';
 
 // ISR: Revalidate every hour
 export const revalidate = 3600;

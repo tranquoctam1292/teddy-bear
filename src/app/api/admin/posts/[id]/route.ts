@@ -3,21 +3,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { getCollections } from '@/lib/db';
 import type { Post } from '@/lib/schemas/post';
+import { postUpdateSchema, type PostUpdateFormData } from '@/lib/schemas/post';
 import { ObjectId } from 'mongodb';
 
 // GET - Get single post by ID
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // Check authentication
     const session = await auth();
     if (!session || session.user?.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { id } = await params;
@@ -34,10 +29,7 @@ export async function GET(
     }
 
     if (!post) {
-      return NextResponse.json(
-        { error: 'Post not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
     // Format post
@@ -50,44 +42,51 @@ export async function GET(
     return NextResponse.json({ post: formattedPost });
   } catch (error) {
     console.error('Error fetching post:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
 // PUT - Update post
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // Check authentication
     const session = await auth();
     if (!session || session.user?.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { id } = await params;
     const body = await request.json();
-    const {
-      title,
-      slug,
-      excerpt,
-      content,
-      metaTitle,
-      metaDescription,
-      keywords,
-      featuredImage,
-      category,
-      tags,
-      status,
-      seo,
-    } = body;
+
+    // Validate with Zod schema (partial update)
+    let validatedData: PostUpdateFormData;
+    try {
+      validatedData = postUpdateSchema.parse(body);
+    } catch (error: unknown) {
+      if (error instanceof Error && 'errors' in error) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              code: 'VALIDATION_ERROR',
+              message: 'Dữ liệu không hợp lệ',
+              details: error,
+            },
+          },
+          { status: 400 }
+        );
+      }
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Dữ liệu không hợp lệ',
+          },
+        },
+        { status: 400 }
+      );
+    }
 
     const { posts } = await getCollections();
 
@@ -98,7 +97,13 @@ export async function PUT(
         post = await posts.findOne({ _id: new ObjectId(id) });
       } catch {
         return NextResponse.json(
-          { error: 'Post not found' },
+          {
+            success: false,
+            error: {
+              code: 'NOT_FOUND',
+              message: 'Bài viết không tồn tại',
+            },
+          },
           { status: 404 }
         );
       }
@@ -106,63 +111,142 @@ export async function PUT(
 
     if (!post) {
       return NextResponse.json(
-        { error: 'Post not found' },
+        {
+          success: false,
+          error: {
+            code: 'NOT_FOUND',
+            message: 'Bài viết không tồn tại',
+          },
+        },
         { status: 404 }
       );
     }
 
     // Check if slug is being changed and if it conflicts
-    if (slug && slug !== post.slug) {
-      const slugExists = await posts.findOne({ slug, id: { $ne: id } });
+    if (validatedData.slug && validatedData.slug !== post.slug) {
+      const slugExists = await posts.findOne({ slug: validatedData.slug, id: { $ne: id } });
       if (slugExists) {
         return NextResponse.json(
-          { error: 'Slug already exists' },
+          {
+            success: false,
+            error: {
+              code: 'CONFLICT',
+              message: 'Slug đã tồn tại',
+            },
+          },
           { status: 400 }
         );
       }
     }
 
-    // Update post
-    const updateData: any = {
+    // Build update data object (only include defined fields)
+    const updateData: Partial<Post> = {
       updatedAt: new Date(),
     };
 
-    if (title !== undefined) updateData.title = title;
-    if (slug !== undefined) updateData.slug = slug;
-    if (excerpt !== undefined) updateData.excerpt = excerpt;
-    if (content !== undefined) updateData.content = content;
-    if (metaTitle !== undefined) updateData.metaTitle = metaTitle;
-    if (metaDescription !== undefined) updateData.metaDescription = metaDescription;
-    if (keywords !== undefined) updateData.keywords = keywords;
-    if (featuredImage !== undefined) updateData.featuredImage = featuredImage;
-    if (category !== undefined) updateData.category = category;
-    if (tags !== undefined) updateData.tags = tags;
-    if (seo !== undefined) {
+    // Update existing fields
+    if (validatedData.title !== undefined) updateData.title = validatedData.title;
+    if (validatedData.slug !== undefined) updateData.slug = validatedData.slug;
+    if (validatedData.excerpt !== undefined) updateData.excerpt = validatedData.excerpt;
+    if (validatedData.content !== undefined) updateData.content = validatedData.content;
+    if (validatedData.metaTitle !== undefined) updateData.metaTitle = validatedData.metaTitle;
+    if (validatedData.metaDescription !== undefined)
+      updateData.metaDescription = validatedData.metaDescription;
+    if (validatedData.keywords !== undefined) updateData.keywords = validatedData.keywords;
+    if (validatedData.featuredImage !== undefined)
+      updateData.featuredImage = validatedData.featuredImage || undefined;
+    if (validatedData.images !== undefined) updateData.images = validatedData.images;
+    if (validatedData.category !== undefined) updateData.category = validatedData.category;
+    if (validatedData.tags !== undefined) updateData.tags = validatedData.tags;
+    if (validatedData.views !== undefined) updateData.views = validatedData.views;
+    if (validatedData.likes !== undefined) updateData.likes = validatedData.likes;
+
+    // 🆕 New fields (Phase 1)
+    if (validatedData.linkedProducts !== undefined)
+      updateData.linkedProducts = validatedData.linkedProducts;
+    if (validatedData.template !== undefined) updateData.template = validatedData.template;
+    if (validatedData.templateData !== undefined)
+      updateData.templateData = validatedData.templateData;
+    if (validatedData.readingTime !== undefined) updateData.readingTime = validatedData.readingTime;
+    if (validatedData.tableOfContents !== undefined)
+      updateData.tableOfContents = validatedData.tableOfContents;
+    if (validatedData.videos !== undefined) updateData.videos = validatedData.videos;
+    if (validatedData.comparisonTable !== undefined)
+      updateData.comparisonTable = validatedData.comparisonTable;
+
+    // SEO data
+    if (validatedData.seo !== undefined) {
       // Clean SEO data - remove empty strings
-      const cleanSeo = seo && Object.keys(seo).length > 0 
-        ? {
-            ...(seo.canonicalUrl && { canonicalUrl: seo.canonicalUrl }),
-            ...(seo.robots && { robots: seo.robots }),
-            ...(seo.focusKeyword && { focusKeyword: seo.focusKeyword }),
-            ...(seo.altText && { altText: seo.altText }),
-          }
-        : null;
-      updateData.seo = cleanSeo && Object.keys(cleanSeo).length > 0 ? cleanSeo : null;
+      const cleanSeo =
+        validatedData.seo && Object.keys(validatedData.seo).length > 0
+          ? {
+              ...(validatedData.seo.canonicalUrl && {
+                canonicalUrl: validatedData.seo.canonicalUrl,
+              }),
+              ...(validatedData.seo.robots && { robots: validatedData.seo.robots }),
+              ...(validatedData.seo.focusKeyword && {
+                focusKeyword: validatedData.seo.focusKeyword,
+              }),
+              ...(validatedData.seo.altText && { altText: validatedData.seo.altText }),
+            }
+          : null;
+      updateData.seo = cleanSeo && Object.keys(cleanSeo).length > 0 ? cleanSeo : undefined;
     }
-    if (status !== undefined) {
-      updateData.status = status;
-      if (status === 'published' && !post.publishedAt) {
-        updateData.publishedAt = new Date();
+
+    // Status and publishedAt
+    if (validatedData.status !== undefined) {
+      updateData.status = validatedData.status;
+      if (validatedData.status === 'published' && !post.publishedAt) {
+        updateData.publishedAt = validatedData.publishedAt || new Date();
       }
     }
 
-    await posts.updateOne(
-      { id },
-      { $set: updateData }
-    );
+    // Update by id field first, fallback to _id
+    let updateResult = await posts.updateOne({ id }, { $set: updateData });
+    if (updateResult.matchedCount === 0) {
+      try {
+        updateResult = await posts.updateOne({ _id: new ObjectId(id) }, { $set: updateData });
+      } catch {
+        // Invalid ObjectId format
+      }
+    }
+    
+    if (updateResult.matchedCount === 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'NOT_FOUND',
+            message: 'Bài viết không tồn tại',
+          },
+        },
+        { status: 404 }
+      );
+    }
 
-    // Fetch updated post
-    const updatedPost = await posts.findOne({ id });
+    // Fetch updated post (try by id first, then _id)
+    let updatedPost = await posts.findOne({ id });
+    if (!updatedPost) {
+      try {
+        updatedPost = await posts.findOne({ _id: new ObjectId(id) });
+      } catch {
+        // Invalid ObjectId format
+      }
+    }
+    
+    if (!updatedPost) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'NOT_FOUND',
+            message: 'Không tìm thấy bài viết sau khi cập nhật',
+          },
+        },
+        { status: 404 }
+      );
+    }
+    
     const { _id, ...postData } = updatedPost as any;
     const formattedPost = {
       ...postData,
@@ -171,22 +255,38 @@ export async function PUT(
 
     // Trigger sitemap regeneration (non-blocking)
     import('@/lib/seo/sitemap-regenerate').then(({ triggerSitemapRegeneration }) => {
-      triggerSitemapRegeneration().catch(err => {
+      triggerSitemapRegeneration().catch((err) => {
         console.error('Failed to trigger sitemap regeneration:', err);
       });
     });
 
     return NextResponse.json({
-      post: formattedPost,
-      message: 'Post updated successfully',
+      success: true,
+      data: { post: formattedPost },
+      message: 'Bài viết đã được cập nhật thành công',
     });
   } catch (error) {
     console.error('Error updating post:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      {
+        success: false,
+        error: {
+          code: 'SERVER_ERROR',
+          message: 'Lỗi server khi cập nhật bài viết',
+        },
+      },
       { status: 500 }
     );
   }
+}
+
+// PATCH - Partial update (alias for PUT, for compatibility)
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  // PATCH is just an alias for PUT
+  return PUT(request, { params });
 }
 
 // DELETE - Delete post
@@ -198,10 +298,7 @@ export async function DELETE(
     // Check authentication
     const session = await auth();
     if (!session || session.user?.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { id } = await params;
@@ -209,7 +306,7 @@ export async function DELETE(
 
     // Try to find and delete by id field first
     let result = await posts.deleteOne({ id });
-    
+
     // If not found, try MongoDB _id
     if (result.deletedCount === 0) {
       try {
@@ -220,10 +317,7 @@ export async function DELETE(
     }
 
     if (result.deletedCount === 0) {
-      return NextResponse.json(
-        { error: 'Post not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
     return NextResponse.json({
@@ -231,9 +325,6 @@ export async function DELETE(
     });
   } catch (error) {
     console.error('Error deleting post:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

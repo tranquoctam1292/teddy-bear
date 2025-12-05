@@ -79,8 +79,17 @@ function PostsContent() {
       if (!response.ok) throw new Error('Failed to fetch');
 
       const data = await response.json();
-      setPosts(data.posts);
-      setPagination(data.pagination);
+      // Handle both old and new API response formats
+      const postsData = data.data?.posts || data.posts || [];
+      const paginationData = data.data?.pagination || data.pagination || {
+        page: 1,
+        limit: 20,
+        total: 0,
+        totalPages: 0,
+      };
+      
+      setPosts(postsData);
+      setPagination(paginationData);
     } catch (error) {
       console.error('Error:', error);
     } finally {
@@ -91,13 +100,13 @@ function PostsContent() {
   // Update counts after fetching posts
   useEffect(() => {
     setStatusCounts({
-      all: pagination.total,
+      all: pagination?.total || 0,
       mine: 0, // TODO: filter by user
       published: posts.filter(p => p.status === 'published').length,
       draft: posts.filter(p => p.status === 'draft').length,
       trash: posts.filter(p => p.status === 'archived').length,
     });
-  }, [posts, pagination.total]);
+  }, [posts, pagination]);
 
   const handleBulkAction = async (action: string) => {
     if (selectedPosts.size === 0) return;
@@ -203,7 +212,7 @@ function PostsContent() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Quản lý Bài viết</h1>
-            <p className="text-gray-600 mt-1">Tổng cộng {pagination.total} bài viết</p>
+            <p className="text-gray-600 mt-1">Tổng cộng {pagination?.total || 0} bài viết</p>
           </div>
           <Link href="/admin/posts/new">
             <Button className="bg-gray-900 hover:bg-gray-800">
@@ -427,9 +436,9 @@ function PostsContent() {
           {/* Pagination */}
           <div className="p-4">
             <Pagination
-              currentPage={pagination.page}
-              totalPages={pagination.totalPages}
-              total={pagination.total}
+              currentPage={pagination?.page || 1}
+              totalPages={pagination?.totalPages || 0}
+              total={pagination?.total || 0}
               onPageChange={setCurrentPage}
             />
           </div>

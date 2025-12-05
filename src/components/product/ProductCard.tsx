@@ -25,33 +25,39 @@ export default function ProductCard({ product }: ProductCardProps) {
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
 
+  // Ensure variants and images are arrays
+  const variants = Array.isArray(product.variants) ? product.variants : [];
+  const images = Array.isArray(product.images) ? product.images : [];
+
   // Find variant based on selected size and color
   const currentVariant = useMemo(() => {
+    if (variants.length === 0) return null;
+
     if (!selectedSize && !selectedColor) {
-      return product.variants[0] || null;
+      return variants[0] || null;
     }
 
     if (selectedSize && selectedColor) {
-      const variant = product.variants.find(
+      const variant = variants.find(
         (v) => v.size === selectedSize && (v.colorCode === selectedColor || v.color === selectedColor)
       );
       if (variant) return variant;
     }
 
     if (selectedSize) {
-      const variant = product.variants.find((v) => v.size === selectedSize);
+      const variant = variants.find((v) => v.size === selectedSize);
       if (variant) return variant;
     }
 
     if (selectedColor) {
-      const variant = product.variants.find(
+      const variant = variants.find(
         (v) => v.colorCode === selectedColor || v.color === selectedColor
       );
       if (variant) return variant;
     }
 
-    return product.variants[0] || null;
-  }, [selectedSize, selectedColor, product.variants]);
+    return variants[0] || null;
+  }, [selectedSize, selectedColor, variants]);
 
   // Price display based on selected variant
   const priceDisplay = currentVariant
@@ -61,11 +67,11 @@ export default function ProductCard({ product }: ProductCardProps) {
     : formatCurrency(product.basePrice);
 
   // Image display based on selected variant
-  const displayImage = currentVariant?.image || product.images[0] || '';
+  const displayImage = currentVariant?.image || images[0] || '';
 
   // Extract unique sizes from variants
   const availableSizes = Array.from(
-    new Set(product.variants.map((v) => v.size))
+    new Set(variants.map((v) => v.size))
   ).sort((a, b) => {
     // Sort by numeric value if possible
     const aNum = parseFloat(a.replace(/[^0-9.]/g, ''));
@@ -79,7 +85,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   // Extract unique colors from variants
   const availableColors = Array.from(
     new Map(
-      product.variants
+      variants
         .filter((v) => v.color || v.colorCode)
         .map((v) => [
           v.colorCode || v.color || 'default',
@@ -93,12 +99,12 @@ export default function ProductCard({ product }: ProductCardProps) {
     setSelectedSize(size);
     // Try to keep the same color if possible
     if (selectedColor) {
-      const variant = product.variants.find(
+      const variant = variants.find(
         (v) => v.size === size && (v.colorCode === selectedColor || v.color === selectedColor)
       );
       if (!variant) {
         // If no variant with this size and color, find any variant with this size
-        const sizeVariant = product.variants.find((v) => v.size === size);
+        const sizeVariant = variants.find((v) => v.size === size);
         if (sizeVariant && (sizeVariant.colorCode || sizeVariant.color)) {
           setSelectedColor(sizeVariant.colorCode || sizeVariant.color || null);
         } else {
@@ -113,12 +119,12 @@ export default function ProductCard({ product }: ProductCardProps) {
     setSelectedColor(colorKey);
     // Try to keep the same size if possible
     if (selectedSize) {
-      const variant = product.variants.find(
+      const variant = variants.find(
         (v) => v.size === selectedSize && (v.colorCode === colorKey || v.color === colorKey)
       );
       if (!variant) {
         // If no variant with this size and color, find any variant with this color
-        const colorVariant = product.variants.find(
+        const colorVariant = variants.find(
           (v) => v.colorCode === colorKey || v.color === colorKey
         );
         if (colorVariant) {
@@ -132,12 +138,12 @@ export default function ProductCard({ product }: ProductCardProps) {
     e.preventDefault();
     e.stopPropagation();
 
-    if (product.variants.length === 0) return;
+    if (variants.length === 0) return;
 
     setIsAdding(true);
     
     // Use selected variant or first available variant
-    const variantToAdd = currentVariant || product.variants[0];
+    const variantToAdd = currentVariant || variants[0];
     
     if (!variantToAdd) return;
     
@@ -148,7 +154,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       size: variantToAdd.size,
       price: variantToAdd.price,
       quantity: 1,
-      image: variantToAdd.image || product.images[0] || '',
+      image: variantToAdd.image || images[0] || '',
     });
 
     // Navigate to cart after short delay
@@ -227,7 +233,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           </h3>
 
           {/* Tags */}
-          {product.tags.length > 0 && (
+          {product.tags && Array.isArray(product.tags) && product.tags.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {product.tags.slice(0, 2).map((tag) => (
                 <span
@@ -287,7 +293,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         </button>
         <button
           onClick={handleQuickBuy}
-          disabled={isAdding || product.variants.length === 0}
+          disabled={isAdding || variants.length === 0}
           className="flex-1 bg-pink-600 text-white py-2.5 px-4 rounded-lg font-semibold hover:bg-pink-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
         >
           <ShoppingCart className="w-4 h-4" />

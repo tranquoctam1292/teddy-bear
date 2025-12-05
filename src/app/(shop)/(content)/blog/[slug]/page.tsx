@@ -2,6 +2,7 @@
 
 // Blog Post Detail Page
 import { useState, useEffect, use } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Calendar, User, ArrowLeft, Share2 } from 'lucide-react';
 import JsonLd from '@/components/seo/JsonLd';
@@ -11,6 +12,10 @@ import Breadcrumb from '@/components/navigation/Breadcrumb';
 import RelatedProducts from '@/components/blog/RelatedProducts';
 import AuthorBox from '@/components/blog/AuthorBox';
 import ReviewerBox from '@/components/blog/ReviewerBox';
+import { BlogPostRenderer } from '@/components/blog/blog-post-renderer';
+import { SocialShareButtons } from '@/components/blog/social-share-buttons';
+import { ReadingTimeBadge } from '@/components/blog/reading-time-badge';
+import { CommentSection } from '@/components/blog/comments/comment-section';
 import type { Post } from '@/lib/schemas/post';
 import type { Author } from '@/lib/types/author';
 
@@ -20,6 +25,7 @@ interface BlogPostPageProps {
 
 export default function BlogPostPage({ params }: BlogPostPageProps) {
   const { slug } = use(params);
+  const searchParams = useSearchParams();
   const [post, setPost] = useState<Post | null>(null);
   const [author, setAuthor] = useState<Author | null>(null);
   const [reviewer, setReviewer] = useState<Author | null>(null);
@@ -30,12 +36,32 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
     async function fetchPost() {
       try {
         setLoading(true);
+        
+        // Check if preview mode (for draft posts)
+        const isPreview = searchParams.get('preview') === 'true';
+        
         // Try to fetch from API
-        const response = await fetch(`/api/posts?slug=${slug}`);
+        let apiUrl = `/api/posts?slug=${slug}`; // Default: public API (only published)
+        
+        if (isPreview) {
+          // For preview, try admin API first (requires auth)
+          apiUrl = `/api/admin/posts?slug=${slug}`;
+        }
+          
+        const response = await fetch(apiUrl);
+        
+        // If admin API fails (401), fallback to public API
+        if (!response.ok && response.status === 401 && isPreview) {
+          // Not authenticated, show message
+          setError('Bạn cần đăng nhập để xem trước bài viết nháp');
+          setLoading(false);
+          return;
+        }
+        
         if (response.ok) {
           const data = await response.json();
-          if (data.success && data.data?.post) {
-            const postData = data.data.post;
+          const postData = data.data?.post || data.post;
+          if (postData) {
             setPost(postData);
             
             // Fetch author data if exists
@@ -78,7 +104,7 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
     }
 
     fetchPost();
-  }, [slug]);
+  }, [slug, searchParams]);
 
   if (loading) {
     return (
@@ -250,10 +276,9 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
                 </time>
               </div>
             )}
-            <button className="flex items-center gap-2 hover:text-pink-600 transition-colors">
-              <Share2 className="w-4 h-4" />
-              Chia sẻ
-            </button>
+            {post.readingTime && (
+              <ReadingTimeBadge readingTime={post.readingTime} variant="compact" />
+            )}
           </div>
         </header>
 
@@ -268,11 +293,8 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
           </div>
         )}
 
-        {/* Content */}
-        <div
-          className="prose prose-lg max-w-none prose-pink prose-headings:text-gray-900 prose-a:text-pink-600 prose-strong:text-gray-900"
-          dangerouslySetInnerHTML={{ __html: post.content }}
-        />
+        {/* Blog Post Renderer (Template-based) */}
+        <BlogPostRenderer post={post} />
 
         {/* Tags */}
         {post.tags && post.tags.length > 0 && (
@@ -322,6 +344,15 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
           category={post.category}
         />
       </div>
+
+      {/* Comment Section */}
+      {post._id && (
+        <CommentSection
+          postId={
+            typeof post._id === 'string' ? post._id : post._id.toString()
+          }
+        />
+      )}
     </div>
   );
 }

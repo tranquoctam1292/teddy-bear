@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { getCollections } from '@/lib/db';
 import type { Post } from '@/lib/schemas/post';
-import { ObjectId } from 'mongodb';
+import { postSchema, type PostFormData } from '@/lib/schemas/post';
 
 // Helper to generate unique ID
 function generateId(): string {
@@ -16,14 +16,40 @@ export async function GET(request: NextRequest) {
     // Check authentication
     const session = await auth();
     if (!session || session.user?.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { posts } = await getCollections();
     const { searchParams } = new URL(request.url);
+    
+    // Check if requesting single post by slug (for preview)
+    const slug = searchParams.get('slug');
+    if (slug) {
+      const post = await posts.findOne({ slug }); // Allow any status for admin preview
+      if (!post) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              code: 'NOT_FOUND',
+              message: 'Post not found',
+            },
+          },
+          { status: 404 }
+        );
+      }
+      const { _id, ...postData } = post as any;
+      return NextResponse.json({
+        success: true,
+        data: {
+          post: {
+            ...postData,
+            id: postData.id || _id.toString(),
+          },
+        },
+      });
+    }
+    
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
     const status = searchParams.get('status') || '';
@@ -67,20 +93,20 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({
-      posts: formattedPosts,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
+      success: true,
+      data: {
+        posts: formattedPosts,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
       },
     });
   } catch (error) {
     console.error('Error fetching posts:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -90,32 +116,37 @@ export async function POST(request: NextRequest) {
     // Check authentication
     const session = await auth();
     if (!session || session.user?.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
-    const {
-      title,
-      slug,
-      excerpt,
-      content,
-      metaTitle,
-      metaDescription,
-      keywords,
-      featuredImage,
-      category,
-      tags,
-      status,
-      seo,
-    } = body;
 
-    // Validation
-    if (!title || !slug || !content || !status) {
+    // Validate with Zod schema
+    let validatedData: PostFormData;
+    try {
+      validatedData = postSchema.parse(body);
+    } catch (error: unknown) {
+      if (error instanceof Error && 'errors' in error) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              code: 'VALIDATION_ERROR',
+              message: 'Dữ liệu không hợp lệ',
+              details: error,
+            },
+          },
+          { status: 400 }
+        );
+      }
       return NextResponse.json(
-        { error: 'Missing required fields: title, slug, content, status' },
+        {
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Dữ liệu không hợp lệ',
+          },
+        },
         { status: 400 }
       );
     }
@@ -123,31 +154,54 @@ export async function POST(request: NextRequest) {
     const { posts } = await getCollections();
 
     // Check if slug already exists
-    const existingPost = await posts.findOne({ slug });
+    const existingPost = await posts.findOne({ slug: validatedData.slug });
     if (existingPost) {
       return NextResponse.json(
-        { error: 'Post with this slug already exists' },
+        {
+          success: false,
+          error: {
+            code: 'CONFLICT',
+            message: 'Slug đã tồn tại',
+          },
+        },
         { status: 400 }
       );
     }
 
-    // Create post
+    // Create post with all new fields
     const newPost: Post = {
       id: generateId(),
-      title,
-      slug,
-      excerpt,
-      content,
-      metaTitle,
-      metaDescription,
-      keywords: keywords || [],
-      featuredImage,
-      category,
-      tags: tags || [],
-      status,
-      seo: seo && Object.keys(seo).length > 0 ? seo : undefined,
-      publishedAt: status === 'published' ? new Date() : undefined,
-      author: session.user?.name || 'Admin',
+      title: validatedData.title,
+      slug: validatedData.slug,
+      excerpt: validatedData.excerpt,
+      content: validatedData.content,
+      metaTitle: validatedData.metaTitle,
+      metaDescription: validatedData.metaDescription,
+      keywords: validatedData.keywords || [],
+      featuredImage: validatedData.featuredImage || undefined,
+      images: validatedData.images || [],
+      category: validatedData.category,
+      tags: validatedData.tags || [],
+      status: validatedData.status,
+      seo:
+        validatedData.seo && Object.keys(validatedData.seo).length > 0
+          ? validatedData.seo
+          : undefined,
+      publishedAt:
+        validatedData.status === 'published' ? validatedData.publishedAt || new Date() : undefined,
+      author: validatedData.author || session.user?.name || 'Admin',
+      views: validatedData.views || 0,
+      likes: validatedData.likes || 0,
+
+      // 🆕 New fields (Phase 1)
+      linkedProducts: validatedData.linkedProducts || [],
+      template: validatedData.template || 'default',
+      templateData: validatedData.templateData || {},
+      readingTime: validatedData.readingTime,
+      tableOfContents: validatedData.tableOfContents || [],
+      videos: validatedData.videos || [],
+      comparisonTable: validatedData.comparisonTable,
+
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -157,19 +211,29 @@ export async function POST(request: NextRequest) {
 
     // Trigger sitemap regeneration (non-blocking)
     import('@/lib/seo/sitemap-regenerate').then(({ triggerSitemapRegeneration }) => {
-      triggerSitemapRegeneration().catch(err => {
+      triggerSitemapRegeneration().catch((err) => {
         console.error('Failed to trigger sitemap regeneration:', err);
       });
     });
 
     return NextResponse.json(
-      { post: newPost, message: 'Post created successfully' },
+      {
+        success: true,
+        data: { post: newPost },
+        message: 'Bài viết đã được tạo thành công',
+      },
       { status: 201 }
     );
   } catch (error) {
     console.error('Error creating post:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      {
+        success: false,
+        error: {
+          code: 'SERVER_ERROR',
+          message: 'Lỗi server khi tạo bài viết',
+        },
+      },
       { status: 500 }
     );
   }

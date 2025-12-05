@@ -1,7 +1,7 @@
 'use client';
 
 // WordPress-Style Post Editor V3 - Modular & Clean
-import { useForm } from 'react-hook-form';
+import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useState, useEffect, useRef } from 'react';
@@ -16,6 +16,10 @@ import GoogleSnippetPreview from './seo/GoogleSnippetPreview';
 import SchemaBuilder from './seo/SchemaBuilder';
 import { PublishBox, FeaturedImageBox, GalleryBox, CategoryBox, TagBox, SEOScoreBox } from './sidebar';
 import AuthorBoxWidget from './posts/AuthorBoxWidget';
+import ProductPickerWidget from './posts/product-picker-widget';
+import ReadingTimeDisplay from './posts/reading-time-display';
+import TemplateSelector from './posts/template-selector';
+import DynamicTemplateFields from './posts/dynamic-template-fields';
 import { PostAuthorInfo } from '@/lib/types/author';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -51,6 +55,28 @@ const postSchema = z.object({
   status: z.enum(['draft', 'published', 'archived']),
   publishDate: z.string().optional(),
   seo: seoSchema.optional(),
+  // 🆕 Phase 2: New fields
+  linkedProducts: z.array(z.object({
+    productId: z.string(),
+    position: z.enum(['inline', 'sidebar', 'bottom']),
+    displayType: z.enum(['card', 'spotlight', 'cta']),
+    customMessage: z.string().optional(),
+  })).optional(),
+  readingTime: z.number().int().min(0).optional(),
+  template: z.enum(['default', 'gift-guide', 'review', 'care-guide', 'story']).optional(),
+  templateData: z.record(z.any()).optional(),
+  comparisonTable: z.object({
+    products: z.array(z.string()),
+    features: z.array(z.object({
+      name: z.string(),
+      values: z.record(z.union([z.string(), z.number(), z.boolean()])),
+    })),
+    displayOptions: z.object({
+      showImages: z.boolean().optional(),
+      showPrices: z.boolean().optional(),
+      highlightBest: z.boolean().optional(),
+    }).optional(),
+  }).optional(),
 });
 
 type PostFormInput = z.infer<typeof postSchema>;
@@ -87,14 +113,7 @@ export default function PostEditorV3({
   );
 
   // Form
-  const {
-    register,
-    control,
-    handleSubmit,
-    watch,
-    setValue,
-    formState: { errors, isDirty },
-  } = useForm<PostFormInput>({
+  const methods = useForm<PostFormInput>({
     resolver: zodResolver(postSchema) as any,
     defaultValues: post
       ? {
@@ -111,6 +130,12 @@ export default function PostEditorV3({
           status: post.status,
           publishDate: post.publishedAt ? new Date(post.publishedAt).toISOString().split('T')[0] : '',
           seo: post.seo || {},
+          // 🆕 Phase 2: New fields
+          linkedProducts: post.linkedProducts || [],
+          readingTime: post.readingTime,
+          template: post.template || 'default',
+          templateData: post.templateData || {},
+          comparisonTable: post.comparisonTable,
         }
       : {
           title: '',
@@ -126,8 +151,23 @@ export default function PostEditorV3({
           status: 'draft',
           publishDate: '',
           seo: {},
+          // 🆕 Phase 2: New fields
+          linkedProducts: [],
+          readingTime: undefined,
+          template: 'default',
+          templateData: {},
+          comparisonTable: undefined,
         },
   });
+
+  const {
+    register,
+    control,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors, isDirty },
+  } = methods;
 
   const watchedValues = watch();
 
@@ -272,6 +312,9 @@ export default function PostEditorV3({
         </CardContent>
       </Card>
 
+      {/* Template Selector */}
+      <TemplateSelector />
+
       {/* Rich Text Editor */}
       <Card>
         <CardContent className="p-0">
@@ -283,6 +326,9 @@ export default function PostEditorV3({
           />
         </CardContent>
       </Card>
+
+      {/* Dynamic Template Fields */}
+      <DynamicTemplateFields />
 
       {/* SEO Section (Collapsed) */}
       <Card>
@@ -404,7 +450,18 @@ export default function PostEditorV3({
         onDateChange={(d) => setValue('publishDate', d)}
         onSave={handleSubmit(handleFormSubmit)}
         onPublish={handleSubmit(handleFormSubmit)}
-        onPreview={() => window.open(`/blog/${watchedValues.slug}`, '_blank')}
+        onPreview={() => {
+          if (!watchedValues.slug) {
+            alert('Vui lòng nhập slug trước khi xem trước');
+            return;
+          }
+          // Preview với draft mode - chỉ preview nếu đã có post ID (đã lưu)
+          if (post?.id) {
+            window.open(`/blog/${watchedValues.slug}?preview=true`, '_blank');
+          } else {
+            alert('Vui lòng lưu bài viết trước khi xem trước');
+          }
+        }}
         isLoading={isLoading}
         isDirty={isDirty}
         lastSaved={lastSaved}
@@ -446,6 +503,10 @@ export default function PostEditorV3({
         onChange={setAuthorInfo}
       />
 
+      <ReadingTimeDisplay />
+
+      <ProductPickerWidget />
+
       <SEOScoreBox
         data={{
           keyword: watchedValues.seo?.focusKeyword || '',
@@ -483,7 +544,7 @@ export default function PostEditorV3({
   );
 
   return (
-    <>
+    <FormProvider {...methods}>
       <form onSubmit={handleSubmit(handleFormSubmit)}>
         <EditorLayout
           title={post ? 'Chỉnh sửa bài viết' : 'Thêm bài viết mới'}
@@ -550,7 +611,7 @@ export default function PostEditorV3({
         onClose={() => setShowSchemaBuilder(false)}
         onApply={(schema) => setSchemaData(schema)}
       />
-    </>
+    </FormProvider>
   );
 }
 

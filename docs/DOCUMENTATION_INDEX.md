@@ -59,6 +59,7 @@ teddy-shop/
 - **[AUTHOR_SYSTEM_QUICK_GUIDE.md](guides/AUTHOR_SYSTEM_QUICK_GUIDE.md)** - Author management (E-E-A-T)
 - **[HOMEPAGE_CONFIGURATION_USER_GUIDE.md](guides/HOMEPAGE_CONFIGURATION_USER_GUIDE.md)** - Homepage builder
 - **[HOMEPAGE_OPTIMIZATION_PLAN_TEDDY_SHOP.md](guides/HOMEPAGE_OPTIMIZATION_PLAN_TEDDY_SHOP.md)** - Homepage optimization plan (Phase 7-9)
+- **[BLOG_UPGRADE_PLAN_TEDDY_SHOP.md](guides/BLOG_UPGRADE_PLAN_TEDDY_SHOP.md)** - Blog system upgrade plan (Phase 1-5)
 
 **Technical Guides:**
 
@@ -110,6 +111,16 @@ teddy-shop/
 **Homepage Optimization:**
 
 - **[PHASE9_HOMEPAGE_AUDIT_REPORT.md](reports/PHASE9_HOMEPAGE_AUDIT_REPORT.md)** ⭐ - Final homepage audit (Phase 9)
+
+**Blog System (NEW - Dec 2025):**
+
+- **[BLOG_DOCUMENTATION.md](../BLOG_DOCUMENTATION.md)** ⭐⭐⭐ - Complete blog system documentation
+- **[BLOG_OPTIMIZATION_CHECKLIST.md](reports/BLOG_OPTIMIZATION_CHECKLIST.md)** - Blog optimization & audit checklist (Phase 5)
+- **[PHASE2_BLOG_QA_CHECKLIST.md](reports/PHASE2_BLOG_QA_CHECKLIST.md)** - Phase 2 QA checklist (CMS Editor)
+- **[PHASE2_TEST_RESULTS.md](reports/PHASE2_TEST_RESULTS.md)** - Phase 2 test results
+- **[PHASE3_BLOG_QA_CHECKLIST.md](reports/PHASE3_BLOG_QA_CHECKLIST.md)** - Phase 3 QA checklist (Frontend)
+- **[PHASE3_TEST_RESULTS.md](reports/PHASE3_TEST_RESULTS.md)** - Phase 3 test results
+- **[PHASE4_QA_CHECKLIST.md](reports/PHASE4_QA_CHECKLIST.md)** - Phase 4 QA checklist (Comment System)
 
 ---
 
