@@ -9,9 +9,54 @@ import { getCollections } from '@/lib/db';
  */
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // Wrap auth() in try-catch to handle potential exceptions
+    let session;
+    try {
+      session = await auth();
+    } catch (authError) {
+      console.error('Auth error:', authError);
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'AUTH_ERROR',
+            message: 'Authentication service unavailable',
+            details:
+              process.env.NODE_ENV === 'development'
+                ? authError instanceof Error
+                  ? authError.message
+                  : String(authError)
+                : undefined,
+          },
+        },
+        { status: 401 }
+      );
+    }
+
+    if (!session?.user) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'AUTH_ERROR',
+            message: 'Authentication required',
+          },
+        },
+        { status: 401 }
+      );
+    }
+
+    if (session.user.role !== 'admin') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'FORBIDDEN',
+            message: 'Admin access required',
+          },
+        },
+        { status: 403 }
+      );
     }
 
     const { searchParams } = new URL(request.url);
@@ -20,7 +65,31 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
 
-    const { db } = await getCollections();
+    // Get database connection
+    let db;
+    try {
+      const collections = await getCollections();
+      db = collections.db;
+    } catch (dbError) {
+      console.error('[GET /configs] Database connection error:', dbError);
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'DATABASE_ERROR',
+            message: 'Database connection failed',
+            details:
+              process.env.NODE_ENV === 'development'
+                ? dbError instanceof Error
+                  ? dbError.message
+                  : String(dbError)
+                : undefined,
+          },
+        },
+        { status: 500 }
+      );
+    }
+    
     const homepageConfigs = db.collection('homepage_configs');
 
     // Build query
@@ -57,7 +126,19 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error fetching homepage configs:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch configurations' },
+      {
+        success: false,
+        error: {
+          code: 'SERVER_ERROR',
+          message: 'Failed to fetch configurations',
+          details:
+            process.env.NODE_ENV === 'development'
+              ? error instanceof Error
+                ? error.message
+                : String(error)
+              : undefined,
+        },
+      },
       { status: 500 }
     );
   }
@@ -68,37 +149,63 @@ export async function GET(request: NextRequest) {
  * Create new homepage configuration
  */
 export async function POST(request: NextRequest) {
+  // CRITICAL: Authentication check MUST be first, before any other code
+  let session;
   try {
-    // 1. Authentication check (CRITICAL - must be first)
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: 'AUTH_ERROR',
-            message: 'Authentication required',
-          },
+    session = await auth();
+  } catch (authError) {
+    // Handle auth() exceptions (e.g., config errors, connection issues)
+    console.error('[POST /configs] Auth error:', authError);
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          code: 'AUTH_ERROR',
+          message: 'Authentication service unavailable',
+          details:
+            process.env.NODE_ENV === 'development'
+              ? authError instanceof Error
+                ? authError.message
+                : String(authError)
+              : undefined,
         },
-        { status: 401 }
-      );
-    }
+      },
+      { status: 401 }
+    );
+  }
 
-    // 2. Authorization check
-    if (session.user.role !== 'admin') {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: 'FORBIDDEN',
-            message: 'Admin access required',
-          },
+  // Check if session exists
+  if (!session?.user) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          code: 'AUTH_ERROR',
+          message: 'Authentication required',
         },
-        { status: 403 }
-      );
-    }
+      },
+      { status: 401 }
+    );
+  }
 
-    // 3. Parse and validate request body
+  // Authorization check - must be admin
+  if (session.user.role !== 'admin') {
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'Admin access required',
+        },
+      },
+      { status: 403 }
+    );
+  }
+
+  // All auth checks passed, proceed with request processing
+  try {
+
+    // Parse and validate request body
     let body;
     try {
       body = await request.json();
@@ -115,7 +222,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 4. Validate required fields
+    // Validate required fields
     if (!body.name || typeof body.name !== 'string' || body.name.trim().length < 2) {
       return NextResponse.json(
         {
@@ -129,12 +236,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 5. Get database connection
-    const { db } = await getCollections();
+    // Get database connection
+    let db;
+    try {
+      const collections = await getCollections();
+      db = collections.db;
+    } catch (dbError) {
+      console.error('[POST /configs] Database connection error:', dbError);
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'DATABASE_ERROR',
+            message: 'Database connection failed',
+            details:
+              process.env.NODE_ENV === 'development'
+                ? dbError instanceof Error
+                  ? dbError.message
+                  : String(dbError)
+                : undefined,
+          },
+        },
+        { status: 500 }
+      );
+    }
+    
     const homepageConfigs = db.collection('homepage_configs');
 
-    // 6. Generate slug if not provided
-    const slug =
+    // Generate slug if not provided
+    let baseSlug =
       body.slug ||
       body.name
         .toLowerCase()
@@ -143,22 +273,43 @@ export async function POST(request: NextRequest) {
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '');
 
-    // 7. Check if slug already exists
-    const existingConfig = await homepageConfigs.findOne({ slug });
-    if (existingConfig) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: 'CONFLICT',
-            message: 'A configuration with this slug already exists',
-          },
-        },
-        { status: 409 }
-      );
+    // Ensure slug is not empty
+    if (!baseSlug) {
+      baseSlug = 'homepage-config';
     }
 
-    // 8. Create config object
+    // Generate unique slug if conflict exists
+    let slug = baseSlug;
+    let counter = 1;
+    let existingConfig = await homepageConfigs.findOne({ slug });
+    
+    while (existingConfig) {
+      slug = `${baseSlug}-${counter}`;
+      existingConfig = await homepageConfigs.findOne({ slug });
+      counter++;
+      
+      // Safety limit to prevent infinite loop
+      if (counter > 1000) {
+        // Fallback to timestamp-based slug
+        slug = `${baseSlug}-${Date.now()}`;
+        break;
+      }
+    }
+
+    // Get user ID with fallback
+    // CRITICAL: session.user.id might be undefined if user logged in before fix
+    // Use email as fallback identifier if id is missing
+    const userId = session.user.id || session.user.email || 'system';
+    
+    if (!session.user.id) {
+      console.warn('[POST /configs] Session user ID is missing, using email as fallback:', {
+        email: session.user.email,
+        hasId: !!session.user.id,
+        sessionUser: session.user,
+      });
+    }
+
+    // Create config object
     const newConfig = {
       name: body.name.trim(),
       slug,
@@ -171,16 +322,88 @@ export async function POST(request: NextRequest) {
         keywords: body.seo?.keywords || [],
       },
       version: 1,
-      createdBy: session.user.id,
-      updatedBy: session.user.id,
+      createdBy: userId,
+      updatedBy: userId,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
-    // 9. Insert into database
-    const result = await homepageConfigs.insertOne(newConfig);
+    // DEBUG: Log config object before insert (development only)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[POST /configs] Creating config:', {
+        name: newConfig.name,
+        slug: newConfig.slug,
+        createdBy: newConfig.createdBy,
+        hasSeo: !!newConfig.seo,
+      });
+    }
 
-    // 10. Return success response with standardized format
+    // Insert into database
+    let result;
+    try {
+      // DEBUG: Log full config object before insert (development only)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[POST /configs] Full config object:', JSON.stringify(newConfig, null, 2));
+      }
+      
+      result = await homepageConfigs.insertOne(newConfig);
+      
+      // DEBUG: Log success
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[POST /configs] Insert successful:', {
+          insertedId: result.insertedId.toString(),
+          acknowledged: result.acknowledged,
+        });
+      }
+    } catch (insertError) {
+      // CRITICAL: Log full error details
+      console.error('[POST /configs] Database insert error:', {
+        error: insertError,
+        errorName: insertError instanceof Error ? insertError.name : 'Unknown',
+        errorMessage: insertError instanceof Error ? insertError.message : String(insertError),
+        errorStack: insertError instanceof Error ? insertError.stack : undefined,
+        configData: {
+          name: newConfig.name,
+          slug: newConfig.slug,
+          createdBy: newConfig.createdBy,
+          hasSeo: !!newConfig.seo,
+        },
+      });
+      
+      // Check for specific MongoDB errors
+      let errorMessage = 'Failed to save configuration to database';
+      if (insertError instanceof Error) {
+        // MongoDB duplicate key error
+        if (insertError.name === 'MongoServerError' && (insertError as any).code === 11000) {
+          errorMessage = 'A configuration with this slug already exists';
+        } else {
+          errorMessage = insertError.message || errorMessage;
+        }
+      }
+      
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'DATABASE_ERROR',
+            message: errorMessage,
+            details:
+              process.env.NODE_ENV === 'development'
+                ? insertError instanceof Error
+                  ? {
+                      name: insertError.name,
+                      message: insertError.message,
+                      stack: insertError.stack,
+                    }
+                  : String(insertError)
+                : undefined,
+          },
+        },
+        { status: 500 }
+      );
+    }
+
+    // Return success response with standardized format
     return NextResponse.json(
       {
         success: true,
@@ -195,7 +418,8 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Error creating homepage config:', error);
+    // CRITICAL: Catch all server errors and return standardized response
+    console.error('[POST /configs] Server error:', error);
     
     // Handle specific error types
     if (error instanceof Error) {
@@ -215,13 +439,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Generic server error
+    // Generic server error - MUST return standardized format
     return NextResponse.json(
       {
         success: false,
         error: {
           code: 'SERVER_ERROR',
-          message: 'Failed to create configuration',
+          message: 'Internal server error',
           details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : undefined,
         },
       },

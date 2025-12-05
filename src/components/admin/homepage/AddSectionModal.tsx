@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { HomepageSection, SectionType } from '@/lib/types/homepage';
-import { SECTION_METADATA, getDefaultSectionContent } from '@/components/homepage/sections';
+import { SECTION_METADATA, getDefaultSectionContent } from '@/components/homepage/sections/metadata';
 import { Search } from 'lucide-react';
 
 interface AddSectionModalProps {

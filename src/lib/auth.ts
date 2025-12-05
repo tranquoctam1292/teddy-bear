@@ -184,12 +184,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
+        token.id = user.id;
         token.role = user.role;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
+        session.user.id = token.id as string;
         session.user.role = token.role as string;
       }
       return session;
@@ -198,5 +200,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   session: {
     strategy: 'jwt',
   },
-  secret: process.env.AUTH_SECRET,
+  // CRITICAL: Explicitly use AUTH_SECRET (not NEXTAUTH_SECRET)
+  // NextAuth v5 may fallback to NEXTAUTH_SECRET if secret is undefined
+  secret: process.env.AUTH_SECRET || (() => {
+    throw new Error('AUTH_SECRET is required. Please set it in .env.local file.');
+  })(),
 });

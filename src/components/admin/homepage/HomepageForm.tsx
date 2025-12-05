@@ -22,7 +22,11 @@ import { useToast } from '@/hooks/use-toast';
 interface HomepageFormProps {
   action: (
     formData: FormData
-  ) => Promise<{ success: true; id: string } | void>;
+  ) => Promise<
+    | { success: true; id: string }
+    | { success: false; error: { code: string; message: string } }
+    | void
+  >;
   defaultValues?: {
     name?: string;
     description?: string;
@@ -77,6 +81,20 @@ export function HomepageForm({ action, defaultValues }: HomepageFormProps) {
       console.log('[HomepageForm] Calling action...');
       const result = await action(formData);
       console.log('[HomepageForm] API Response:', result);
+
+      // Check if result contains error (from Server Action)
+      if (result && typeof result === 'object' && 'success' in result && !result.success) {
+        // Handle error response from Server Action
+        const errorMessage =
+          result.error?.message || 'Không thể lưu cấu hình. Vui lòng thử lại.';
+        
+        toast({
+          variant: 'destructive',
+          title: 'Lỗi',
+          description: errorMessage,
+        });
+        return; // Exit early, don't proceed with redirect
+      }
 
       // Handle redirect for create flow (when id is returned)
       if (result && typeof result === 'object' && 'id' in result && result.id) {

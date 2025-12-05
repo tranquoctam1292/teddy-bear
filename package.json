@@ -12,8 +12,13 @@
     "authors:migrate": "tsx scripts/migrate-author-info.ts",
     "authors:indexes": "tsx scripts/create-author-indexes.ts",
     "test:db": "tsx scripts/test-cms-connections.js",
+    "test:mongodb": "tsx scripts/test-mongodb-connection.ts",
+    "fix:mongodb-uri": "tsx scripts/fix-mongodb-uri.ts",
+    "test:homepage-flow": "tsx scripts/test-homepage-creation-flow.ts",
     "test:homepage": "tsx scripts/test-homepage-system.ts",
-    "homepage:schedule": "tsx scripts/process-scheduled-configs.ts"
+    "test:homepage-create": "tsx scripts/test-homepage-create.ts",
+    "homepage:schedule": "tsx scripts/process-scheduled-configs.ts",
+    "verify:env": "tsx scripts/verify-env.ts"
   },
   "dependencies": {
     "@hello-pangea/dnd": "^16.6.0",
@@ -65,6 +70,7 @@
     "react-dom": "^19.2.1",
     "react-hook-form": "^7.51.0",
     "recharts": "^3.5.1",
+    "server-only": "^0.0.1",
     "tailwind-merge": "^2.2.1",
     "tailwindcss-animate": "^1.0.7",
     "zod": "^3.22.4",

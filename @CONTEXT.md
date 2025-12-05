@@ -43,13 +43,13 @@ A **full-stack E-commerce platform** combined with a **headless CMS**, focusing 
 
 ### 🎨 Core Framework
 
-| Technology     | Version | Purpose                  |
-| -------------- | ------- | ------------------------ |
-| **Next.js**    | 15.5.7  | App Router, SSR, ISR     |
-| **React**      | 19.2.1  | UI framework             |
-| **TypeScript** | 5+      | Type safety              |
-| **MongoDB**    | 6.3     | Database (Native Driver) |
-| **NextAuth**   | v5      | Authentication           |
+| Technology     | Version        | Purpose                  |
+| -------------- | -------------- | ------------------------ |
+| **Next.js**    | 15.5.7         | App Router, SSR, ISR     |
+| **React**      | 19.2.1         | UI framework             |
+| **TypeScript** | 5              | Type safety              |
+| **MongoDB**    | 6.3.0          | Database (Native Driver) |
+| **NextAuth**   | 5.0.0-beta.16  | Authentication           |
 
 ### 🔧 State & Logic
 
@@ -77,6 +77,12 @@ A **full-stack E-commerce platform** combined with a **headless CMS**, focusing 
 | --------------- | -------------------- |
 | **Vercel Blob** | Image/media storage  |
 | **Vercel**      | Hosting & deployment |
+
+### 🔒 Server-Side Safety
+
+| Package         | Version | Purpose                          |
+| --------------- | ------- | -------------------------------- |
+| **server-only** | 0.0.1   | Prevent server code in client bundle |
 
 ---
 
@@ -515,7 +521,9 @@ teddy-shop/
 │   │   ├── admin/                    # Admin-specific widgets
 │   │   │   ├── AuthorBoxWidget.tsx   # Author selector
 │   │   │   ├── RowActions.tsx        # Table actions
-│   │   │   ├── homepage/             # 🆕 Homepage builder (12 components)
+│   │   │   ├── homepage/             # 🆕 Homepage builder (13 components)
+│   │   │   │   ├── HomepagePreviewContent.tsx  # Server Component wrapper
+│   │   │   │   └── ... (12 other components)
 │   │   │   └── ...
 │   │   │
 │   │   ├── blog/                     # Blog frontend
@@ -524,7 +532,9 @@ teddy-shop/
 │   │   │
 │   │   ├── homepage/                 # 🆕 Homepage sections
 │   │   │   ├── HomepageRenderer.tsx  # Main renderer
-│   │   │   └── sections/             # 15 section components
+│   │   │   └── sections/             # 15 section components + metadata
+│   │   │       ├── metadata.ts      # Section metadata (server-safe)
+│   │   │       └── ... (15 section components)
 │   │   │
 │   │   └── ui/                       # Reusable UI atoms
 │   │       ├── button.tsx            # Buttons
@@ -543,6 +553,9 @@ teddy-shop/
 │   │   │   ├── author.ts
 │   │   │   ├── homepage.ts           # 🆕
 │   │   │   └── ...
+│   │   ├── utils/                    # 🆕 Centralized utilities
+│   │   │   ├── slug.ts               # Slug generation
+│   │   │   └── format.ts             # Date/currency formatting
 │   │   ├── payment/                  # Payment gateways
 │   │   ├── stock/                    # Stock management
 │   │   └── email/                    # Email service
@@ -783,6 +796,26 @@ createdAt: new Date(); // ✅ Always Date objects, not strings
 ### 2. 🏠 Homepage Configuration System
 
 **Status:** ✅ 100% Complete | **Date:** Dec 4, 2025
+
+#### Server/Client Component Separation (Dec 4, 2025)
+
+**Issue:** `HomepagePreview` (Client Component) was rendering `HomepageRenderer` (Server Component) which indirectly imported `db.ts`, causing "mongodb is not defined" errors.
+
+**Solution:**
+
+- Created `HomepagePreviewContent.tsx` - Dedicated Server Component wrapper
+- Separated `metadata.ts` from `sections/index.tsx` to prevent client imports
+- Used `dynamic()` import with `ssr: true` in `HomepagePreview`
+- Added `server-only` package for explicit server-side enforcement
+
+**Files Created:**
+- `components/admin/homepage/HomepagePreviewContent.tsx`
+- `components/homepage/sections/metadata.ts`
+
+**Files Modified:**
+- `components/admin/homepage/HomepagePreview.tsx` - Dynamic import pattern
+- `components/homepage/sections/index.tsx` - Removed server-only code
+- `lib/db.ts` - Removed explicit `server-only` (handled by component boundaries)
 
 #### Schema Changes:
 

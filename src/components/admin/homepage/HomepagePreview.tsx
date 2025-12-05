@@ -1,11 +1,17 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Monitor, Tablet, Smartphone, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { HomepageRenderer } from '@/components/homepage/HomepageRenderer';
+
+// Dynamic import Server Component to prevent client-side bundling
+const HomepagePreviewContent = dynamic(
+  () => import('./HomepagePreviewContent').then((mod) => ({ default: mod.HomepagePreviewContent })),
+  { ssr: true }
+);
 
 interface HomepagePreviewProps {
   config: any;
@@ -82,10 +88,7 @@ export function HomepagePreview({ config }: HomepagePreviewProps) {
           >
             {/* Preview Content */}
             <div className="overflow-y-auto" style={{ maxHeight: '70vh' }}>
-              <HomepageRenderer
-                config={config}
-                isPreview={true}
-              />
+              <HomepagePreviewContent config={config} />
             </div>
           </div>
         </div>

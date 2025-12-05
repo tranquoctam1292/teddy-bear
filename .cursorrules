@@ -47,7 +47,7 @@
 
 ## 2. Core Principles
 
-### 🎯 The Five Pillars:
+### 🎯 The Six Pillars:
 
 #### 1️⃣ Server-Side First
 
@@ -115,6 +115,17 @@ PATTERN:
   });
 
 TARGET: Keep initial bundle < 250KB
+```
+
+#### 6️⃣ Full Implementation Protocol
+
+```
+❌ FORBIDDEN Phrases: "You need to...", "Here is an example...", "Modify the file like this..."
+
+✅ REQUIRED Action: "Here is the updated file:", "I have fixed the issue. Here is the code:"
+
+- Always output actionable, copy-pasteable, COMPLETE code.
+- Do not shift the burden of implementation to the user.
 ```
 
 ---
@@ -1369,17 +1380,23 @@ When coding, AI must:
 9. ✅ Validate all inputs
 10. ✅ Follow established patterns
 11. ✅ **Language:** MUST reply in Vietnamese (VI) for all output, regardless of the input language (EN/VN).
+12. ✅ **Anti-Lazy Mode:** Do not provide tutorials, guides, or "here is how to do it" explanations. **WRITE THE CODE.** If a file needs modification, output the **FULL, COMPLETE** file content. Never use comments like "// ... rest of code" or "// ... unchanged" unless explicitly requested for a tiny diff.
 
 **Violations of these rules = Code quality failure!**
 
 ---
 
-**Rules Version:** 3.3  
-**Last Updated:** December 4, 2025 (Case Sensitivity Fix)  
+**Rules Version:** 3.4  
+**Last Updated:** December 4, 2025 (Anti-Lazy Policy & Full Implementation Protocol)  
 **Status:** Active & Enforced  
 **Compliance:** Mandatory for all AI-generated code
 
-**Recent Updates (Version 3.3):**
+**Recent Updates (Version 3.4):**
+
+- ✅ **Anti-Lazy Mode** - CRITICAL: AI must output FULL, COMPLETE code files. No tutorials or partial snippets.
+- ✅ **Full Implementation Protocol** - New 6th Pillar: Always write actionable, copy-pasteable, COMPLETE code.
+
+**Previous Updates (Version 3.3):**
 
 - ✅ **File Naming Convention** - CRITICAL: Lowercase filenames for cross-platform compatibility (button.tsx not Button.tsx)
 - ✅ **Vietnamese Language Requirement** - All AI responses MUST be in Vietnamese (VI)
