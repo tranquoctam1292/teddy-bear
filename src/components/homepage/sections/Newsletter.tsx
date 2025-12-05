@@ -1,195 +1,139 @@
-// Newsletter Subscription Section Component
+// Newsletter Subscription Section Component - Phase 5: Marketing Sections Redesign
+// Client Component handling email subscription form
 'use client';
 
-import { useState } from 'react';
-import { Mail, CheckCircle, AlertCircle } from 'lucide-react';
+import { useState, FormEvent } from 'react';
+import { Mail, Loader2, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { SectionComponentProps } from '@/lib/types/homepage';
+import { Container } from '@/components/homepage/container';
+import { SectionHeader } from '@/components/homepage/section-header';
+import type { NewsletterContent } from '@/lib/mock-data';
+import { NEWSLETTER_CONTENT } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
 
-interface NewsletterContent {
-  heading: string;
-  description?: string;
+interface NewsletterProps {
+  content?: NewsletterContent;
+  heading?: string;
+  subheading?: string;
   placeholder?: string;
   buttonText?: string;
-  successMessage?: string;
-  errorMessage?: string;
-  
-  // Design options
-  layout?: 'horizontal' | 'vertical' | 'inline';
-  backgroundColor?: string;
-  textColor?: string;
-  
-  // Privacy
-  showPrivacyNote?: boolean;
   privacyText?: string;
-  
-  // Visual elements
-  showIcon?: boolean;
-  backgroundImage?: string;
 }
 
 export function Newsletter({
   content,
-  layout,
-  isPreview,
-}: SectionComponentProps<NewsletterContent>) {
+  heading,
+  subheading,
+  placeholder,
+  buttonText,
+  privacyText,
+}: NewsletterProps) {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
-  const [message, setMessage] = useState('');
+  const [success, setSuccess] = useState(false);
 
-  const layoutType = content.layout || 'horizontal';
-  const placeholder = content.placeholder || 'Enter your email';
-  const buttonText = content.buttonText || 'Subscribe';
-  const successMessage = content.successMessage || 'Thank you for subscribing!';
-  const errorMessage = content.errorMessage || 'Something went wrong. Please try again.';
-  const showIcon = content.showIcon !== false;
-  const showPrivacyNote = content.showPrivacyNote !== false;
-  const privacyText = content.privacyText || 'We respect your privacy. Unsubscribe at any time.';
+  // Use content prop or individual props
+  const finalHeading = content?.heading || heading || NEWSLETTER_CONTENT.heading;
+  const finalSubheading = content?.subheading || subheading || NEWSLETTER_CONTENT.subheading;
+  const finalPlaceholder = content?.placeholder || placeholder || NEWSLETTER_CONTENT.placeholder;
+  const finalButtonText = content?.buttonText || buttonText || NEWSLETTER_CONTENT.buttonText;
+  const finalPrivacyText = content?.privacyText || privacyText || NEWSLETTER_CONTENT.privacyText;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
-    if (!email || !email.includes('@')) {
-      setStatus('error');
-      setMessage('Please enter a valid email address');
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
       return;
     }
 
     setLoading(true);
-    setStatus('idle');
 
-    try {
-      // TODO: Replace with actual API endpoint
-      const response = await fetch('/api/newsletter/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
+    // Simulate API call (1 second delay)
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      if (response.ok) {
-        setStatus('success');
-        setMessage(successMessage);
-        setEmail('');
-      } else {
-        throw new Error('Subscription failed');
-      }
-    } catch (error) {
-      setStatus('error');
-      setMessage(errorMessage);
-    } finally {
-      setLoading(false);
-    }
+    // TODO: Replace with actual API call
+    // await fetch('/api/newsletter/subscribe', {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify({ email }),
+    // });
+
+    setLoading(false);
+    setSuccess(true);
+    setEmail('');
+
+    // Reset success message after 3 seconds
+    setTimeout(() => {
+      setSuccess(false);
+    }, 3000);
   };
 
   return (
-    <div
-      className="relative overflow-hidden"
-      style={{
-        backgroundColor: content.backgroundColor || '#f9fafb',
-        color: content.textColor || '#111827',
-      }}
-    >
-      {/* Background Image */}
-      {content.backgroundImage && (
-        <div
-          className="absolute inset-0 bg-cover bg-center opacity-10"
-          style={{ backgroundImage: `url(${content.backgroundImage})` }}
-        />
-      )}
+    <Container variant="standard" padding="desktop">
+      {/* Section Header */}
+      <SectionHeader
+        heading={finalHeading}
+        subheading={finalSubheading}
+        alignment="center"
+      />
 
-      <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div
-          className={cn(
-            'max-w-4xl mx-auto',
-            layoutType === 'vertical' && 'text-center',
-            layoutType === 'horizontal' && 'flex flex-col md:flex-row items-center gap-8',
-            layoutType === 'inline' && 'text-center'
-          )}
-        >
-          {/* Content */}
-          <div className={cn(
-            layoutType === 'horizontal' && 'md:flex-1 text-left md:text-left'
-          )}>
-            {showIcon && (
-              <div className={cn(
-                'inline-flex items-center justify-center w-16 h-16 rounded-full bg-pink-100 mb-4',
-                layoutType === 'vertical' && 'mx-auto'
-              )}>
-                <Mail className="w-8 h-8 text-pink-600" />
-              </div>
-            )}
-
-            <h2 className="text-3xl md:text-4xl font-bold mb-3">
-              {content.heading}
-            </h2>
-            
-            {content.description && (
-              <p className="text-lg opacity-80 mb-6">
-                {content.description}
-              </p>
-            )}
+      {/* Newsletter Form */}
+      <div className="max-w-2xl mx-auto">
+        {success ? (
+          <div className="text-center py-8">
+            <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+            <p className="text-xl font-semibold text-gray-900 mb-2">
+              Đăng ký thành công!
+            </p>
+            <p className="text-gray-600">
+              Cảm ơn bạn đã đăng ký. Chúng tôi sẽ gửi email cho bạn sớm nhất.
+            </p>
           </div>
-
-          {/* Form */}
-          <div className={cn(
-            layoutType === 'horizontal' && 'md:flex-1',
-            layoutType === 'inline' && 'max-w-md mx-auto w-full'
-          )}>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div
-                className={cn(
-                  'flex gap-2',
-                  layoutType === 'vertical' && 'flex-col',
-                  (layoutType === 'horizontal' || layoutType === 'inline') && 'flex-col sm:flex-row'
-                )}
-              >
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Input & Button Row */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex-1 relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <Input
                   type="email"
+                  placeholder={finalPlaceholder}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder={placeholder}
-                  disabled={loading || status === 'success'}
-                  className="flex-1"
+                  className="pl-10 h-12 text-base focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
                   required
+                  disabled={loading}
                 />
-                <Button
-                  type="submit"
-                  disabled={loading || status === 'success'}
-                  className="whitespace-nowrap"
-                >
-                  {loading ? 'Subscribing...' : buttonText}
-                </Button>
               </div>
+              <Button
+                type="submit"
+                size="lg"
+                disabled={loading || !email}
+                className="bg-pink-600 hover:bg-pink-700 text-white px-8 py-6 h-12 font-semibold shadow-lg hover:shadow-xl transition-all"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 w-5 h-5 animate-spin" />
+                    Đang xử lý...
+                  </>
+                ) : (
+                  finalButtonText
+                )}
+              </Button>
+            </div>
 
-              {/* Status Messages */}
-              {status === 'success' && (
-                <div className="flex items-center gap-2 text-green-600 text-sm">
-                  <CheckCircle className="w-4 h-4" />
-                  <span>{message}</span>
-                </div>
-              )}
-
-              {status === 'error' && (
-                <div className="flex items-center gap-2 text-red-600 text-sm">
-                  <AlertCircle className="w-4 h-4" />
-                  <span>{message}</span>
-                </div>
-              )}
-
-              {/* Privacy Note */}
-              {showPrivacyNote && status !== 'success' && (
-                <p className="text-xs opacity-60">
-                  {privacyText}
-                </p>
-              )}
-            </form>
-          </div>
-        </div>
+            {/* Privacy Note */}
+            {finalPrivacyText && (
+              <p className="text-xs md:text-sm text-gray-500 text-center">
+                {finalPrivacyText}
+              </p>
+            )}
+          </form>
+        )}
       </div>
-    </div>
+    </Container>
   );
 }
-

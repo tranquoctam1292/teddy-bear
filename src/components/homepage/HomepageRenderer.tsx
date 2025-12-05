@@ -1,4 +1,7 @@
 // Homepage Renderer - Renders sections from config
+// NOTE: This is a Server Component but doesn't need 'server-only' directive
+// because it doesn't directly import db.ts. The section components that use db.ts
+// have their own 'server-only' directives.
 import { HomepageConfig, HomepageSection } from '@/lib/types/homepage';
 import { getSectionComponent } from './sections';
 import { cn } from '@/lib/utils';
@@ -8,7 +11,7 @@ interface HomepageRendererProps {
   isPreview?: boolean;
 }
 
-export function HomepageRenderer({ config, isPreview }: HomepageRendererProps) {
+export async function HomepageRenderer({ config, isPreview }: HomepageRendererProps) {
   // Get visible sections
   const visibleSections = (config.sections || [])
     .filter((section) => section.enabled)
@@ -47,15 +50,15 @@ export function HomepageRenderer({ config, isPreview }: HomepageRendererProps) {
   );
 }
 
-// Section Wrapper Component
-function SectionWrapper({
+// Section Wrapper Component (async to support lazy-loaded Server Components)
+async function SectionWrapper({
   section,
   isPreview,
 }: {
   section: HomepageSection;
   isPreview?: boolean;
 }) {
-  const Component = getSectionComponent(section.type);
+  const Component = await getSectionComponent(section.type);
 
   if (!Component) {
     console.warn(`Unknown section type: ${section.type}`);

@@ -90,7 +90,7 @@ export default async function EditHomepageConfigPage({ params }: PageProps) {
 
         {/* Status Badge */}
         {configWithStringId.status === 'published' && (
-          <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+          <div className="rounded-lg border border-green-200 bg-green-50 py-2 px-4">
             <p className="text-sm text-green-800">
               ✓ This configuration is currently published and active on your homepage
             </p>

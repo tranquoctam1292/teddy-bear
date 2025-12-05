@@ -1,0 +1,162 @@
+/* Design Tokens - Homepage UX/UI Redesign
+ * Phase 1: Foundation
+ * Date: December 5, 2025
+ */
+
+/* ============================================
+   3.1 COLOR PALETTE (Refined)
+   ============================================ */
+
+:root {
+  /* Primary Pink - Brand Color */
+  --pink-50: #fdf2f8; /* Backgrounds */
+  --pink-100: #fce7f3; /* Light backgrounds */
+  --pink-200: #fbcfe8; /* Borders, dividers */
+  --pink-300: #f9a8d4;
+  --pink-400: #f472b6;
+  --pink-500: #ec4899; /* Primary actions */
+  --pink-600: #db2777; /* Hover states */
+  --pink-700: #be185d; /* Active states */
+
+  /* Accent Colors */
+  --cream-50: #fefbf7; /* Neutral backgrounds */
+  --cream-100: #fdf6ed; /* Card backgrounds */
+  --cream-200: #faedd4;
+  --cream-300: #f6e0b8;
+  --brown-600: #8b7355; /* Text accents */
+  --brown-700: #6b5d4f;
+  --brown-900: #3d3529;
+
+  /* Semantic Colors - Success */
+  --green-50: #f0fdf4;
+  --green-500: #22c55e;
+  --green-600: #16a34a;
+
+  /* Semantic Colors - Warning */
+  --yellow-50: #fefce8;
+  --yellow-500: #eab308;
+  --yellow-600: #ca8a04;
+
+  /* Semantic Colors - Error */
+  --red-50: #fef2f2;
+  --red-500: #ef4444;
+  --red-600: #dc2626;
+
+  /* Semantic Colors - Neutral */
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+
+  /* ============================================
+     3.2 TYPOGRAPHY SCALE
+     ============================================ */
+
+  /* Font Families */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu',
+    'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  --font-display: 'Inter', var(--font-sans); /* For headings */
+
+  /* Font Sizes */
+  --text-xs: 0.75rem; /* 12px - Captions */
+  --text-sm: 0.875rem; /* 14px - Body small */
+  --text-base: 1rem; /* 16px - Body */
+  --text-lg: 1.125rem; /* 18px - Body large */
+  --text-xl: 1.25rem; /* 20px - Subheadings */
+  --text-2xl: 1.5rem; /* 24px - H4 */
+  --text-3xl: 1.875rem; /* 30px - H3 */
+  --text-4xl: 2.25rem; /* 36px - H2 */
+  --text-5xl: 3rem; /* 48px - H1 */
+  --text-6xl: 3.75rem; /* 60px - Hero H1 */
+  --text-7xl: 4.5rem; /* 72px - Large Hero H1 */
+
+  /* Font Weights */
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+
+  /* Line Heights */
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.75;
+
+  /* ============================================
+     3.3 SPACING SYSTEM (8px Grid)
+     ============================================ */
+
+  /* Spacing Scale */
+  --space-1: 0.25rem; /* 4px */
+  --space-2: 0.5rem; /* 8px */
+  --space-3: 0.75rem; /* 12px */
+  --space-4: 1rem; /* 16px */
+  --space-5: 1.25rem; /* 20px */
+  --space-6: 1.5rem; /* 24px */
+  --space-8: 2rem; /* 32px */
+  --space-10: 2.5rem; /* 40px */
+  --space-12: 3rem; /* 48px */
+  --space-16: 4rem; /* 64px */
+  --space-20: 5rem; /* 80px */
+  --space-24: 6rem; /* 96px */
+
+  /* Section Padding */
+  --section-padding-mobile: var(--space-12); /* 48px */
+  --section-padding-tablet: var(--space-16); /* 64px */
+  --section-padding-desktop: var(--space-20); /* 80px */
+
+  /* Container Padding */
+  --container-padding-mobile: var(--space-4); /* 16px */
+  --container-padding-tablet: var(--space-6); /* 24px */
+  --container-padding-desktop: var(--space-8); /* 32px */
+
+  /* ============================================
+     3.4 BORDER RADIUS
+     ============================================ */
+
+  --radius-sm: 0.25rem; /* 4px - Small elements */
+  --radius-md: 0.375rem; /* 6px - Default */
+  --radius-lg: 0.5rem; /* 8px - Cards */
+  --radius-xl: 0.75rem; /* 12px - Large cards */
+  --radius-2xl: 1rem; /* 16px - Hero sections */
+  --radius-full: 9999px; /* Pills, badges */
+
+  /* ============================================
+     3.5 SHADOWS
+     ============================================ */
+
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+
+  /* ============================================
+     3.6 BREAKPOINTS
+     ============================================ */
+
+  /* Mobile First */
+  --breakpoint-sm: 640px; /* Small tablets */
+  --breakpoint-md: 768px; /* Tablets */
+  --breakpoint-lg: 1024px; /* Desktop */
+  --breakpoint-xl: 1280px; /* Large desktop */
+  --breakpoint-2xl: 1536px; /* Extra large */
+
+  /* ============================================
+     CONTAINER MAX WIDTHS
+     ============================================ */
+
+  --container-narrow: 56rem; /* 896px - Text content, forms */
+  --container-standard: 80rem; /* 1280px - Product grids, features */
+  --container-wide: 87.5rem; /* 1400px - Large galleries */
+}
+
+/* Dark theme support (for future use) */
+.dark {
+  /* Dark theme tokens can be added here if needed */
+}

@@ -34,6 +34,17 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 interface HomepageConfig {
   _id: string;
@@ -60,9 +71,22 @@ export function HomepageConfigTable({
   page,
 }: HomepageConfigTableProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const [configs, setConfigs] = useState<HomepageConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
+  
+  // Delete dialog state
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<{ id: string; name: string } | null>(null);
+  
+  // Publish dialog state
+  const [isPublishDialogOpen, setIsPublishDialogOpen] = useState(false);
+  const [itemToPublish, setItemToPublish] = useState<string | null>(null);
+  
+  // Duplicate dialog state
+  const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false);
+  const [itemToDuplicate, setItemToDuplicate] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     fetchConfigs();
@@ -91,63 +115,113 @@ export function HomepageConfigTable({
     }
   }
 
-  async function handlePublish(id: string) {
-    if (!confirm('Make this configuration active? This will replace the current homepage.')) {
-      return;
-    }
+  function openPublishDialog(id: string) {
+    setItemToPublish(id);
+    setIsPublishDialogOpen(true);
+  }
+
+  async function handlePublish() {
+    if (!itemToPublish) return;
 
     try {
-      const response = await fetch(`/api/admin/homepage/configs/${id}/publish`, {
+      const response = await fetch(`/api/admin/homepage/configs/${itemToPublish}/publish`, {
         method: 'POST',
       });
 
-      if (!response.ok) throw new Error('Failed to publish');
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error?.message || 'Failed to publish');
+      }
 
-      alert('Configuration published successfully!');
+      toast({
+        title: 'Success',
+        description: 'Configuration published successfully!',
+      });
+      
+      setIsPublishDialogOpen(false);
+      setItemToPublish(null);
       fetchConfigs();
       router.refresh();
-    } catch (error) {
-      alert('Failed to publish configuration');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to publish configuration';
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive',
+      });
     }
   }
 
-  async function handleDuplicate(id: string, name: string) {
-    if (!confirm(`Duplicate "${name}"?`)) return;
+  function openDuplicateDialog(id: string, name: string) {
+    setItemToDuplicate({ id, name });
+    setIsDuplicateDialogOpen(true);
+  }
+
+  async function handleDuplicate() {
+    if (!itemToDuplicate) return;
 
     try {
-      const response = await fetch(`/api/admin/homepage/configs/${id}/duplicate`, {
+      const response = await fetch(`/api/admin/homepage/configs/${itemToDuplicate.id}/duplicate`, {
         method: 'POST',
       });
 
-      if (!response.ok) throw new Error('Failed to duplicate');
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error?.message || 'Failed to duplicate');
+      }
 
       const data = await response.json();
-      alert('Configuration duplicated successfully!');
+      toast({
+        title: 'Success',
+        description: 'Configuration duplicated successfully!',
+      });
+      
+      setIsDuplicateDialogOpen(false);
+      setItemToDuplicate(null);
       router.push(`/admin/homepage/${data.config._id}/edit`);
-    } catch (error) {
-      alert('Failed to duplicate configuration');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to duplicate configuration';
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive',
+      });
     }
   }
 
-  async function handleDelete(id: string, name: string) {
-    if (!confirm(`Delete "${name}"? This action cannot be undone.`)) {
-      return;
-    }
+  function openDeleteDialog(id: string, name: string) {
+    setItemToDelete({ id, name });
+    setIsDeleteDialogOpen(true);
+  }
+
+  async function handleDelete() {
+    if (!itemToDelete) return;
 
     try {
-      const response = await fetch(`/api/admin/homepage/configs/${id}`, {
+      const response = await fetch(`/api/admin/homepage/configs/${itemToDelete.id}`, {
         method: 'DELETE',
       });
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to delete');
+        throw new Error(data.error?.message || 'Failed to delete');
       }
 
-      alert('Configuration deleted successfully!');
+      toast({
+        title: 'Success',
+        description: 'Configuration deleted successfully!',
+      });
+      
+      setIsDeleteDialogOpen(false);
+      setItemToDelete(null);
       fetchConfigs();
-    } catch (error: any) {
-      alert(error.message || 'Failed to delete configuration');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete configuration';
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive',
+      });
     }
   }
 
@@ -244,18 +318,18 @@ export function HomepageConfigTable({
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       {config.status !== 'published' && (
-                        <DropdownMenuItem onClick={() => handlePublish(config._id)}>
+                        <DropdownMenuItem onClick={() => openPublishDialog(config._id)}>
                           <CheckCircle className="mr-2 h-4 w-4" />
                           Publish
                         </DropdownMenuItem>
                       )}
-                      <DropdownMenuItem onClick={() => handleDuplicate(config._id, config.name)}>
+                      <DropdownMenuItem onClick={() => openDuplicateDialog(config._id, config.name)}>
                         <Copy className="mr-2 h-4 w-4" />
                         Duplicate
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
-                        onClick={() => handleDelete(config._id, config.name)}
+                        onClick={() => openDeleteDialog(config._id, config.name)}
                         className="text-red-600"
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
@@ -297,6 +371,63 @@ export function HomepageConfigTable({
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete &quot;{itemToDelete?.name}&quot;. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Publish Confirmation Dialog */}
+      <AlertDialog open={isPublishDialogOpen} onOpenChange={setIsPublishDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Publish Configuration?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will make this configuration active and replace the current homepage. Are you sure you want to continue?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handlePublish}>
+              Publish
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Duplicate Confirmation Dialog */}
+      <AlertDialog open={isDuplicateDialogOpen} onOpenChange={setIsDuplicateDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Duplicate Configuration?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will create a copy of &quot;{itemToDuplicate?.name}&quot;. Continue?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDuplicate}>
+              Duplicate
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -350,4 +481,5 @@ function TableSkeleton() {
     </div>
   );
 }
+
 

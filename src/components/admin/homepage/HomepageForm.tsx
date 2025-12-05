@@ -57,17 +57,11 @@ export function HomepageForm({ action, defaultValues }: HomepageFormProps) {
     },
   });
 
-  // Debug: Only log when there are errors or during submission
-  if (Object.keys(errors).length > 0) {
-    console.log('[HomepageForm] Validation errors:', errors);
-  }
 
   const seoTitleLength = watch('seoTitle')?.length || 0;
   const seoDescriptionLength = watch('seoDescription')?.length || 0;
 
   const onSubmit = async (data: HomepageFormFormData) => {
-    console.log('[HomepageForm] ✅ Form is valid, submitting with data:', data);
-
     try {
       // Convert form data to FormData for Server Action compatibility
       const formData = new FormData();
@@ -78,9 +72,7 @@ export function HomepageForm({ action, defaultValues }: HomepageFormProps) {
       formData.append('seoTitle', data.seoTitle);
       formData.append('seoDescription', data.seoDescription);
 
-      console.log('[HomepageForm] Calling action...');
       const result = await action(formData);
-      console.log('[HomepageForm] API Response:', result);
 
       // Check if result contains error (from Server Action)
       if (result && typeof result === 'object' && 'success' in result && !result.success) {
@@ -98,10 +90,9 @@ export function HomepageForm({ action, defaultValues }: HomepageFormProps) {
 
       // Handle redirect for create flow (when id is returned)
       if (result && typeof result === 'object' && 'id' in result && result.id) {
-        console.log('[HomepageForm] Redirecting to edit page:', `/admin/homepage/${result.id}/edit`);
         // Show success toast
         toast({
-          variant: 'success',
+          variant: 'default',
           title: 'Thành công!',
           description: 'Cấu hình trang chủ đã được tạo. Đang chuyển đến trang chỉnh sửa...',
         });
@@ -111,9 +102,8 @@ export function HomepageForm({ action, defaultValues }: HomepageFormProps) {
         }, 500);
       } else {
         // For update flow (no redirect needed)
-        console.log('[HomepageForm] Configuration saved successfully');
         toast({
-          variant: 'success',
+          variant: 'default',
           title: 'Đã lưu!',
           description: 'Cấu hình đã được cập nhật thành công.',
         });
@@ -135,23 +125,26 @@ export function HomepageForm({ action, defaultValues }: HomepageFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <Tabs defaultValue="basic" className="w-full">
-        <TabsList>
-          <TabsTrigger value="basic">Basic Info</TabsTrigger>
-          <TabsTrigger value="seo">SEO Settings</TabsTrigger>
-        </TabsList>
+    <div className="flex flex-col min-h-[calc(100vh-12rem)]">
+      {/* Form Container with Max Width */}
+      <form id="homepage-form" onSubmit={handleSubmit(onSubmit)} className="flex-1 pb-24">
+        <div className="max-w-3xl mx-auto space-y-8">
+          <Tabs defaultValue="basic" className="w-full">
+            <TabsList>
+              <TabsTrigger value="basic">Basic Info</TabsTrigger>
+              <TabsTrigger value="seo">SEO</TabsTrigger>
+            </TabsList>
 
-        {/* Basic Info Tab */}
-        <TabsContent value="basic" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Basic Information</CardTitle>
-              <CardDescription>
-                General information about this homepage configuration
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+            {/* Basic Info Tab */}
+            <TabsContent value="basic" className="space-y-6 mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Basic Information</CardTitle>
+                  <CardDescription>
+                    General information about this homepage configuration
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
               {/* Name */}
               <div className="space-y-2">
                 <Label htmlFor="name">
@@ -191,16 +184,16 @@ export function HomepageForm({ action, defaultValues }: HomepageFormProps) {
           </Card>
         </TabsContent>
 
-        {/* SEO Tab */}
-        <TabsContent value="seo" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>SEO Settings</CardTitle>
-              <CardDescription>
-                Optimize your homepage for search engines
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+            {/* SEO Tab */}
+            <TabsContent value="seo" className="space-y-6 mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>SEO Settings</CardTitle>
+                  <CardDescription>
+                    Optimize your homepage for search engines
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
               {/* SEO Title */}
               <div className="space-y-2">
                 <Label htmlFor="seoTitle">
@@ -264,57 +257,79 @@ export function HomepageForm({ action, defaultValues }: HomepageFormProps) {
                   <li>• Make it compelling to increase click-through rate</li>
                 </ul>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
 
-      {/* Validation Summary - Always visible when errors exist */}
-      {Object.keys(errors).length > 0 && (
-        <div className="rounded-lg border-2 border-red-300 bg-red-50 p-4 shadow-sm">
-          <div className="flex items-start gap-2">
-            <span className="text-red-600 text-xl">⚠️</span>
-            <div className="flex-1">
-              <h4 className="font-semibold text-red-900 mb-2">
-                Vui lòng sửa các lỗi sau để tiếp tục:
-              </h4>
-              <ul className="list-disc list-inside space-y-1 text-sm text-red-800">
-                {errors.name && <li><strong>Configuration Name:</strong> {errors.name.message}</li>}
-                {errors.seoTitle && <li><strong>Page Title:</strong> {errors.seoTitle.message}</li>}
-                {errors.seoDescription && (
-                  <li><strong>Meta Description:</strong> {errors.seoDescription.message}</li>
-                )}
-              </ul>
+          {/* Validation Summary - Always visible when errors exist */}
+          {Object.keys(errors).length > 0 && (
+            <div className="rounded-lg border-2 border-red-300 bg-red-50 p-4 shadow-sm">
+              <div className="flex items-start gap-2">
+                <span className="text-red-600 text-xl">⚠️</span>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-red-900 mb-2">
+                    Vui lòng sửa các lỗi sau để tiếp tục:
+                  </h4>
+                  <ul className="list-disc list-inside space-y-1 text-sm text-red-800">
+                    {errors.name && <li><strong>Configuration Name:</strong> {errors.name.message}</li>}
+                    {errors.seoTitle && <li><strong>Page Title:</strong> {errors.seoTitle.message}</li>}
+                    {errors.seoDescription && (
+                      <li><strong>Meta Description:</strong> {errors.seoDescription.message}</li>
+                    )}
+                  </ul>
+                </div>
+              </div>
             </div>
+          )}
+
+          {/* Action Buttons - Inside form but positioned at bottom */}
+          <div className="flex justify-end gap-4 pt-6 pb-6">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.back()}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="submit" 
+              disabled={isSubmitting || !isValid}
+            >
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {defaultValues ? 'Save Changes' : 'Create & Continue'}
+            </Button>
           </div>
         </div>
-      )}
+      </form>
 
-      {/* Actions */}
-      <div className="flex justify-end gap-4">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => router.back()}
-          disabled={isSubmitting}
-        >
-          Cancel
-        </Button>
-        <Button 
-          type="submit" 
-          disabled={isSubmitting}
-          onClick={() => {
-            // Log for debugging if needed
-            if (Object.keys(errors).length > 0) {
-              console.log('[HomepageForm] Submit blocked - validation errors:', errors);
-            }
-          }}
-        >
-          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {defaultValues ? 'Save Changes' : 'Create & Continue'}
-        </Button>
+      {/* Sticky Action Bar - Mobile only for better UX on scroll */}
+      <div className="sticky bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 shadow-lg z-10 lg:hidden">
+        <div className="max-w-3xl mx-auto px-6 py-3">
+          <div className="flex justify-end gap-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.back()}
+              disabled={isSubmitting}
+              size="sm"
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="submit" 
+              form="homepage-form"
+              disabled={isSubmitting || !isValid}
+              size="sm"
+            >
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {defaultValues ? 'Save' : 'Create'}
+            </Button>
+          </div>
+        </div>
       </div>
-    </form>
+    </div>
   );
 }
 

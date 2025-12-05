@@ -2,18 +2,11 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { Suspense } from 'react';
-import { PlusCircle, Search } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { HomepageConfigTable } from '@/components/admin/homepage/HomepageConfigTable';
+import { HomepageToolbarWrapper } from '@/components/admin/homepage/HomepageToolbarWrapper';
 
 export const metadata: Metadata = {
   title: 'Homepage Manager | Admin',
@@ -58,30 +51,10 @@ export default async function HomepageManagerPage({ searchParams }: PageProps) {
         <ActiveConfigAlert />
       </Suspense>
 
-      {/* Filters */}
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search configurations..."
-            className="pl-8"
-            defaultValue={search}
-            name="search"
-          />
-        </div>
-        <Select defaultValue={status}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="published">Published</SelectItem>
-            <SelectItem value="draft">Draft</SelectItem>
-            <SelectItem value="scheduled">Scheduled</SelectItem>
-            <SelectItem value="archived">Archived</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      {/* WordPress-style Toolbar */}
+      <Suspense fallback={<ToolbarSkeleton />}>
+        <HomepageToolbarWrapper status={status} />
+      </Suspense>
 
       {/* Table */}
       <Suspense fallback={<TableSkeleton />}>
@@ -150,6 +123,15 @@ function TableSkeleton() {
       {[...Array(5)].map((_, i) => (
         <Skeleton key={i} className="h-16 w-full" />
       ))}
+    </div>
+  );
+}
+
+function ToolbarSkeleton() {
+  return (
+    <div className="bg-white rounded-lg border p-4 space-y-4">
+      <Skeleton className="h-10 w-full" />
+      <Skeleton className="h-10 w-full" />
     </div>
   );
 }

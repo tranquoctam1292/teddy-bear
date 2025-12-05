@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { HomepageForm } from './HomepageForm';
 import { SectionBuilder } from './SectionBuilder';
-import { HomepagePreview } from './HomepagePreview';
+import { HomepagePreviewWrapper } from './HomepagePreviewWrapper';
 import { VersionHistory } from './VersionHistory';
 import { SchedulePublishModal } from './SchedulePublishModal';
 import { ABTestingPanel } from './ABTestingPanel';
@@ -183,7 +183,7 @@ export function HomepageEditor({ config }: HomepageEditorProps) {
 
         {/* Preview Tab */}
         <TabsContent value="preview" className="space-y-4">
-          <HomepagePreview
+          <HomepagePreviewWrapper
             config={{
               ...config,
               sections,

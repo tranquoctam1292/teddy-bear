@@ -2,6 +2,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { getCollections } from '@/lib/db';
+import { homepageFormSchema } from '@/lib/schemas/homepage';
+import { generateSlug } from '@/lib/utils/slug';
 
 /**
  * GET /api/admin/homepage/configs
@@ -181,7 +183,7 @@ export async function POST(request: NextRequest) {
         success: false,
         error: {
           code: 'AUTH_ERROR',
-          message: 'Authentication required',
+          message: 'Authentication required. Please log in to continue.',
         },
       },
       { status: 401 }
@@ -204,8 +206,7 @@ export async function POST(request: NextRequest) {
 
   // All auth checks passed, proceed with request processing
   try {
-
-    // Parse and validate request body
+    // Parse request body
     let body;
     try {
       body = await request.json();
@@ -216,20 +217,55 @@ export async function POST(request: NextRequest) {
           error: {
             code: 'VALIDATION_ERROR',
             message: 'Invalid JSON in request body',
+            details: process.env.NODE_ENV === 'development'
+              ? parseError instanceof Error ? parseError.message : String(parseError)
+              : undefined,
           },
         },
         { status: 400 }
       );
     }
 
-    // Validate required fields
-    if (!body.name || typeof body.name !== 'string' || body.name.trim().length < 2) {
+    // Validate with Zod schema
+    let validatedData;
+    try {
+      validatedData = homepageFormSchema.parse({
+        name: body.name,
+        description: body.description,
+        seoTitle: body.seo?.title || body.seoTitle,
+        seoDescription: body.seo?.description || body.seoDescription,
+      });
+    } catch (zodError) {
+      // Handle Zod validation errors
+      if (zodError && typeof zodError === 'object' && 'errors' in zodError) {
+        const zodErrors = zodError as { errors: Array<{ path: string[]; message: string }> };
+        const errorMessages = zodErrors.errors.map((err) => {
+          const field = err.path.join('.');
+          return `${field}: ${err.message}`;
+        });
+        
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              code: 'VALIDATION_ERROR',
+              message: 'Validation failed',
+              details: errorMessages,
+            },
+          },
+          { status: 400 }
+        );
+      }
+      
       return NextResponse.json(
         {
           success: false,
           error: {
             code: 'VALIDATION_ERROR',
-            message: 'Name is required and must be at least 2 characters',
+            message: 'Invalid request data',
+            details: process.env.NODE_ENV === 'development'
+              ? zodError instanceof Error ? zodError.message : String(zodError)
+              : undefined,
           },
         },
         { status: 400 }
@@ -263,15 +299,8 @@ export async function POST(request: NextRequest) {
     
     const homepageConfigs = db.collection('homepage_configs');
 
-    // Generate slug if not provided
-    let baseSlug =
-      body.slug ||
-      body.name
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, '');
+    // Generate slug using centralized utility
+    let baseSlug = body.slug || generateSlug(validatedData.name);
 
     // Ensure slug is not empty
     if (!baseSlug) {
@@ -309,16 +338,16 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Create config object
+    // Create config object using validated data
     const newConfig = {
-      name: body.name.trim(),
+      name: validatedData.name.trim(),
       slug,
-      description: body.description?.trim() || '',
+      description: validatedData.description?.trim() || '',
       status: body.status || 'draft',
       sections: body.sections || [],
       seo: {
-        title: body.seo?.title || body.seoTitle || '',
-        description: body.seo?.description || body.seoDescription || '',
+        title: validatedData.seoTitle,
+        description: validatedData.seoDescription,
         keywords: body.seo?.keywords || [],
       },
       version: 1,

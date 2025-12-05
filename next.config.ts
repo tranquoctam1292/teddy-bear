@@ -1,6 +1,25 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  // Image Optimization Configuration
+  // Phase 3: Allow external image domains for product images
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'placehold.co',
+      },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+    ],
+    // Allow SVG images from placehold.co (they return SVG format)
+    dangerouslyAllowSVG: true,
+    contentDispositionType: 'attachment',
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+  },
+
   // TypeScript Build Configuration
   typescript: {
     ignoreBuildErrors: true,

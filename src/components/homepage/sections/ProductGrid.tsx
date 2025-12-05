@@ -1,15 +1,18 @@
 // Product Grid Section Component
+// NOTE: This is a Server Component (async function) that uses database
+// It should only be imported in Server Components, not Client Components
 import Link from 'next/link';
-import { getCollections } from '@/lib/db';
 import { SectionComponentProps } from '@/lib/types/homepage';
 import ProductCard from '@/components/shop/ProductCard';
 import { Button } from '@/components/ui/button';
+import { Container } from '@/components/homepage/container';
+import { SectionHeader } from '@/components/homepage/section-header';
 import { cn } from '@/lib/utils';
 
 interface ProductGridContent {
   heading?: string;
   subheading?: string;
-  
+
   // Product Selection
   productSelection: 'manual' | 'automatic' | 'category' | 'tag';
   productIds?: string[];
@@ -17,7 +20,7 @@ interface ProductGridContent {
   tag?: string;
   sortBy?: 'newest' | 'popular' | 'price-asc' | 'price-desc' | 'name';
   limit?: number;
-  
+
   // Display Options
   columns?: number; // 2, 3, 4, 5, 6
   showPrice?: boolean;
@@ -25,7 +28,7 @@ interface ProductGridContent {
   showAddToCart?: boolean;
   showCategory?: boolean;
   showTags?: boolean;
-  
+
   // View More
   viewMoreButton?: {
     text: string;
@@ -33,35 +36,24 @@ interface ProductGridContent {
   };
 }
 
-export async function ProductGrid({
-  content,
-  layout,
-  isPreview,
-}: SectionComponentProps<ProductGridContent>) {
+export async function ProductGrid({ content }: SectionComponentProps<ProductGridContent>) {
   // Fetch products
   const products = await getProducts(content);
-  
+
   const columns = content.columns || 4;
-  const showPrice = content.showPrice !== false;
-  const showRating = content.showRating !== false;
-  const showAddToCart = content.showAddToCart !== false;
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+    <Container variant="standard" padding="desktop">
       {/* Header */}
       {(content.heading || content.subheading) && (
-        <div className="text-center mb-12">
-          {content.heading && (
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
-              {content.heading}
-            </h2>
-          )}
-          {content.subheading && (
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              {content.subheading}
-            </p>
-          )}
-        </div>
+        <SectionHeader
+          heading={content.heading || ''}
+          subheading={content.subheading}
+          alignment="center"
+          showViewAll={!!content.viewMoreButton}
+          viewAllLink={content.viewMoreButton?.link}
+          viewAllText={content.viewMoreButton?.text}
+        />
       )}
 
       {/* Products Grid */}
@@ -82,95 +74,49 @@ export async function ProductGrid({
             )}
           >
             {products.map((product: any) => (
-              <ProductCard
-                key={product._id || product.id}
-                product={product}
-              />
+              <ProductCard key={product._id || product.id} product={product} />
             ))}
           </div>
 
-          {/* View More Button */}
-          {content.viewMoreButton && (
+          {/* View More Button - Fallback if not using SectionHeader */}
+          {content.viewMoreButton && !content.heading && (
             <div className="text-center">
               <Button asChild variant="outline" size="lg">
-                <Link href={content.viewMoreButton.link}>
-                  {content.viewMoreButton.text}
-                </Link>
+                <Link href={content.viewMoreButton.link}>{content.viewMoreButton.text}</Link>
               </Button>
             </div>
           )}
         </>
       )}
-    </div>
+    </Container>
   );
 }
 
 // Helper: Fetch products based on content settings
 async function getProducts(content: ProductGridContent) {
   try {
-    const { products } = await getCollections();
-    
-    let query: any = { status: 'published' };
-    const limit = content.limit || 12;
-    
-    // Build query based on selection method
-    switch (content.productSelection) {
-      case 'category':
-        if (content.category) {
-          query.category = content.category;
-        }
-        break;
-      
-      case 'tag':
-        if (content.tag) {
-          query.tags = { $in: [content.tag] };
-        }
-        break;
-      
-      case 'manual':
-        if (content.productIds && content.productIds.length > 0) {
-          query._id = { $in: content.productIds };
-        }
-        break;
-      
-      case 'automatic':
-      default:
-        // No additional filter, get all products
-        break;
-    }
-    
-    // Sorting
-    let sort: any = {};
-    switch (content.sortBy) {
-      case 'newest':
-        sort = { createdAt: -1 };
-        break;
-      case 'popular':
-        sort = { views: -1, sales: -1 };
-        break;
-      case 'price-asc':
-        sort = { price: 1 };
-        break;
-      case 'price-desc':
-        sort = { price: -1 };
-        break;
-      case 'name':
-        sort = { name: 1 };
-        break;
-      default:
-        sort = { createdAt: -1 };
-    }
-    
-    const productList = await products
-      .find(query)
-      .sort(sort)
-      .limit(limit)
-      .toArray();
-    
-    return productList;
+    // Lazy-load database helper to avoid bundling issues
+    const { getSectionProducts } = await import('@/lib/db-sections');
+
+    // Map 'name' sort to 'newest' since db-sections doesn't support 'name' yet
+    const validSortBy =
+      content.sortBy === 'name'
+        ? 'newest'
+        : content.sortBy &&
+          ['newest', 'popular', 'price-asc', 'price-desc'].includes(content.sortBy)
+        ? content.sortBy
+        : undefined;
+
+    return getSectionProducts({
+      productSelection: content.productSelection,
+      productIds: content.productIds,
+      category: content.category,
+      tag: content.tag,
+      sortBy: validSortBy,
+      limit: content.limit || 12,
+    });
   } catch (error) {
     console.error('Error fetching products for grid:', error);
     return [];
   }
 }
-

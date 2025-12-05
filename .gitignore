@@ -82,3 +82,13 @@ next-env.d.ts
 tmp/
 temp/
 *.tmp
+
+# Build logs and output
+build-log.txt
+build-output.txt
+*.build.log
+*.build-output
+
+# Accidental command output files
+how*
+"t format*"

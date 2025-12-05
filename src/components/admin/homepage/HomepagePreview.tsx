@@ -1,23 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Monitor, Tablet, Smartphone, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-// Dynamic import Server Component to prevent client-side bundling
-const HomepagePreviewContent = dynamic(
-  () => import('./HomepagePreviewContent').then((mod) => ({ default: mod.HomepagePreviewContent })),
-  { ssr: true }
-);
+import type { ReactNode } from 'react';
 
 interface HomepagePreviewProps {
   config: any;
+  children: ReactNode; // Server Component content passed from parent
 }
 
-export function HomepagePreview({ config }: HomepagePreviewProps) {
+export function HomepagePreview({ config, children }: HomepagePreviewProps) {
   const [device, setDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
 
   const deviceWidths = {
@@ -88,7 +83,7 @@ export function HomepagePreview({ config }: HomepagePreviewProps) {
           >
             {/* Preview Content */}
             <div className="overflow-y-auto" style={{ maxHeight: '70vh' }}>
-              <HomepagePreviewContent config={config} />
+              {children}
             </div>
           </div>
         </div>

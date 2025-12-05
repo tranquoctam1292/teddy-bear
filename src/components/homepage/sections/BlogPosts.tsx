@@ -1,10 +1,11 @@
 // Blog Posts Section Component
+// NOTE: This is a Server Component (async function) that uses database
+// It should only be imported in Server Components, not Client Components
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { BlogPostsContent } from '@/lib/types/homepage';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { getCollections } from '@/lib/db';
 import { formatDistanceToNow } from 'date-fns';
 
 interface BlogPostsProps {
@@ -124,41 +125,13 @@ export async function BlogPosts({ content, layout, isPreview }: BlogPostsProps) 
 }
 
 async function getPosts(content: BlogPostsContent) {
-  const { posts } = await getCollections();
-
-  let query: any = { status: 'published' };
-  const limit = content.limit || 6;
-
-  // Build query based on selection method
-  switch (content.postSelection) {
-    case 'featured':
-      query.featured = true;
-      break;
-
-    case 'category':
-      if (content.category) {
-        query.category = content.category;
-      }
-      break;
-
-    case 'manual':
-      if (content.postIds && content.postIds.length > 0) {
-        query._id = { $in: content.postIds };
-      }
-      break;
-
-    case 'recent':
-    default:
-      // Will use default sorting
-      break;
-  }
-
-  const postsList = await posts
-    .find(query)
-    .sort({ publishedAt: -1 })
-    .limit(limit)
-    .toArray();
-
-  return postsList;
+  // Lazy-load database helper to avoid bundling issues
+  const { getSectionPosts } = await import('@/lib/db-sections');
+  return getSectionPosts({
+    postSelection: content.postSelection,
+    category: content.category,
+    postIds: content.postIds,
+    limit: content.limit || 6,
+  });
 }
 

@@ -1,8 +1,9 @@
 # 📚 Teddy Shop - Documentation Index
 
 **Project:** Teddy Shop E-commerce Platform  
-**Last Updated:** 04 December 2025  
-**Status:** ✅ Production Ready
+**Last Updated:** 05 December 2025  
+**Status:** ✅ Production Ready  
+**Cleanup:** ✅ Documentation cleanup completed (40% reduction)
 
 ---
 
@@ -34,15 +35,17 @@ teddy-shop/
 ├── README.md                [Project overview]
 │
 └── docs/
-    ├── guides/              [User & Developer Guides - 7 files]
-    ├── reports/             [Technical & QA Reports - 22 files]
+    ├── guides/              [User & Developer Guides - 8 files]
+    ├── reports/             [Technical & QA Reports - 16 files]
     │   └── performance/     [Performance Optimization - 7 files]
-    └── archive/             [Historical documentation]
+    └── archive/             [Historical documentation - 20 files]
+        ├── phase-reports/   [Phase audit reports - 9 files]
+        └── verification/    [Verification & fix reports - 15 files]
 ```
 
 ---
 
-## 📘 GUIDES (7 files)
+## 📘 GUIDES (8 files)
 
 ### Developer Guides
 
@@ -55,6 +58,7 @@ teddy-shop/
 
 - **[AUTHOR_SYSTEM_QUICK_GUIDE.md](guides/AUTHOR_SYSTEM_QUICK_GUIDE.md)** - Author management (E-E-A-T)
 - **[HOMEPAGE_CONFIGURATION_USER_GUIDE.md](guides/HOMEPAGE_CONFIGURATION_USER_GUIDE.md)** - Homepage builder
+- **[HOMEPAGE_OPTIMIZATION_PLAN_TEDDY_SHOP.md](guides/HOMEPAGE_OPTIMIZATION_PLAN_TEDDY_SHOP.md)** - Homepage optimization plan (Phase 7-9)
 
 **Technical Guides:**
 
@@ -64,7 +68,7 @@ teddy-shop/
 
 ---
 
-## 📊 REPORTS (22 files)
+## 📊 REPORTS (16 files)
 
 ### Core Reports (7 files)
 
@@ -86,24 +90,26 @@ teddy-shop/
 
 ---
 
-### QA Session Reports (8 files)
+### QA Session Reports (3 files)
 
 **Recent QA Pass (December 2025):**
 
 - **[FINAL_QA_AUDIT_REPORT.md](reports/FINAL_QA_AUDIT_REPORT.md)** ⭐ - Complete audit summary
-- **[TODO_SEMANTIC.md](reports/TODO_SEMANTIC.md)** - Semantic HTML roadmap
 - **[SEMANTIC_HTML_IMPLEMENTATION_REPORT.md](reports/SEMANTIC_HTML_IMPLEMENTATION_REPORT.md)** - Implementation details
 
 **Code Quality:**
 
 - **[UTILITY_EXTRACTION_REPORT.md](reports/UTILITY_EXTRACTION_REPORT.md)** - Utility function refactoring
 - **[FUNCTION_EXPORT_PATTERN_AUDIT.md](reports/FUNCTION_EXPORT_PATTERN_AUDIT.md)** - Pattern compliance
-- **[COMPONENT_LIST_TO_REFACTOR.md](reports/COMPONENT_LIST_TO_REFACTOR.md)** - Component inventory
 
 **Type Safety:**
 
 - **[FORM_TYPE_FIXES.md](reports/FORM_TYPE_FIXES.md)** - Form type improvements
 - **[COLLECTION_STANDARDIZATION.md](reports/COLLECTION_STANDARDIZATION.md)** - DB collection patterns
+
+**Homepage Optimization:**
+
+- **[PHASE9_HOMEPAGE_AUDIT_REPORT.md](reports/PHASE9_HOMEPAGE_AUDIT_REPORT.md)** ⭐ - Final homepage audit (Phase 9)
 
 ---
 
@@ -167,20 +173,25 @@ teddy-shop/
 ### Organization
 
 - **Root files:** 3 core docs (clean!) ✅
-- **Guides:** 7 user/developer guides
-- **Reports:** 22 technical reports
+- **Guides:** 8 user/developer guides
+- **Reports:** 16 technical reports
   - Core: 7 reports
-  - QA: 8 reports
+  - QA: 3 reports
+  - Homepage: 1 report
   - Performance: 7 reports
-- **Total:** 32 active documents
+- **Archive:** 20 historical documents
+  - Phase reports: 9 files
+  - Verification: 15 files
+- **Total:** 24 active documents (40% reduction from 60+ files)
 
 ### Quality
 
-- ✅ No duplicates
-- ✅ Well-organized
+- ✅ No duplicates (removed 3 duplicate files)
+- ✅ Well-organized (archived 20 obsolete files)
 - ✅ Clear categorization
 - ✅ Up-to-date content
 - ✅ Easy navigation
+- ✅ Clean structure (40% file reduction)
 
 ### Recent Updates (December 2025)
 
@@ -190,6 +201,10 @@ teddy-shop/
 - ✅ QA pass (65% error reduction)
 - ✅ Semantic HTML (41 tags)
 - ✅ Utility extraction (10 functions)
+- ✅ **Documentation cleanup (40% reduction)**
+  - Removed 3 duplicate files
+  - Archived 20 obsolete files
+  - Improved organization
 
 ---
 
@@ -239,6 +254,32 @@ teddy-shop/
 
 ---
 
+## 📦 ARCHIVE
+
+### Historical Documentation
+
+**Location:** `docs/archive/`
+
+**Phase Reports (9 files):**
+
+- Phase 1-5 audit reports (completed phases)
+- Context vs Codebase audit
+- Git sync investigation
+- Component refactor list
+- Semantic HTML TODO
+
+**Verification Reports (15 files):**
+
+- MongoDB connection fixes (5 files)
+- Environment & debug guides (6 files)
+- Homepage & session fixes (4 files)
+
+**Purpose:** Preserve historical reference while keeping active docs clean.
+
+See [archive/README.md](archive/README.md) for details.
+
+---
+
 ## 🔄 MAINTENANCE
 
 ### Documentation Updates
@@ -246,12 +287,13 @@ teddy-shop/
 - Update this index when new reports are added
 - Archive obsolete reports to `archive/`
 - Keep root directory clean (3 core files only)
+- Review quarterly for cleanup opportunities
 
 ### Review Schedule
 
 - **Weekly:** Check for new reports to organize
 - **Monthly:** Review and archive outdated docs
-- **Quarterly:** Major documentation cleanup
+- **Quarterly:** Major documentation cleanup (last: December 2025)
 
 ---
 
@@ -271,8 +313,8 @@ teddy-shop/
 ---
 
 **Maintained by:** AI Documentation Manager  
-**Last Cleanup:** 04 December 2025  
-**Next Review:** January 2025
+**Last Cleanup:** 05 December 2025 (Major cleanup - 40% reduction)  
+**Next Review:** January 2026
 
 ---
 

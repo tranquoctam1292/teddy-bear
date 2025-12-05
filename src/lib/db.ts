@@ -1,4 +1,6 @@
 // MongoDB Connection Helper
+// NOTE: This file should only be imported in Server Components or API routes
+// It uses MongoDB native driver which is server-only
 import { MongoClient, Db } from 'mongodb';
 
 const options = {};

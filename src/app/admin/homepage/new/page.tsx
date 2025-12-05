@@ -104,76 +104,124 @@ export default function NewHomepageConfigPage() {
     }
 
     try {
-      // Get cookies from incoming request to forward to API
-      const cookieStore = await cookies();
-      const allCookies = cookieStore.getAll();
-      const cookieHeader = allCookies
-        .map((cookie) => `${cookie.name}=${cookie.value}`)
-        .join('; ');
+      // Import required modules
+      const { getCollections } = await import('@/lib/db');
+      const { generateSlug } = await import('@/lib/utils/slug');
+      const { homepageFormSchema } = await import('@/lib/schemas/homepage');
 
-      // DEBUG: Log cookie forwarding (only in development)
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[createConfig] Forwarding cookies to API:', {
-          cookieCount: allCookies.length,
-          cookieNames: allCookies.map(c => c.name),
-          hasAuthCookie: allCookies.some(c => 
-            c.name.includes('auth') || 
-            c.name.includes('session') || 
-            c.name.includes('next-auth')
-          ),
+      // Validate with Zod schema
+      let validatedData;
+      try {
+        validatedData = homepageFormSchema.parse({
+          name,
+          description,
+          seoTitle,
+          seoDescription,
         });
-      }
-
-      // CRITICAL: Forward cookies from Server Action to API route
-      // This ensures NextAuth session cookie is included in the request
-      const response = await fetch(
-        `${siteUrl}/api/admin/homepage/configs`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            // Forward cookies from incoming request (includes NextAuth session cookie)
-            Cookie: cookieHeader,
-          },
-          body: JSON.stringify({
-            name,
-            description,
-            slug: name
-              .toLowerCase()
-              .replace(/[^a-z0-9]+/g, '-')
-              .replace(/^-|-$/g, ''),
-            status: 'draft',
-            sections: [],
-            seo: {
-              title: seoTitle,
-              description: seoDescription,
+      } catch (zodError) {
+        // Handle Zod validation errors
+        if (zodError && typeof zodError === 'object' && 'errors' in zodError) {
+          const zodErrors = zodError as { errors: Array<{ path: string[]; message: string }> };
+          const errorMessages = zodErrors.errors.map((err) => {
+            const field = err.path.join('.');
+            return `${field}: ${err.message}`;
+          });
+          
+          return {
+            success: false,
+            error: {
+              code: 'VALIDATION_ERROR',
+              message: 'Validation failed',
+              details: errorMessages,
             },
-          }),
+          };
         }
-      );
-
-      const data = await response.json();
-
-      // Handle standardized error response
-      if (!response.ok || !data.success) {
-        const errorMessage =
-          data.error?.message || 'Failed to create configuration';
         
-        // Return error object instead of throwing to prevent component crash
-        // The Client Component (HomepageForm) will handle the error and show toast
         return {
           success: false,
           error: {
-            code: data.error?.code || 'UNKNOWN_ERROR',
-            message: errorMessage,
+            code: 'VALIDATION_ERROR',
+            message: 'Invalid request data',
+            details: process.env.NODE_ENV === 'development'
+              ? zodError instanceof Error ? zodError.message : String(zodError)
+              : undefined,
           },
         };
       }
 
-      // Return id instead of redirect (redirect doesn't work from Client Component)
-      return { success: true, id: data.data.config._id };
+      // Get database connection
+      const { db } = await getCollections();
+      const homepageConfigs = db.collection('homepage_configs');
+
+      // Generate slug using centralized utility
+      let baseSlug = generateSlug(validatedData.name);
+      if (!baseSlug) {
+        baseSlug = 'homepage-config';
+      }
+
+      // Generate unique slug if conflict exists
+      let slug = baseSlug;
+      let counter = 1;
+      let existingConfig = await homepageConfigs.findOne({ slug });
+      
+      while (existingConfig) {
+        slug = `${baseSlug}-${counter}`;
+        existingConfig = await homepageConfigs.findOne({ slug });
+        counter++;
+        
+        // Safety limit to prevent infinite loop
+        if (counter > 1000) {
+          slug = `${baseSlug}-${Date.now()}`;
+          break;
+        }
+      }
+
+      // Get user ID
+      const userId = session.user.id || session.user.email || 'system';
+
+      // Create config object
+      const newConfig = {
+        name: validatedData.name.trim(),
+        slug,
+        description: validatedData.description?.trim() || '',
+        status: 'draft' as const,
+        sections: [],
+        seo: {
+          title: validatedData.seoTitle,
+          description: validatedData.seoDescription,
+          keywords: [],
+        },
+        version: 1,
+        createdBy: userId,
+        updatedBy: userId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      // Insert into database
+      const result = await homepageConfigs.insertOne(newConfig);
+
+      // Return success with id
+      return { 
+        success: true, 
+        id: result.insertedId.toString() 
+      };
     } catch (error) {
-      console.error('Error creating config:', error);
+      console.error('[createConfig] Error creating config:', error);
+      
+      // Handle specific error types
+      if (error instanceof Error) {
+        // MongoDB duplicate key error
+        if (error.name === 'MongoServerError' && (error as any).code === 11000) {
+          return {
+            success: false,
+            error: {
+              code: 'VALIDATION_ERROR',
+              message: 'A configuration with this slug already exists',
+            },
+          };
+        }
+      }
       
       // Return error object instead of throwing
       const errorMessage =
@@ -184,7 +232,7 @@ export default function NewHomepageConfigPage() {
       return {
         success: false,
         error: {
-          code: 'NETWORK_ERROR',
+          code: 'SERVER_ERROR',
           message: errorMessage,
         },
       };

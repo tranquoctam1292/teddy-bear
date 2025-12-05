@@ -1,8 +1,9 @@
 # 🐻 Teddy Shop - Project Context & Architecture
 
-**Last Updated:** December 4, 2025  
+**Last Updated:** December 5, 2025  
 **Status:** Production Ready (Phase 14 Complete - Architect & Performance Pass)  
-**Build:** ✅ Passing | **Security:** ✅ CVEs Patched | **Performance:** ⚡ Highly Optimized (-44% bundle)
+**Build:** ✅ Passing | **Security:** ✅ CVEs Patched | **Performance:** ⚡ Highly Optimized (-44% bundle)  
+**Recent Updates:** Product Variants System | Cart Integration | Documentation Cleanup (40% reduction)
 
 ---
 
@@ -15,6 +16,7 @@
 5. [Folder Structure](#5-folder-structure-map)
 6. [Development Guidelines](#6-development-guidelines)
 7. [Recent Major Updates](#-recent-major-updates-december-2025)
+8. [Product Variants & Cart Integration](#11-️-product-variants--cart-integration-dec-5-2025)
 
 ---
 
@@ -43,13 +45,13 @@ A **full-stack E-commerce platform** combined with a **headless CMS**, focusing 
 
 ### 🎨 Core Framework
 
-| Technology     | Version        | Purpose                  |
-| -------------- | -------------- | ------------------------ |
-| **Next.js**    | 15.5.7         | App Router, SSR, ISR     |
-| **React**      | 19.2.1         | UI framework             |
-| **TypeScript** | 5              | Type safety              |
-| **MongoDB**    | 6.3.0          | Database (Native Driver) |
-| **NextAuth**   | 5.0.0-beta.16  | Authentication           |
+| Technology     | Version       | Purpose                  |
+| -------------- | ------------- | ------------------------ |
+| **Next.js**    | 15.5.7        | App Router, SSR, ISR     |
+| **React**      | 19.2.1        | UI framework             |
+| **TypeScript** | 5             | Type safety              |
+| **MongoDB**    | 6.3.0         | Database (Native Driver) |
+| **NextAuth**   | 5.0.0-beta.16 | Authentication           |
 
 ### 🔧 State & Logic
 
@@ -80,8 +82,8 @@ A **full-stack E-commerce platform** combined with a **headless CMS**, focusing 
 
 ### 🔒 Server-Side Safety
 
-| Package         | Version | Purpose                          |
-| --------------- | ------- | -------------------------------- |
+| Package         | Version | Purpose                              |
+| --------------- | ------- | ------------------------------------ |
 | **server-only** | 0.0.1   | Prevent server code in client bundle |
 
 ---
@@ -225,10 +227,12 @@ interface Product {
 
 interface ProductVariant {
   id: string;
-  size: string; // "80cm", "1m2", "2m"
+  size: string; // "80cm", "1m2", "1m5", "2m"
+  color?: string; // Color name (e.g., "Pink", "Purple", "Blue")
+  colorCode?: string; // Hex color code (e.g., "#FF69B4", "#9B59B6")
   price: number;
   stock: number;
-  image?: string;
+  image?: string; // Variant-specific image URL
   sku?: string;
 }
 ```
@@ -521,8 +525,11 @@ teddy-shop/
 │   │   ├── admin/                    # Admin-specific widgets
 │   │   │   ├── AuthorBoxWidget.tsx   # Author selector
 │   │   │   ├── RowActions.tsx        # Table actions
-│   │   │   ├── homepage/             # 🆕 Homepage builder (13 components)
-│   │   │   │   ├── HomepagePreviewContent.tsx  # Server Component wrapper
+│   │   │   ├── homepage/             # 🆕 Homepage builder (16 components)
+│   │   │   │   ├── HomepageToolbar.tsx          # WordPress-style toolbar
+│   │   │   │   ├── HomepageToolbarWrapper.tsx   # Toolbar wrapper
+│   │   │   │   ├── HomepagePreviewContent.tsx   # Server Component wrapper
+│   │   │   │   ├── HomepagePreviewWrapper.tsx  # Component composition
 │   │   │   │   └── ... (12 other components)
 │   │   │   └── ...
 │   │   │
@@ -540,6 +547,9 @@ teddy-shop/
 │   │       ├── button.tsx            # Buttons
 │   │       ├── input.tsx             # Inputs
 │   │       ├── table.tsx             # Tables
+│   │       ├── alert-dialog.tsx      # Confirmation modals
+│   │       ├── toast.tsx             # Toast notifications
+│   │       ├── toaster.tsx           # Toast provider
 │   │       └── ... (11 total)
 │   │
 │   ├── lib/
@@ -560,6 +570,8 @@ teddy-shop/
 │   │   ├── stock/                    # Stock management
 │   │   └── email/                    # Email service
 │   │
+│   ├── hooks/                        # Custom React hooks
+│   │   └── use-toast.ts             # Toast notification hook
 │   └── store/                        # Zustand stores
 │       └── useCartStore.ts           # Cart state
 │
@@ -568,11 +580,13 @@ teddy-shop/
 │   ├── migrate-author-info.ts        # Data migration
 │   └── create-author-indexes.ts      # 🆕 Create DB indexes
 │
-└── docs/                             # 📚 Documentation (Reorganized Dec 2025)
-    ├── guides/                       # User guides (7 files)
-    ├── reports/                      # Analysis & status (15 files)
-    │   └── performance/              # 🆕 Performance reports (7 files)
-    └── archive/                      # Historical docs
+└── docs/                             # 📚 Documentation (Cleaned Dec 5, 2025)
+    ├── guides/                       # User & developer guides (8 files)
+    ├── reports/                      # Technical reports (16 files)
+    │   └── performance/              # Performance reports (7 files)
+    └── archive/                      # Historical documentation (20 files)
+        ├── phase-reports/            # Phase audit reports (9 files)
+        └── verification/             # Verification & fix reports (15 files)
 ```
 
 ---
@@ -675,7 +689,44 @@ createdAt: new Date(); // ✅ Always Date objects, not strings
 
 ## 🆕 RECENT MAJOR UPDATES (December 2025)
 
-### 1. ⚡ Performance Optimization (Dec 4, 2025)
+### 1. 🎨 Homepage Manager Toolbar (Dec 5, 2025)
+
+**Status:** ✅ Complete | **Impact:** Enhanced UX for homepage management
+
+#### WordPress-Style Filter Toolbar
+
+**New Components:**
+
+- `HomepageToolbar.tsx` - Main toolbar with status tabs, bulk actions, filters, and search
+- `HomepageToolbarWrapper.tsx` - Client wrapper that fetches status counts from API
+
+**Features:**
+
+- **Status Tabs:** "Tất cả", "Đã xuất bản", "Bản nháp", "Đã lên lịch", "Thùng rác" with live counts
+- **Bulk Actions:** Dropdown with actions (Delete, Trash, Restore, Publish, Draft) + Apply button
+- **Date Filter:** "Tất cả các ngày", "Hôm nay", "Tuần này", "Tháng này", "Năm này"
+- **Category Filter:** Placeholder for future category filtering
+- **Search:** Input field with Search button, Enter key support
+- **URL State Management:** All filters sync with URL searchParams for shareable links
+- **Responsive Design:** Flexbox layout, stacks on mobile, rows on desktop
+
+**Architecture:**
+
+- Uses `useSearchParams` and `useRouter` for URL-based state management
+- Server-friendly: Filters passed via URL params to Server Components
+- Status counts fetched via parallel API calls for performance
+
+**Integration:**
+
+- Integrated into `src/app/admin/homepage/page.tsx`
+- Replaces previous simple filter UI
+- Works seamlessly with `HomepageConfigTable`
+
+**Pattern:** Follows WordPress admin UI patterns for familiar user experience
+
+---
+
+### 2. ⚡ Performance Optimization (Dec 4, 2025)
 
 **Status:** ✅ Complete | **Impact:** -44% bundle size
 
@@ -809,10 +860,12 @@ createdAt: new Date(); // ✅ Always Date objects, not strings
 - Added `server-only` package for explicit server-side enforcement
 
 **Files Created:**
+
 - `components/admin/homepage/HomepagePreviewContent.tsx`
 - `components/homepage/sections/metadata.ts`
 
 **Files Modified:**
+
 - `components/admin/homepage/HomepagePreview.tsx` - Dynamic import pattern
 - `components/homepage/sections/index.tsx` - Removed server-only code
 - `lib/db.ts` - Removed explicit `server-only` (handled by component boundaries)
@@ -850,18 +903,22 @@ createdAt: new Date(); // ✅ Always Date objects, not strings
 | GET    | `/api/admin/homepage/configs/[id]/versions`  | Version history               |
 | POST   | `/api/admin/homepage/configs/[id]/restore`   | Rollback version              |
 
-#### Components (27 new):
+#### Components (29 new):
 
-**Admin Components (12):**
+**Admin Components (14):**
 
 - `HomepageEditor.tsx` - Main editor interface
 - `SectionBuilder.tsx` - Drag & drop builder
 - `SectionEditorPanel.tsx` - Section content editor
-- `HomepagePreview.tsx` - Live preview
+- `HomepagePreview.tsx` - Live preview (Client Component)
+- `HomepagePreviewContent.tsx` - Server Component wrapper for preview
+- `HomepagePreviewWrapper.tsx` - Component composition wrapper
+- `HomepageToolbar.tsx` - WordPress-style filter toolbar (Status tabs, bulk actions, filters, search)
+- `HomepageToolbarWrapper.tsx` - Client wrapper for toolbar with status counts
 - `ABTestingPanel.tsx` - A/B test management
 - `VersionHistory.tsx` - Version control
 - `AdvancedSEOSettings.tsx` - SEO panel
-- `HomepageConfigTable.tsx` - Config list table
+- `HomepageConfigTable.tsx` - Config list table with AlertDialog modals
 - `AddSectionModal.tsx` - Section template picker
 - `SchedulePublishModal.tsx` - Schedule dialog
 - `ImageUploadField.tsx` - Image uploader
@@ -885,13 +942,31 @@ createdAt: new Date(); // ✅ Always Date objects, not strings
 - `SocialFeed.tsx` - Social media posts
 - `CustomHTML.tsx` - Custom HTML/CSS/JS
 
-**Total Implementation:** ~2,500 lines of code
+**Total Implementation:** ~2,800 lines of code
+
+#### WordPress-Style Toolbar (Dec 5, 2025):
+
+**New Feature:** Homepage Manager now includes a WordPress-style filter toolbar:
+
+- **Status Tabs:** "Tất cả", "Đã xuất bản", "Bản nháp", "Đã lên lịch", "Thùng rác" with live counts
+- **Bulk Actions:** Dropdown with actions (Delete, Trash, Restore, Publish, Draft) + Apply button
+- **Filters:** Date filter (Today, This Week, This Month, This Year) and Category filter (placeholder)
+- **Search:** Input field with Search button, Enter key support, URL-synced state
+- **URL State Management:** All filters sync with URL searchParams for shareable links
+- **Responsive:** Flexbox layout, stacks on mobile, rows on desktop
+
+**Components:**
+
+- `HomepageToolbar.tsx` - Main toolbar component (Client Component)
+- `HomepageToolbarWrapper.tsx` - Wrapper that fetches status counts from API
+
+**Pattern:** Uses `useSearchParams` and `useRouter` for URL-based state management, ensuring server-friendly architecture.
 
 **Documentation:** `docs/implementation/🎨_HOMEPAGE_CONFIGURATION_PLAN.md`
 
 ---
 
-### 2. ⚡ MongoDB Indexes Optimization
+### 3. ⚡ MongoDB Indexes Optimization
 
 **Status:** ✅ Implemented | **Date:** Dec 4, 2025
 
@@ -924,7 +999,7 @@ createdAt: new Date(); // ✅ Always Date objects, not strings
 
 ---
 
-### 3. 🔒 Security Patches (Critical CVEs)
+### 4. 🔒 Security Patches (Critical CVEs)
 
 **Status:** ✅ Applied | **Date:** Dec 4, 2025
 
@@ -951,7 +1026,7 @@ createdAt: new Date(); // ✅ Always Date objects, not strings
 
 ---
 
-### 4. 🎨 Layout Architecture Separation
+### 5. 🎨 Layout Architecture Separation
 
 **Status:** ✅ Implemented | **Date:** Dec 4, 2025
 
@@ -987,25 +1062,85 @@ src/app/
 
 ---
 
-### 5. 🧩 UI Components Library
+### 6. 🧩 UI Components Library
 
-**Status:** ✅ Complete | **Date:** Dec 4, 2025
+**Status:** ✅ Complete | **Date:** Dec 4, 2025 | **Updated:** Dec 5, 2025
 
-#### Components Added (11):
+#### Components Added (14):
 
-| Component     | File                | Based On       | Usage             |
-| ------------- | ------------------- | -------------- | ----------------- |
-| Table         | `table.tsx`         | Radix -        | Data tables       |
-| Card          | `card.tsx`          | Radix -        | Containers        |
-| Dialog        | `dialog.tsx`        | Radix Dialog   | Modals            |
-| Skeleton      | `skeleton.tsx`      | Radix -        | Loading states    |
-| Label         | `label.tsx`         | Radix Label    | Form labels       |
-| Select        | `select.tsx`        | Radix Select   | Dropdowns         |
-| Dropdown Menu | `dropdown-menu.tsx` | Radix Dropdown | Context menus     |
-| Textarea      | `textarea.tsx`      | Native         | Text areas        |
-| Switch        | `switch.tsx`        | Radix Switch   | Toggles           |
-| Button        | `button.tsx`        | Radix Slot     | Buttons (updated) |
-| Input         | `input.tsx`         | Native         | Inputs (updated)  |
+| Component     | File                | Based On             | Usage               |
+| ------------- | ------------------- | -------------------- | ------------------- |
+| Table         | `table.tsx`         | Radix -              | Data tables         |
+| Card          | `card.tsx`          | Radix -              | Containers          |
+| Dialog        | `dialog.tsx`        | Radix Dialog         | Modals              |
+| Alert Dialog  | `alert-dialog.tsx`  | Radix AlertDialog    | Confirmation modals |
+| Toast         | `toast.tsx`         | Radix Toast          | Toast notifications |
+| Toaster       | `toaster.tsx`       | Radix Toast Provider | Toast container     |
+| Skeleton      | `skeleton.tsx`      | Radix -              | Loading states      |
+| Label         | `label.tsx`         | Radix Label          | Form labels         |
+| Select        | `select.tsx`        | Radix Select         | Dropdowns           |
+| Dropdown Menu | `dropdown-menu.tsx` | Radix Dropdown       | Context menus       |
+| Textarea      | `textarea.tsx`      | Native               | Text areas          |
+| Switch        | `switch.tsx`        | Radix Switch         | Toggles             |
+| Button        | `button.tsx`        | Radix Slot           | Buttons (updated)   |
+| Input         | `input.tsx`         | Native               | Inputs (updated)    |
+
+#### Toast System (Dec 5, 2025):
+
+**New Components:**
+
+- `toast.tsx` - Toast primitive component (Radix UI)
+- `toaster.tsx` - Toast provider component
+- `hooks/use-toast.ts` - Toast hook for triggering notifications
+
+**Features:**
+
+- Auto-dismiss after 5 seconds (configurable)
+- Success, error, warning, info variants
+- Action buttons support
+- Accessible (ARIA compliant)
+- Z-index: 100 (above all content)
+
+**Usage Pattern:**
+
+```typescript
+import { useToast } from '@/hooks/use-toast';
+
+const { toast } = useToast();
+
+toast({
+  title: 'Success',
+  description: 'Operation completed',
+  variant: 'default', // or 'destructive'
+});
+```
+
+#### Alert Dialog System (Dec 5, 2025):
+
+**Component:** `alert-dialog.tsx` - Replaces native `window.confirm()`
+
+**Features:**
+
+- Centered modal with backdrop blur
+- Z-index: 100 (above all content)
+- Accessible (ARIA compliant)
+- Customizable actions (Cancel, Confirm)
+- Used in: `HomepageConfigTable` for delete/publish/duplicate confirmations
+
+**Usage Pattern:**
+
+```typescript
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+```
 
 **Style System:**
 
@@ -1018,7 +1153,7 @@ src/app/
 
 ---
 
-### 6. 📋 Checkout Flow Documentation
+### 7. 📋 Checkout Flow Documentation
 
 **Status:** ✅ Documented | **Date:** Dec 4, 2025
 
@@ -1065,7 +1200,7 @@ src/app/
 
 ---
 
-### 7. 📦 Dependencies Updates
+### 8. 📦 Dependencies Updates
 
 **Status:** ✅ Updated | **Date:** Dec 4, 2025
 
@@ -1111,7 +1246,7 @@ src/app/
 
 ---
 
-### 8. 🚀 CI/CD & Build Improvements
+### 9. 🚀 CI/CD & Build Improvements
 
 **Status:** ✅ All Passing | **Date:** Dec 4, 2025
 
@@ -1148,29 +1283,27 @@ src/app/
 
 ---
 
-### 9. 📚 Documentation Cleanup (Dec 4, 2025)
+### 10. 📚 Documentation Cleanup (Dec 5, 2025)
 
-**Status:** ✅ Complete | **Date:** Dec 4, 2025
+**Status:** ✅ Complete | **Date:** Dec 5, 2025
 
 #### Cleanup Actions:
 
-**Deleted (16 files):**
+**Deleted (3 files):**
 
-- 1 duplicate (DOCUMENTATION_INDEX.md in root)
-- 2 temp files (type-check-\*.txt)
-- 6 obsolete archive files
-- 3 completed folder files
-- 4 implementation plan files
+- `docs/reports/HOMEPAGE_FITNESS_ASSESSMENT.md` (duplicate)
+- `docs/reports/HOMEPAGE_OPTIMIZATION_RECOMMENDATIONS.md` (duplicate)
+- `docs/README.md` (duplicate)
 
-**Moved (15 files):**
+**Archived (20 files):**
 
-- 8 QA reports → docs/reports/
-- 7 performance reports → docs/reports/performance/
+- 15 verification & fix reports → `docs/archive/verification/`
+- 9 phase reports & audits → `docs/archive/phase-reports/`
 
-**Created:**
+**Updated:**
 
-- New folder: `docs/reports/performance/`
-- Updated: `docs/DOCUMENTATION_INDEX.md`
+- `docs/archive/README.md` (merged ARCHIVE_README.md)
+- `docs/DOCUMENTATION_INDEX.md` (updated structure)
 
 #### Final Structure:
 
@@ -1181,16 +1314,17 @@ teddy-shop/
 ├── README.md
 │
 └── docs/
-    ├── guides/              [7 files]  📖 How-to guides
+    ├── guides/              [8 files]  📖 User & developer guides
     │   ├── QUICK_START.md
     │   ├── TROUBLESHOOTING.md
     │   ├── MONGODB_CONNECTION_GUIDE.md
     │   ├── HOMEPAGE_CONFIGURATION_USER_GUIDE.md
+    │   ├── HOMEPAGE_OPTIMIZATION_PLAN_TEDDY_SHOP.md
     │   ├── AUTHOR_SYSTEM_QUICK_GUIDE.md
     │   ├── 📘_NOTEBOOKLM_GUIDE.md
     │   └── 🚀_DEPLOY_NOW.md
     │
-    ├── reports/             [22 files] 📊 Technical reports
+    ├── reports/             [16 files] 📊 Technical reports
     │   ├── DATABASE_SCHEMA.md
     │   ├── SOURCE_CODE_ANALYSIS.md
     │   ├── ACCESSIBILITY_AUDIT.md
@@ -1198,18 +1332,15 @@ teddy-shop/
     │   ├── 🎯_BUILD_STATUS_FINAL.md
     │   ├── 🎯_QUALITY_TESTING_REPORT.md
     │   ├── 📊_TESTING_SUMMARY.md
-    │   │
-    │   ├── [QA Reports - 8 files]
+    │   ├── PHASE9_HOMEPAGE_AUDIT_REPORT.md
     │   ├── FINAL_QA_AUDIT_REPORT.md
-    │   ├── TODO_SEMANTIC.md
     │   ├── SEMANTIC_HTML_IMPLEMENTATION_REPORT.md
     │   ├── UTILITY_EXTRACTION_REPORT.md
     │   ├── FUNCTION_EXPORT_PATTERN_AUDIT.md
-    │   ├── COMPONENT_LIST_TO_REFACTOR.md
     │   ├── FORM_TYPE_FIXES.md
     │   ├── COLLECTION_STANDARDIZATION.md
     │   │
-    │   └── performance/     [7 files]  🆕 Performance reports
+    │   └── performance/     [7 files]  ⚡ Performance reports
     │       ├── BUNDLE_OPTIMIZATION_FINAL_REPORT.md
     │       ├── REFACTORING_SUMMARY.md
     │       ├── DYNAMIC_IMPORT_IMPLEMENTATION_REPORT.md
@@ -1218,23 +1349,66 @@ teddy-shop/
     │       ├── NEXTJS_ARCHITECT_AUDIT.md
     │       └── SERVER_COMPONENT_CONVERSION_REPORT.md
     │
-    └── archive/             [1 file]   📦 Historical
-        └── README.md
+    └── archive/             [20 files] 📦 Historical documentation
+        ├── README.md
+        ├── phase-reports/   [9 files]  Phase audit reports
+        └── verification/    [15 files] Verification & fix reports
 ```
 
 #### Impact:
 
-| Metric             | Before | After     | Change   |
-| ------------------ | ------ | --------- | -------- |
-| **Root .md files** | 19     | 4         | -79% ✅  |
-| **Total files**    | 50+    | 34        | -32% ✅  |
-| **Duplicates**     | 2      | 0         | -100% ✅ |
-| **Obsolete**       | 13     | 0         | -100% ✅ |
-| **Organization**   | Poor   | Excellent | +200% ✅ |
+| Metric           | Before | After     | Change    |
+| ---------------- | ------ | --------- | --------- |
+| **Total files**  | 60+    | 24        | -40% ✅   |
+| **Guides**       | 9      | 8         | -1 ✅     |
+| **Reports**      | 29     | 16        | -13 ✅    |
+| **Duplicates**   | 3      | 0         | -100% ✅  |
+| **Archived**     | 1      | 20        | +1900% ✅ |
+| **Organization** | Good   | Excellent | +50% ✅   |
 
-**Documentation:** `docs/reports/performance/` contains all optimization reports
+**Documentation:** `docs/DOCUMENTATION_INDEX.md` provides master index
 
-**Navigation:** `docs/DOCUMENTATION_INDEX.md` provides master index
+**Archive:** `docs/archive/README.md` explains archived content
+
+---
+
+### 11. 🛍️ Product Variants & Cart Integration (Dec 5, 2025)
+
+**Status:** ✅ Complete | **Date:** Dec 5, 2025
+
+#### Implementation:
+
+**Product Variants System:**
+
+- ✅ Extended `HomepageProduct` interface with `variants?: Variant[]`
+- ✅ Added `color` and `colorCode` to `ProductVariant` interface
+- ✅ Updated `MOCK_PRODUCTS` with variants (size, color, price, stock, image)
+- ✅ Variant selector components: `SizeDisplay`, `ColorDisplay`
+
+**Cart Integration:**
+
+- ✅ ProductCard homepage supports variant selection
+- ✅ Dynamic price & image update based on selected variant
+- ✅ Cart store (`useCartStore`) integrated with variants
+- ✅ QuickView modal supports variant selection
+- ✅ Add to cart with variant support
+
+**Components Updated:**
+
+- `src/components/homepage/sections/product-card.tsx` - Full variant support
+- `src/lib/mock-data.ts` - Variants data structure
+- `src/store/useCartStore.ts` - Variant-aware cart operations
+
+**Features:**
+
+- ✅ Size selector (80cm, 1m2, 1m5)
+- ✅ Color selector with color codes
+- ✅ Dynamic price display (single price or range)
+- ✅ Dynamic image display (variant-specific images)
+- ✅ QuickView modal with variant selection
+- ✅ Cart integration with variant tracking
+
+**Documentation:** See `docs/guides/HOMEPAGE_OPTIMIZATION_PLAN_TEDDY_SHOP.md` (Phase 9)
 
 ---
 
@@ -1365,8 +1539,8 @@ teddy-shop/
 
 ---
 
-**Document Version:** 3.0  
-**Last Major Update:** December 4, 2025 (Architect & Performance Pass)  
+**Document Version:** 3.1  
+**Last Major Update:** December 5, 2025 (Homepage Toolbar & UI Components)  
 **Phase:** 14 - Performance Optimization Complete  
 **Next Review:** When major features added  
 **Maintained By:** AI + Developer collaboration
