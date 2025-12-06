@@ -3,57 +3,46 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Calendar, User, ArrowRight } from 'lucide-react';
-
-// NOTE: Metadata moved to client component state
-// If you need static metadata, convert this back to server component
-
-// Mock blog posts data
-const blogPosts = [
-  {
-    id: '1',
-    title: 'Cách chọn gấu bông phù hợp cho từng dịp',
-    excerpt: 'Gấu bông không chỉ là món quà mà còn là người bạn đồng hành. Hãy cùng tìm hiểu cách chọn gấu bông phù hợp cho từng dịp đặc biệt...',
-    author: 'The Emotional House',
-    date: '2024-12-01',
-    image: '/images/blog/post-1.jpg',
-    category: 'Mẹo vặt',
-  },
-  {
-    id: '2',
-    title: 'Lịch sử và ý nghĩa của gấu bông Teddy',
-    excerpt: 'Teddy Bear đã trở thành biểu tượng của tình yêu và sự ấm áp. Khám phá câu chuyện đằng sau chú gấu bông nổi tiếng nhất thế giới...',
-    author: 'The Emotional House',
-    date: '2024-11-25',
-    image: '/images/blog/post-2.jpg',
-    category: 'Kiến thức',
-  },
-  {
-    id: '3',
-    title: 'Cách bảo quản gấu bông luôn như mới',
-    excerpt: 'Gấu bông của bạn sẽ luôn mềm mại và đẹp như mới nếu bạn biết cách chăm sóc đúng cách. Hãy cùng học những mẹo bảo quản hiệu quả...',
-    author: 'The Emotional House',
-    date: '2024-11-18',
-    image: '/images/blog/post-3.jpg',
-    category: 'Chăm sóc',
-  },
-  {
-    id: '4',
-    title: 'Top 5 gấu bông được yêu thích nhất năm 2024',
-    excerpt: 'Cùng điểm qua những chú gấu bông đang được khách hàng yêu thích nhất trong năm nay tại The Emotional House...',
-    author: 'The Emotional House',
-    date: '2024-11-10',
-    image: '/images/blog/post-4.jpg',
-    category: 'Sản phẩm',
-  },
-];
-
-const categories = ['Tất cả', 'Mẹo vặt', 'Kiến thức', 'Chăm sóc', 'Sản phẩm'];
+import Image from 'next/image';
+import { Calendar, User, ArrowRight, Loader2 } from 'lucide-react';
+import type { Post } from '@/lib/schemas/post';
 
 export default function BlogPage() {
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('Tất cả');
   const [selectedAuthor, setSelectedAuthor] = useState('all');
   const [authors, setAuthors] = useState<any[]>([]);
+  const [categories, setCategories] = useState<string[]>(['Tất cả']);
+
+  // Fetch published posts
+  useEffect(() => {
+    async function fetchPosts() {
+      try {
+        setLoading(true);
+        // Add cache busting to ensure fresh data
+        const res = await fetch(`/api/posts?status=published&limit=100&_t=${Date.now()}`, {
+          cache: 'no-store', // Disable caching
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.data?.posts) {
+            const fetchedPosts = data.data.posts;
+            setPosts(fetchedPosts);
+            
+            // Extract unique categories from posts
+            const uniqueCategories = ['Tất cả', ...new Set(fetchedPosts.map((p: Post) => p.category).filter(Boolean))];
+            setCategories(uniqueCategories);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching posts:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchPosts();
+  }, []);
 
   // Fetch featured authors
   useEffect(() => {
@@ -72,15 +61,22 @@ export default function BlogPage() {
   }, []);
 
   // Filter posts based on selected category and author
-  const filteredPosts = blogPosts.filter((post) => {
+  const filteredPosts = posts.filter((post) => {
     // Filter by category
     const categoryMatch =
       selectedCategory === 'Tất cả' || post.category === selectedCategory;
 
-    // Filter by author
-    // Note: selectedAuthor is author name from dropdown (not slug)
-    const authorMatch =
-      selectedAuthor === 'all' || post.author === selectedAuthor;
+    // Filter by author (check authorInfo.authorId or guestAuthor.name)
+    let authorMatch = true;
+    if (selectedAuthor !== 'all') {
+      const author = authors.find(a => a.name === selectedAuthor);
+      if (author) {
+        authorMatch = post.authorInfo?.authorId === author.id;
+      } else {
+        // Check guest author
+        authorMatch = post.authorInfo?.guestAuthor?.name === selectedAuthor;
+      }
+    }
 
     return categoryMatch && authorMatch;
   });
@@ -153,76 +149,114 @@ export default function BlogPage() {
         <div className="max-w-6xl mx-auto">
           {/* Results count */}
           <div className="mb-6 text-sm text-gray-600">
-            Hiển thị {filteredPosts.length} / {blogPosts.length} bài viết
-            {selectedCategory !== 'Tất cả' && ` trong "${selectedCategory}"`}
-            {selectedAuthor !== 'all' && ` của "${authors.find(a => a.slug === selectedAuthor)?.name}"`}
-          </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredPosts.length === 0 ? (
-              <div className="col-span-full text-center py-12">
-                <p className="text-gray-500 text-lg">Không tìm thấy bài viết nào</p>
-                <button
-                  onClick={() => {
-                    setSelectedCategory('Tất cả');
-                    setSelectedAuthor('all');
-                  }}
-                  className="mt-4 text-pink-600 hover:text-pink-700 font-medium"
-                >
-                  Xóa bộ lọc
-                </button>
-              </div>
+            {loading ? (
+              <span>Đang tải...</span>
             ) : (
-              filteredPosts.map((post) => (
-              <article
-                key={post.id}
-                className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-shadow overflow-hidden group"
-              >
-                <Link href={`/blog/${post.id}`}>
-                  {/* Image */}
-                  <div className="relative aspect-video bg-gradient-to-br from-pink-100 to-pink-200 overflow-hidden">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-6xl opacity-30">🐻</span>
-                    </div>
-                    <div className="absolute top-4 left-4">
-                      <span className="bg-white text-pink-600 px-3 py-1 rounded-full text-xs font-semibold">
-                        {post.category}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Content */}
-                  <div className="p-6">
-                    <h2 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-pink-600 transition-colors line-clamp-2">
-                      {post.title}
-                    </h2>
-                    <p className="text-gray-600 mb-4 line-clamp-3">
-                      {post.excerpt}
-                    </p>
-
-                    {/* Meta */}
-                    <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
-                      <div className="flex items-center gap-1">
-                        <User className="w-4 h-4" />
-                        <span>{post.author}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
-                        <span>{new Date(post.date).toLocaleDateString('vi-VN')}</span>
-                      </div>
-                    </div>
-
-                    {/* Read More */}
-                    <div className="flex items-center text-pink-600 font-medium group-hover:gap-2 transition-all">
-                      <span>Đọc thêm</span>
-                      <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
-                    </div>
-                  </div>
-                </Link>
-              </article>
-              ))
+              <>
+                Hiển thị {filteredPosts.length} / {posts.length} bài viết
+                {selectedCategory !== 'Tất cả' && ` trong "${selectedCategory}"`}
+                {selectedAuthor !== 'all' && ` của "${selectedAuthor}"`}
+              </>
             )}
           </div>
+          
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-8 h-8 animate-spin text-pink-600" />
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {filteredPosts.length === 0 ? (
+                <div className="col-span-full text-center py-12">
+                  <p className="text-gray-500 text-lg">Không tìm thấy bài viết nào</p>
+                  <button
+                    onClick={() => {
+                      setSelectedCategory('Tất cả');
+                      setSelectedAuthor('all');
+                    }}
+                    className="mt-4 text-pink-600 hover:text-pink-700 font-medium"
+                  >
+                    Xóa bộ lọc
+                  </button>
+                </div>
+              ) : (
+                filteredPosts.map((post) => {
+                  const authorName = post.authorInfo?.guestAuthor?.name || 
+                    authors.find(a => a.id === post.authorInfo?.authorId)?.name || 
+                    'The Emotional House';
+                  const publishedDate = post.publishedAt 
+                    ? new Date(post.publishedAt).toLocaleDateString('vi-VN')
+                    : post.createdAt 
+                    ? new Date(post.createdAt).toLocaleDateString('vi-VN')
+                    : '';
+
+                  return (
+                    <article
+                      key={post.id}
+                      className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-shadow overflow-hidden group"
+                    >
+                      <Link href={`/blog/${post.slug}`}>
+                        {/* Image */}
+                        <div className="relative aspect-video bg-gradient-to-br from-pink-100 to-pink-200 overflow-hidden">
+                          {post.featuredImage ? (
+                            <Image
+                              src={post.featuredImage}
+                              alt={post.title}
+                              fill
+                              className="object-cover"
+                              unoptimized={post.featuredImage.includes('blob.vercel-storage.com')}
+                              sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                            />
+                          ) : (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <span className="text-6xl opacity-30">🐻</span>
+                            </div>
+                          )}
+                          {post.category && (
+                            <div className="absolute top-4 left-4">
+                              <span className="bg-white text-pink-600 px-3 py-1 rounded-full text-xs font-semibold">
+                                {post.category}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-6">
+                          <h2 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-pink-600 transition-colors line-clamp-2">
+                            {post.title}
+                          </h2>
+                          <p className="text-gray-600 mb-4 line-clamp-3">
+                            {post.excerpt || 'Không có mô tả'}
+                          </p>
+
+                          {/* Meta */}
+                          <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
+                            <div className="flex items-center gap-1">
+                              <User className="w-4 h-4" />
+                              <span>{authorName}</span>
+                            </div>
+                            {publishedDate && (
+                              <div className="flex items-center gap-1">
+                                <Calendar className="w-4 h-4" />
+                                <span>{publishedDate}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Read More */}
+                          <div className="flex items-center text-pink-600 font-medium group-hover:gap-2 transition-all">
+                            <span>Đọc thêm</span>
+                            <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                          </div>
+                        </div>
+                      </Link>
+                    </article>
+                  );
+                })
+              )}
+            </div>
+          )}
         </div>
       </section>
 

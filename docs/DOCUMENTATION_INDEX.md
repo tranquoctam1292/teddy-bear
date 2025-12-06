@@ -1,7 +1,7 @@
 # 📚 Teddy Shop - Documentation Index
 
 **Project:** Teddy Shop E-commerce Platform  
-**Last Updated:** 05 December 2025  
+**Last Updated:** 06 December 2025  
 **Status:** ✅ Production Ready  
 **Cleanup:** ✅ Documentation cleanup completed (40% reduction)
 
@@ -36,7 +36,7 @@ teddy-shop/
 │
 └── docs/
     ├── guides/              [User & Developer Guides - 8 files]
-    ├── reports/             [Technical & QA Reports - 16 files]
+    ├── reports/             [Technical & QA Reports - 19 files]
     │   └── performance/     [Performance Optimization - 7 files]
     └── archive/             [Historical documentation - 20 files]
         ├── phase-reports/   [Phase audit reports - 9 files]
@@ -69,7 +69,7 @@ teddy-shop/
 
 ---
 
-## 📊 REPORTS (16 files)
+## 📊 REPORTS (19 files)
 
 ### Core Reports (7 files)
 
@@ -116,11 +116,19 @@ teddy-shop/
 
 - **[BLOG_DOCUMENTATION.md](../BLOG_DOCUMENTATION.md)** ⭐⭐⭐ - Complete blog system documentation
 - **[BLOG_OPTIMIZATION_CHECKLIST.md](reports/BLOG_OPTIMIZATION_CHECKLIST.md)** - Blog optimization & audit checklist (Phase 5)
-- **[PHASE2_BLOG_QA_CHECKLIST.md](reports/PHASE2_BLOG_QA_CHECKLIST.md)** - Phase 2 QA checklist (CMS Editor)
-- **[PHASE2_TEST_RESULTS.md](reports/PHASE2_TEST_RESULTS.md)** - Phase 2 test results
-- **[PHASE3_BLOG_QA_CHECKLIST.md](reports/PHASE3_BLOG_QA_CHECKLIST.md)** - Phase 3 QA checklist (Frontend)
-- **[PHASE3_TEST_RESULTS.md](reports/PHASE3_TEST_RESULTS.md)** - Phase 3 test results
-- **[PHASE4_QA_CHECKLIST.md](reports/PHASE4_QA_CHECKLIST.md)** - Phase 4 QA checklist (Comment System)
+- **Phase 2-4 Reports:** Archived to `docs/archive/phase-reports/` (completed phases)
+
+**Tiptap Editor Enhancements (NEW - Dec 2025):**
+
+- **[KEYBOARD_SHORTCUTS_QA_REPORT.md](reports/KEYBOARD_SHORTCUTS_QA_REPORT.md)** ⭐ - Keyboard shortcuts audit (Ctrl+K, Ctrl+U)
+- **[LINK_FEATURE_QA_REPORT.md](reports/LINK_FEATURE_QA_REPORT.md)** ⭐ - Link insertion/editing feature audit
+- **[WORDPRESS_TOOLBAR_AUDIT_REPORT.md](reports/WORDPRESS_TOOLBAR_AUDIT_REPORT.md)** ⭐ - WordPress-style toolbar comprehensive audit
+
+### PLP & Readability (3 files)
+
+- **[PRODUCT_LISTING_PAGE_AUDIT.md](reports/PRODUCT_LISTING_PAGE_AUDIT.md)** - PLP audit & đề xuất tối ưu (Dec 2025)
+- **[PLP_TEST_RESULTS.md](reports/PLP_TEST_RESULTS.md)** - Kết quả kiểm thử PLP sau tối ưu (Dec 2025)
+- **[BLOG_READABILITY_OPTIMIZATION_PLAN.md](reports/BLOG_READABILITY_OPTIMIZATION_PLAN.md)** - Kế hoạch tối ưu readability blog (Dec 2025)
 
 ---
 
@@ -185,15 +193,17 @@ teddy-shop/
 
 - **Root files:** 3 core docs (clean!) ✅
 - **Guides:** 8 user/developer guides
-- **Reports:** 16 technical reports
+- **Reports:** 22 technical reports
   - Core: 7 reports
   - QA: 3 reports
   - Homepage: 1 report
+  - PLP & Readability: 3 reports
+  - Tiptap Editor: 3 reports (NEW - Dec 2025)
   - Performance: 7 reports
 - **Archive:** 20 historical documents
   - Phase reports: 9 files
   - Verification: 15 files
-- **Total:** 24 active documents (40% reduction from 60+ files)
+- **Total:** 30 active documents (approx., incl. new PLP/readability reports)
 
 ### Quality
 
@@ -206,6 +216,7 @@ teddy-shop/
 
 ### Recent Updates (December 2025)
 
+- ✅ **Tiptap Editor enhancements** (Keyboard shortcuts Ctrl+K/Ctrl+U, WordPress toolbar, Link modal improvements)
 - ✅ Server Component conversion (6 files)
 - ✅ Dynamic import optimization (3 libraries)
 - ✅ Bundle size reduction (44%)

@@ -9,7 +9,7 @@ import type { Post } from '@/lib/schemas/post';
 import type { PostFormData } from '@/types/post';
 
 export default function AdminPostEditPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const params = useParams();
   const postId = params.id as string;
@@ -28,6 +28,7 @@ export default function AdminPostEditPage() {
     if (status === 'authenticated' && postId) {
       fetchPost();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, postId]);
 
   const fetchPost = async () => {
@@ -59,21 +60,29 @@ export default function AdminPostEditPage() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to update post');
+        const errorData = await response.json();
+        const errorMessage = errorData.error?.message || errorData.error || 'Failed to update post';
+        throw new Error(errorMessage);
       }
 
       const result = await response.json();
-      const post = result.post;
+      const updatedPost = result.data?.post || result.post;
 
-      // Return response for PostEditor to extract ID and save analysis
+      // Refresh post data to show updated content
+      if (updatedPost) {
+        setPost(updatedPost as Post);
+      }
+
+      // Show success message but DON'T redirect
+      // User can continue editing
       // Note: SEO analysis will be saved by PostEditor component
-      // Redirect after analysis save is initiated (non-blocking)
-      router.push('/admin/posts');
-      return { post };
+
+      return { post: updatedPost };
     } catch (error) {
       console.error('Error updating post:', error);
       alert(error instanceof Error ? error.message : 'Có lỗi xảy ra khi cập nhật bài viết');
+      throw error; // Re-throw to let PostEditor handle it
+    } finally {
       setIsSaving(false);
     }
   };
@@ -99,16 +108,14 @@ export default function AdminPostEditPage() {
 
   return (
     <>
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+      <header className="bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Chỉnh sửa bài viết</h1>
               <p className="text-sm text-gray-600 mt-1">{post.title}</p>
             </div>
-            <div className="text-sm text-gray-500">
-              Modern CMS Editor
-            </div>
+            <div className="text-sm text-gray-500">Modern CMS Editor</div>
           </div>
         </div>
       </header>
@@ -124,4 +131,3 @@ export default function AdminPostEditPage() {
     </>
   );
 }
-

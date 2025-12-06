@@ -91,3 +91,6 @@ export default function RelatedProducts({ product }: RelatedProductsProps) {
   );
 }
 
+
+
+

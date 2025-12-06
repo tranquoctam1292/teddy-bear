@@ -11,6 +11,9 @@ import {
   AlignLeft,
   AlignCenter,
   AlignRight,
+  AlignJustify,
+  Indent,
+  Outdent,
   Link as LinkIcon,
   Image as ImageIcon,
   Table,
@@ -22,7 +25,6 @@ import {
   Highlighter,
   Type,
   HelpCircle,
-  MoreHorizontal,
   Trash2,
   Plus,
   Minus,
@@ -30,7 +32,6 @@ import {
   Video,
 } from 'lucide-react';
 import { Button } from './ui/button';
-import { Select } from './ui/select';
 import { useState, useEffect, useRef } from 'react';
 import LinkModal from './LinkModal';
 import ColorPickerModal from './ColorPickerModal';
@@ -38,17 +39,35 @@ import ColorPickerModal from './ColorPickerModal';
 interface WordPressToolbarProps {
   editor: Editor;
   onAddMedia?: () => void;
+  onOpenLinkModal?: () => void;
   className?: string;
 }
 
 export default function WordPressToolbar({
   editor,
   onAddMedia,
+  onOpenLinkModal,
   className = '',
 }: WordPressToolbarProps) {
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showColorPickerModal, setShowColorPickerModal] = useState(false);
   const [showLinkModal, setShowLinkModal] = useState(false);
+
+  // Expose function to open link modal (for keyboard shortcuts)
+  useEffect(() => {
+    // Store the function in editor storage so KeyboardShortcuts extension can access it
+    const openLinkModal = () => {
+      // Open link modal - LinkModal will read initialUrl and initialText from editor state
+      setShowLinkModal(true);
+    };
+    
+    (editor as any).__openLinkModal = openLinkModal;
+    
+    // Cleanup: remove function when component unmounts
+    return () => {
+      delete (editor as any).__openLinkModal;
+    };
+  }, [editor]);
   const [showTableMenu, setShowTableMenu] = useState(false);
   const colorPickerRef = useRef<HTMLDivElement>(null);
   const tableMenuRef = useRef<HTMLDivElement>(null);
@@ -57,7 +76,7 @@ export default function WordPressToolbar({
   // Move useEffect BEFORE early return to follow Rules of Hooks
   useEffect(() => {
     if (!editor) return;
-    
+
     const handleClickOutside = (event: MouseEvent) => {
       if (colorPickerRef.current && !colorPickerRef.current.contains(event.target as Node)) {
         setShowColorPicker(false);
@@ -94,25 +113,91 @@ export default function WordPressToolbar({
   }) => (
     <button
       type="button"
-      onClick={onClick}
+      onMouseDown={(e) => {
+        e.preventDefault(); // Prevent focus loss from Editor
+        if (!disabled) {
+          onClick();
+        }
+      }}
       disabled={disabled}
       title={title}
       className={`p-2 rounded transition-colors ${
-        isActive
-          ? 'bg-gray-700 text-white'
-          : 'hover:bg-gray-100 text-gray-700'
+        isActive ? 'bg-gray-700 text-white' : 'hover:bg-gray-100 text-gray-700'
       } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
     >
       <Icon className="w-4 h-4" />
     </button>
   );
 
-  const handleInsertLink = (url: string, text?: string) => {
-    if (text) {
-      editor.chain().focus().insertContent(`<a href="${url}">${text}</a>`).run();
-    } else {
-      editor.chain().focus().setLink({ href: url }).run();
+  const handleInsertLink = (url: string, text?: string, target?: string, rel?: string) => {
+    const { from, to } = editor.state.selection;
+    const selectedText = editor.state.doc.textBetween(from, to);
+
+    // Build link attributes
+    const linkAttrs: { href: string; target?: string; rel?: string } = { href: url };
+    if (target) linkAttrs.target = target;
+    if (rel) linkAttrs.rel = rel;
+
+    // Case 1: Empty selection - expand to word or insert with text
+    if (from === to) {
+      // If text provided, insert link with text
+      if (text) {
+        const linkHtml = `<a href="${url}"${target ? ` target="${target}"` : ''}${
+          rel ? ` rel="${rel}"` : ''
+        }>${text}</a>`;
+        editor.chain().focus().insertContent(linkHtml).run();
+        return;
+      }
+
+      // Try to expand selection to word boundaries
+      const $from = editor.state.doc.resolve(from);
+      const node = $from.parent;
+      const nodeText = node.textContent;
+
+      if (nodeText) {
+        const offset = $from.parentOffset;
+        const textBefore = nodeText.slice(0, offset);
+        const textAfter = nodeText.slice(offset);
+
+        // Find word boundaries using regex
+        const wordBeforeMatch = textBefore.match(/\S+$/);
+        const wordAfterMatch = textAfter.match(/^\S+/);
+
+        const wordBefore = wordBeforeMatch ? wordBeforeMatch[0] : '';
+        const wordAfter = wordAfterMatch ? wordAfterMatch[0] : '';
+
+        if (wordBefore || wordAfter) {
+          // Expand selection to word
+          const wordStart = from - wordBefore.length;
+          const wordEnd = from + wordAfter.length;
+          editor
+            .chain()
+            .setTextSelection({ from: wordStart, to: wordEnd })
+            .setLink(linkAttrs)
+            .run();
+          return;
+        }
+      }
+
+      // Cannot create link without text or selection
+      return;
     }
+
+    // Case 2: Has selection - set link on selection
+    if (text && text !== selectedText) {
+      // Replace selection with new text + link
+      const linkHtml = `<a href="${url}"${target ? ` target="${target}"` : ''}${
+        rel ? ` rel="${rel}"` : ''
+      }>${text}</a>`;
+      editor.chain().focus().deleteSelection().insertContent(linkHtml).run();
+    } else {
+      // Use selected text, just add link
+      editor.chain().focus().setLink(linkAttrs).run();
+    }
+  };
+
+  const handleRemoveLink = () => {
+    editor.chain().focus().unsetLink().run();
   };
 
   const insertTable = () => {
@@ -155,23 +240,27 @@ export default function WordPressToolbar({
   };
 
   return (
-    <nav className={`bg-white border border-gray-300 rounded-t-lg ${className}`} role="toolbar" aria-label="Rich text editor toolbar">
+    <nav
+      className={`sticky top-0 z-50 bg-white border border-gray-300 rounded-t-lg border-b-2 ${className}`}
+      role="toolbar"
+      aria-label="Rich text editor toolbar"
+    >
       {/* Action Buttons Row */}
-      <section className="flex items-center gap-2 px-4 py-2 border-b border-gray-200" aria-label="Media actions">
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          onClick={onAddMedia}
-          className="text-sm"
-        >
+      <section
+        className="flex items-center gap-2 px-4 py-2 border-b border-gray-200"
+        aria-label="Media actions"
+      >
+        <Button type="button" size="sm" variant="outline" onClick={onAddMedia} className="text-sm">
           <ImageIcon className="h-4 w-4 mr-2" />
           Thêm Media
         </Button>
       </section>
 
       {/* Row 1 - Primary Formatting */}
-      <section className="flex items-center gap-0.5 px-2 py-2 border-b border-gray-200 flex-wrap" aria-label="Text formatting">
+      <section
+        className="flex items-center gap-0.5 px-2 py-2 border-b border-gray-200 flex-wrap"
+        aria-label="Text formatting"
+      >
         {/* Format Dropdown */}
         <select
           value={
@@ -185,14 +274,26 @@ export default function WordPressToolbar({
           }
           onChange={(e) => {
             const value = e.target.value;
+
             if (value === 'paragraph') {
               editor.chain().focus().setParagraph().run();
-            } else if (value === 'h1') {
-              editor.chain().focus().toggleHeading({ level: 1 }).run();
-            } else if (value === 'h2') {
-              editor.chain().focus().toggleHeading({ level: 2 }).run();
-            } else if (value === 'h3') {
-              editor.chain().focus().toggleHeading({ level: 3 }).run();
+            } else {
+              const level = parseInt(value.replace('h', '')) as 1 | 2 | 3;
+
+              // Check if already this heading level
+              if (editor.isActive('heading', { level })) {
+                // Toggle to paragraph if clicking same heading
+                editor.chain().focus().setParagraph().run();
+              } else {
+                // Check if in list - need to lift out first
+                if (editor.isActive('bulletList') || editor.isActive('orderedList')) {
+                  // Lift out of list item before setting heading
+                  editor.chain().focus().liftListItem('listItem').setHeading({ level }).run();
+                } else {
+                  // Directly set heading
+                  editor.chain().focus().setHeading({ level }).run();
+                }
+              }
             }
           }}
           className="px-3 py-1.5 border border-gray-300 rounded text-sm mr-2 bg-white"
@@ -205,6 +306,7 @@ export default function WordPressToolbar({
 
         {/* Font Family Dropdown */}
         <select
+          value={editor.getAttributes('textStyle').fontFamily || 'default'}
           onChange={(e) => {
             if (e.target.value === 'default') {
               editor.chain().focus().unsetFontFamily().run();
@@ -228,6 +330,7 @@ export default function WordPressToolbar({
 
         {/* Font Size Dropdown */}
         <select
+          value={editor.getAttributes('textStyle').fontSize || 'default'}
           onChange={(e) => {
             if (e.target.value === 'default') {
               editor.chain().focus().unsetFontSize().run();
@@ -268,15 +371,43 @@ export default function WordPressToolbar({
 
         <ToolbarButton
           icon={List}
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          onClick={() => {
+            if (editor.isActive('orderedList')) {
+              // Switch from ordered to bullet list
+              editor.chain().focus().toggleOrderedList().toggleBulletList().run();
+            } else {
+              // Toggle bullet list
+              editor.chain().focus().toggleBulletList().run();
+            }
+          }}
           isActive={editor.isActive('bulletList')}
           title="Danh sách dấu đầu dòng"
         />
         <ToolbarButton
           icon={ListOrdered}
-          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          onClick={() => {
+            if (editor.isActive('bulletList')) {
+              // Switch from bullet to ordered list
+              editor.chain().focus().toggleBulletList().toggleOrderedList().run();
+            } else {
+              // Toggle ordered list
+              editor.chain().focus().toggleOrderedList().run();
+            }
+          }}
           isActive={editor.isActive('orderedList')}
           title="Danh sách đánh số"
+        />
+        <ToolbarButton
+          icon={Indent}
+          onClick={() => editor.chain().focus().sinkListItem('listItem').run()}
+          disabled={!editor.can().sinkListItem('listItem')}
+          title="Thụt lề (Indent)"
+        />
+        <ToolbarButton
+          icon={Outdent}
+          onClick={() => editor.chain().focus().liftListItem('listItem').run()}
+          disabled={!editor.can().liftListItem('listItem')}
+          title="Giảm thụt lề (Outdent)"
         />
 
         <div className="w-px h-6 bg-gray-300 mx-1" />
@@ -292,47 +423,74 @@ export default function WordPressToolbar({
 
         <ToolbarButton
           icon={AlignLeft}
-          onClick={() => editor.chain().focus().setTextAlign('left').run()}
+          onClick={() => {
+            if (editor.isActive({ textAlign: 'left' })) {
+              editor.chain().focus().unsetTextAlign().run();
+            } else {
+              editor.chain().focus().setTextAlign('left').run();
+            }
+          }}
           isActive={editor.isActive({ textAlign: 'left' })}
           title="Căn trái"
         />
         <ToolbarButton
           icon={AlignCenter}
-          onClick={() => editor.chain().focus().setTextAlign('center').run()}
+          onClick={() => {
+            if (editor.isActive({ textAlign: 'center' })) {
+              editor.chain().focus().unsetTextAlign().run();
+            } else {
+              editor.chain().focus().setTextAlign('center').run();
+            }
+          }}
           isActive={editor.isActive({ textAlign: 'center' })}
           title="Căn giữa"
         />
         <ToolbarButton
           icon={AlignRight}
-          onClick={() => editor.chain().focus().setTextAlign('right').run()}
+          onClick={() => {
+            if (editor.isActive({ textAlign: 'right' })) {
+              editor.chain().focus().unsetTextAlign().run();
+            } else {
+              editor.chain().focus().setTextAlign('right').run();
+            }
+          }}
           isActive={editor.isActive({ textAlign: 'right' })}
           title="Căn phải"
+        />
+        <ToolbarButton
+          icon={AlignJustify}
+          onClick={() => {
+            if (editor.isActive({ textAlign: 'justify' })) {
+              editor.chain().focus().unsetTextAlign().run();
+            } else {
+              editor.chain().focus().setTextAlign('justify').run();
+            }
+          }}
+          isActive={editor.isActive({ textAlign: 'justify' })}
+          title="Căn đều (Justify)"
         />
 
         <div className="w-px h-6 bg-gray-300 mx-1" />
 
         <ToolbarButton
           icon={LinkIcon}
-          onClick={() => setShowLinkModal(true)}
+          onClick={() => {
+            setShowLinkModal(true);
+          }}
           isActive={editor.isActive('link')}
           title="Chèn liên kết"
         />
-        <ToolbarButton
-          icon={ImageIcon}
-          onClick={onAddMedia}
-          title="Thêm hình ảnh"
-        />
-        <ToolbarButton
-          icon={Video}
-          onClick={addYouTubeVideo}
-          title="Nhúng video YouTube"
-        />
-        
+        <ToolbarButton icon={ImageIcon} onClick={onAddMedia || (() => {})} title="Thêm hình ảnh" />
+        <ToolbarButton icon={Video} onClick={addYouTubeVideo} title="Nhúng video YouTube" />
+
         {/* Table Menu */}
         <div className="relative" ref={tableMenuRef}>
           <button
             type="button"
-            onClick={() => setShowTableMenu(!showTableMenu)}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              setShowTableMenu(!showTableMenu);
+            }}
             className="p-2 rounded hover:bg-gray-100 text-gray-700 flex items-center gap-1"
             title="Bảng"
           >
@@ -445,7 +603,10 @@ export default function WordPressToolbar({
       </section>
 
       {/* Row 2 - Advanced Formatting */}
-      <section className="flex items-center gap-0.5 px-2 py-2 flex-wrap" aria-label="Advanced formatting">
+      <section
+        className="flex items-center gap-0.5 px-2 py-2 flex-wrap"
+        aria-label="Advanced formatting"
+      >
         <ToolbarButton
           icon={UnderlineIcon}
           onClick={() => editor.chain().focus().toggleUnderline().run()}
@@ -465,7 +626,10 @@ export default function WordPressToolbar({
         <div className="relative" ref={colorPickerRef}>
           <button
             type="button"
-            onClick={() => setShowColorPicker(!showColorPicker)}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              setShowColorPicker(!showColorPicker);
+            }}
             className="p-2 rounded hover:bg-gray-100 text-gray-700 flex items-center gap-1"
             title="Màu chữ"
             aria-label="Chọn màu chữ"
@@ -479,26 +643,67 @@ export default function WordPressToolbar({
               <div className="grid grid-cols-6 gap-1 mb-2">
                 {[
                   // Row 1 - Dark colors
-                  '#000000', '#434343', '#666666', '#999999', '#B7B7B7', '#CCCCCC',
+                  '#000000',
+                  '#434343',
+                  '#666666',
+                  '#999999',
+                  '#B7B7B7',
+                  '#CCCCCC',
                   // Row 2 - Reds & Browns
-                  '#F44336', '#E91E63', '#9C27B0', '#673AB7', '#3F51B5', '#2196F3',
+                  '#F44336',
+                  '#E91E63',
+                  '#9C27B0',
+                  '#673AB7',
+                  '#3F51B5',
+                  '#2196F3',
                   // Row 3 - Blues & Cyans
-                  '#03A9F4', '#00BCD4', '#009688', '#4CAF50', '#8BC34A', '#CDDC39',
+                  '#03A9F4',
+                  '#00BCD4',
+                  '#009688',
+                  '#4CAF50',
+                  '#8BC34A',
+                  '#CDDC39',
                   // Row 4 - Greens & Yellows
-                  '#FFEB3B', '#FFC107', '#FF9800', '#FF5722', '#795548', '#9E9E9E',
+                  '#FFEB3B',
+                  '#FFC107',
+                  '#FF9800',
+                  '#FF5722',
+                  '#795548',
+                  '#9E9E9E',
                   // Row 5 - Light Reds
-                  '#FFCDD2', '#F8BBD0', '#E1BEE7', '#D1C4E9', '#C5CAE9', '#BBDEFB',
+                  '#FFCDD2',
+                  '#F8BBD0',
+                  '#E1BEE7',
+                  '#D1C4E9',
+                  '#C5CAE9',
+                  '#BBDEFB',
                   // Row 6 - Light Blues
-                  '#B3E5FC', '#B2EBF2', '#B2DFDB', '#C8E6C9', '#DCEDC8', '#F0F4C3',
+                  '#B3E5FC',
+                  '#B2EBF2',
+                  '#B2DFDB',
+                  '#C8E6C9',
+                  '#DCEDC8',
+                  '#F0F4C3',
                   // Row 7 - Light Yellows
-                  '#FFF9C4', '#FFECB3', '#FFE0B2', '#FFCCBC', '#D7CCC8', '#F5F5F5',
+                  '#FFF9C4',
+                  '#FFECB3',
+                  '#FFE0B2',
+                  '#FFCCBC',
+                  '#D7CCC8',
+                  '#F5F5F5',
                   // Row 8 - Custom/Special
-                  '#FFFFFF', '#EA4335', '#FBBC04', '#34A853', '#4285F4', '#FF6D00',
-                ].map(color => (
+                  '#FFFFFF',
+                  '#EA4335',
+                  '#FBBC04',
+                  '#34A853',
+                  '#4285F4',
+                  '#FF6D00',
+                ].map((color) => (
                   <button
                     key={color}
                     type="button"
-                    onClick={() => {
+                    onMouseDown={(e) => {
+                      e.preventDefault();
                       editor.chain().focus().setColor(color).run();
                       setShowColorPicker(false);
                     }}
@@ -508,34 +713,35 @@ export default function WordPressToolbar({
                   />
                 ))}
               </div>
-              
+
               {/* Custom Color Section */}
               <div className="border-t pt-2">
                 <button
                   type="button"
                   className="text-xs text-blue-600 hover:text-blue-800 mb-2 w-full text-left"
-                  onClick={() => {
+                  onMouseDown={(e) => {
+                    e.preventDefault();
                     setShowColorPicker(false);
                     setShowColorPickerModal(true);
                   }}
                 >
                   Tùy chỉnh...
                 </button>
-                
+
                 {/* Custom Color Slots (placeholder) */}
                 <div className="grid grid-cols-8 gap-1">
-                  {Array(8).fill(null).map((_, i) => (
-                    <div
-                      key={i}
-                      className="w-6 h-6 rounded border border-gray-300 bg-white"
-                    />
-                  ))}
+                  {Array(8)
+                    .fill(null)
+                    .map((_, i) => (
+                      <div key={i} className="w-6 h-6 rounded border border-gray-300 bg-white" />
+                    ))}
                 </div>
               </div>
-              
+
               <button
                 type="button"
-                onClick={() => {
+                onMouseDown={(e) => {
+                  e.preventDefault();
                   editor.chain().focus().unsetColor().run();
                   setShowColorPicker(false);
                 }}
@@ -560,8 +766,20 @@ export default function WordPressToolbar({
         {/* Clear Formatting */}
         <ToolbarButton
           icon={Type}
-          onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().run()}
-          title="Xóa định dạng"
+          onClick={() => {
+            editor
+              .chain()
+              .focus()
+              .unsetAllMarks() // Removes Bold, Italic, Underline, Strike, etc.
+              .unsetHighlight() // Remove highlight
+              .unsetColor() // Remove text color
+              .unsetFontFamily() // Remove font family
+              .unsetFontSize() // Remove font size
+              .unsetLink() // Remove links
+              .run();
+            // Note: We don't use clearNodes() to preserve Heading/List structure
+          }}
+          title="Xóa định dạng (chỉ xóa Bold, Italic, Màu, Font, Link)"
         />
 
         <div className="w-px h-6 bg-gray-300 mx-1" />
@@ -584,7 +802,11 @@ export default function WordPressToolbar({
 
         <ToolbarButton
           icon={HelpCircle}
-          onClick={() => alert('Phím tắt:\n\nCtrl+B: In đậm\nCtrl+I: In nghiêng\nCtrl+U: Gạch chân\nCtrl+Z: Hoàn tác\nCtrl+Y: Làm lại\nCtrl+K: Chèn liên kết')}
+          onClick={() =>
+            alert(
+              'Phím tắt:\n\nCtrl+B: In đậm\nCtrl+I: In nghiêng\nCtrl+U: Gạch chân\nCtrl+Z: Hoàn tác\nCtrl+Y: Làm lại\nCtrl+K: Chèn liên kết'
+            )
+          }
           title="Trợ giúp & Phím tắt"
         />
       </section>
@@ -594,6 +816,12 @@ export default function WordPressToolbar({
         isOpen={showLinkModal}
         onClose={() => setShowLinkModal(false)}
         onInsert={handleInsertLink}
+        onRemove={handleRemoveLink}
+        initialUrl={editor.getAttributes('link').href || ''}
+        initialText={(() => {
+          const { from, to } = editor.state.selection;
+          return editor.state.doc.textBetween(from, to);
+        })()}
       />
 
       {/* Advanced Color Picker Modal */}
@@ -607,4 +835,3 @@ export default function WordPressToolbar({
     </nav>
   );
 }
-

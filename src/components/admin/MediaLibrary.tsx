@@ -8,23 +8,17 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/admin/ui/dialog';
+  DialogDescription,
+} from '@/components/ui/dialog';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Upload,
-  Search,
-  Check,
-  X,
-  Calendar,
-  Image as ImageIcon,
-  Trash2,
-} from 'lucide-react';
+import { Upload, Search, Check, Image as ImageIcon } from 'lucide-react';
 import { Select } from './ui/select';
 
 interface MediaFile {
-  id: string;
+  id?: string;
+  _id?: string;
   url: string;
   filename: string;
   size: number;
@@ -34,8 +28,13 @@ interface MediaFile {
   title?: string;
   caption?: string;
   description?: string;
-  uploadedAt: Date;
+  uploadedAt: Date | string;
 }
+
+// Helper to get file ID (support both id and _id)
+const getFileId = (file: MediaFile): string => {
+  return file.id || file._id || file.url;
+};
 
 interface MediaLibraryProps {
   isOpen: boolean;
@@ -58,7 +57,6 @@ export default function MediaLibrary({
   const [filterType, setFilterType] = useState('all');
   const [filterDate, setFilterDate] = useState('all');
   const [isUploading, setIsUploading] = useState(false);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   useEffect(() => {
     if (isOpen) {
@@ -68,15 +66,26 @@ export default function MediaLibrary({
 
   const loadMediaFiles = async () => {
     try {
-      // TODO: Replace with actual API call
       const response = await fetch('/api/admin/media');
       if (response.ok) {
         const data = await response.json();
-        setFiles(data.files || []);
+        if (data.success && data.files) {
+          // Normalize files: ensure id field exists, convert uploadedAt to Date
+          const normalizedFiles = data.files.map((file: MediaFile) => ({
+            ...file,
+            id: file._id || file.id || file.url,
+            uploadedAt:
+              typeof file.uploadedAt === 'string'
+                ? new Date(file.uploadedAt)
+                : file.uploadedAt || new Date(),
+          }));
+          setFiles(normalizedFiles);
+        } else {
+          setFiles([]);
+        }
       }
     } catch (error) {
       console.error('Failed to load media files:', error);
-      // For now, use empty array
       setFiles([]);
     }
   };
@@ -92,21 +101,35 @@ export default function MediaLibrary({
         const formData = new FormData();
         formData.append('file', file);
 
-        const response = await fetch('/api/upload', {
+        const response = await fetch('/api/admin/media', {
           method: 'POST',
           body: formData,
         });
 
         if (response.ok) {
           const data = await response.json();
-          // Reload media library
-          await loadMediaFiles();
+          if (data.success && data.file) {
+            // Add uploaded file immediately to the list
+            const newFile = {
+              ...data.file,
+              id: data.file._id || data.file.id || data.file.url,
+              uploadedAt:
+                typeof data.file.uploadedAt === 'string'
+                  ? new Date(data.file.uploadedAt)
+                  : data.file.uploadedAt || new Date(),
+            };
+            setFiles((prev) => [newFile, ...prev]);
+          }
         }
       }
     } catch (error) {
       console.error('Upload failed:', error);
     } finally {
       setIsUploading(false);
+      // Reset input
+      if (e.target) {
+        e.target.value = '';
+      }
     }
   };
 
@@ -124,10 +147,10 @@ export default function MediaLibrary({
   };
 
   const handleInsert = () => {
-    const selected = files.filter(f => selectedFiles.has(f.id));
+    const selected = files.filter((f) => selectedFiles.has(getFileId(f)));
     if (selected.length > 0) {
       if (multiple) {
-        selected.forEach(file => onSelect(file));
+        selected.forEach((file) => onSelect(file));
       } else {
         onSelect(selected[0]);
       }
@@ -135,7 +158,7 @@ export default function MediaLibrary({
     }
   };
 
-  const filteredFiles = files.filter(file => {
+  const filteredFiles = files.filter((file) => {
     // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -148,7 +171,7 @@ export default function MediaLibrary({
     return true;
   });
 
-  const selectedFile = files.find(f => selectedFiles.has(f.id));
+  const selectedFile = files.find((f) => selectedFiles.has(getFileId(f)));
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -158,15 +181,24 @@ export default function MediaLibrary({
           <div className="flex-1 flex flex-col">
             <DialogHeader className="px-6 py-4 border-b">
               <DialogTitle className="text-xl">Thư viện Media</DialogTitle>
+              <DialogDescription className="sr-only">
+                Quản lý và chọn ảnh từ thư viện media
+              </DialogDescription>
             </DialogHeader>
 
             {/* Tabs */}
             <Tabs defaultValue="library" className="flex-1 flex flex-col">
               <TabsList className="px-6 pt-4 justify-start bg-transparent border-b rounded-none">
-                <TabsTrigger value="upload" className="data-[state=active]:border-b-2 data-[state=active]:border-blue-600">
+                <TabsTrigger
+                  value="upload"
+                  className="data-[state=active]:border-b-2 data-[state=active]:border-blue-600"
+                >
                   Tải lên tệp mới
                 </TabsTrigger>
-                <TabsTrigger value="library" className="data-[state=active]:border-b-2 data-[state=active]:border-blue-600">
+                <TabsTrigger
+                  value="library"
+                  className="data-[state=active]:border-b-2 data-[state=active]:border-blue-600"
+                >
                   Chọn từ thư viện Media
                 </TabsTrigger>
               </TabsList>
@@ -185,7 +217,10 @@ export default function MediaLibrary({
                       <h3 className="text-lg font-medium mb-2">Kéo thả tệp để tải lên</h3>
                       <p className="text-sm text-gray-500 mb-4">hoặc</p>
                       <label>
-                        <Button type="button" onClick={() => document.getElementById('file-upload')?.click()}>
+                        <Button
+                          type="button"
+                          onClick={() => document.getElementById('file-upload')?.click()}
+                        >
                           <Upload className="h-4 w-4 mr-2" />
                           Chọn tệp
                         </Button>
@@ -207,14 +242,25 @@ export default function MediaLibrary({
               {/* Library Tab */}
               <TabsContent value="library" className="flex-1 flex flex-col">
                 {/* Filters */}
-                <section className="px-6 py-3 border-b bg-gray-50 flex items-center gap-4" aria-label="Media filters">
+                <section
+                  className="px-6 py-3 border-b bg-gray-50 flex items-center gap-4"
+                  aria-label="Media filters"
+                >
                   <span className="text-sm font-medium text-gray-700">Lọc media</span>
-                  <Select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="w-40">
+                  <Select
+                    value={filterType}
+                    onChange={(e) => setFilterType(e.target.value)}
+                    className="w-40"
+                  >
                     <option value="all">Tất cả</option>
                     <option value="images">Hình ảnh</option>
                     <option value="videos">Video</option>
                   </Select>
-                  <Select value={filterDate} onChange={(e) => setFilterDate(e.target.value)} className="w-48">
+                  <Select
+                    value={filterDate}
+                    onChange={(e) => setFilterDate(e.target.value)}
+                    className="w-48"
+                  >
                     <option value="all">Tất cả các ngày</option>
                     <option value="today">Hôm nay</option>
                     <option value="week">Tuần này</option>
@@ -241,32 +287,35 @@ export default function MediaLibrary({
                     </div>
                   ) : (
                     <div className="grid grid-cols-4 gap-4">
-                      {filteredFiles.map((file) => (
-                        <div
-                          key={file.id}
-                          className={`relative aspect-square rounded-lg overflow-hidden cursor-pointer border-2 transition-all ${
-                            selectedFiles.has(file.id)
-                              ? 'border-blue-600 shadow-lg'
-                              : 'border-transparent hover:border-gray-300'
-                          }`}
-                          onClick={() => toggleSelect(file.id)}
-                        >
-                          <Image
-                            src={file.url}
-                            alt={file.alt || file.filename}
-                            fill
-                            className="object-cover"
-                            sizes="(max-width: 768px) 50vw, 200px"
-                          />
-                          {selectedFiles.has(file.id) && (
-                            <div className="absolute inset-0 bg-blue-600/20 flex items-center justify-center">
-                              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                                <Check className="h-5 w-5 text-white" />
+                      {filteredFiles.map((file) => {
+                        const fileId = getFileId(file);
+                        return (
+                          <div
+                            key={fileId}
+                            className={`relative aspect-square rounded-lg overflow-hidden cursor-pointer border-2 transition-all ${
+                              selectedFiles.has(fileId)
+                                ? 'border-blue-600 shadow-lg'
+                                : 'border-transparent hover:border-gray-300'
+                            }`}
+                            onClick={() => toggleSelect(fileId)}
+                          >
+                            <Image
+                              src={file.url}
+                              alt={file.alt || file.filename}
+                              fill
+                              className="object-cover"
+                              sizes="(max-width: 768px) 50vw, 200px"
+                            />
+                            {selectedFiles.has(fileId) && (
+                              <div className="absolute inset-0 bg-blue-600/20 flex items-center justify-center">
+                                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                                  <Check className="h-5 w-5 text-white" />
+                                </div>
                               </div>
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </section>
@@ -276,12 +325,13 @@ export default function MediaLibrary({
 
           {/* Right Panel - Attachment Details */}
           {selectedFile && (
-            <div className="w-80 border-l bg-white flex flex-col">
-              <div className="p-6 border-b">
+            <div className="w-80 border-l bg-white flex flex-col h-full">
+              {/* Header Section - Fixed */}
+              <div className="p-6 border-b flex-shrink-0">
                 <h3 className="font-medium text-sm text-gray-700 mb-4">CHI TIẾT TỆP ĐÍNH KÈM</h3>
-                
+
                 {/* Image Preview */}
-                <div className="relative aspect-square mb-4 bg-gray-100 rounded">
+                <div className="relative h-32 mb-4 bg-gray-100 rounded overflow-hidden">
                   <Image
                     src={selectedFile.url}
                     alt={selectedFile.alt || selectedFile.filename}
@@ -301,9 +351,7 @@ export default function MediaLibrary({
                       year: 'numeric',
                     })}
                   </p>
-                  <p className="text-gray-500">
-                    {(selectedFile.size / 1024).toFixed(0)} KB
-                  </p>
+                  <p className="text-gray-500">{(selectedFile.size / 1024).toFixed(0)} KB</p>
                   {selectedFile.width && selectedFile.height && (
                     <p className="text-gray-500">
                       {selectedFile.width} × {selectedFile.height} pixel
@@ -317,17 +365,15 @@ export default function MediaLibrary({
                 </div>
               </div>
 
-              {/* Metadata Form */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              {/* Metadata Form - Scrollable */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-4 min-h-0">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Văn bản thay thế
                   </label>
                   <textarea
                     value={selectedFile.alt || ''}
-                    onChange={(e) => {
-                      // Update alt text
-                    }}
+                    readOnly
                     rows={2}
                     className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
                     placeholder="Mô tả ảnh cho accessibility"
@@ -338,32 +384,25 @@ export default function MediaLibrary({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Tiêu đề
-                  </label>
-                  <Input
-                    value={selectedFile.title || ''}
-                    className="text-sm"
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tiêu đề</label>
+                  <Input value={selectedFile.title || ''} readOnly className="text-sm" />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Chú thích
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Chú thích</label>
                   <textarea
                     value={selectedFile.caption || ''}
+                    readOnly
                     rows={2}
                     className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Mô tả
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Mô tả</label>
                   <textarea
                     value={selectedFile.description || ''}
+                    readOnly
                     rows={3}
                     className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
                   />
@@ -373,53 +412,42 @@ export default function MediaLibrary({
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Liên kết của tệp tin
                   </label>
-                  <Input
-                    value={selectedFile.url}
-                    readOnly
-                    className="text-sm bg-gray-50"
-                  />
+                  <Input value={selectedFile.url} readOnly className="text-sm bg-gray-50" />
                 </div>
               </div>
 
-              {/* Insert Button */}
-              <div className="p-6 border-t">
+              {/* Sticky Footer with Insert Button */}
+              <div className="flex-shrink-0 border-t bg-white p-4">
                 <Button
                   onClick={handleInsert}
                   disabled={selectedFiles.size === 0}
-                  className="w-full"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                  size="lg"
                 >
-                  Chèn vào bài viết
+                  {selectedFiles.size === 0
+                    ? 'Chọn ảnh để chèn'
+                    : selectedFiles.size === 1
+                    ? 'Chèn vào bài viết'
+                    : `Chèn ${selectedFiles.size} ảnh`}
                 </Button>
               </div>
             </div>
           )}
         </div>
 
-        {/* Bottom Bar */}
-        {selectedFiles.size > 0 && (
-          <div className="absolute bottom-0 left-0 right-0 bg-white border-t p-4 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600">
-                đã chọn {selectedFiles.size} item
-              </span>
-              <button
-                onClick={() => setSelectedFiles(new Set())}
-                className="text-sm text-red-600 hover:underline"
-              >
-                Xóa
-              </button>
-            </div>
-            {!selectedFile && (
-              <Button onClick={handleInsert}>
-                Chèn {selectedFiles.size} ảnh
-              </Button>
-            )}
+        {/* Floating Insert Button - Only show when no file selected in sidebar */}
+        {selectedFiles.size > 0 && !selectedFile && (
+          <div className="absolute bottom-4 right-4 z-[130]">
+            <Button
+              onClick={handleInsert}
+              disabled={selectedFiles.size === 0}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {`Chèn ${selectedFiles.size} ảnh`}
+            </Button>
           </div>
         )}
       </DialogContent>
     </Dialog>
   );
 }
-
-
-

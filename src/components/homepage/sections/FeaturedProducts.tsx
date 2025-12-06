@@ -6,20 +6,15 @@ import { SectionHeader } from '@/components/homepage/section-header';
 import { ProductGrid } from './product-grid';
 import type { FeaturedProductsContent } from '@/lib/types/homepage';
 import type { SectionComponentProps } from '@/lib/types/homepage';
-import { MOCK_PRODUCTS } from '@/lib/mock-data';
+import type { Product } from '@/types';
 
 export async function FeaturedProducts(
   props: SectionComponentProps<FeaturedProductsContent> | { content: FeaturedProductsContent }
 ) {
   const { content } = props;
-  // Fetch products based on selection method
-  // For Phase 3 demo, use mock data. In production, uncomment database fetch below
-  // TODO: Uncomment when ready to use database
-  // const dbProducts = await getProducts(content);
-  // const products = dbProducts.map(transformDbProductToHomepageProduct);
-
-  // Phase 3: Use mock data
-  const products = MOCK_PRODUCTS.slice(0, content.limit || 8);
+  // Fetch products from database
+  const dbProducts = await getProducts(content);
+  const products = dbProducts.map(transformDbProductToProduct);
 
   if (products.length === 0) {
     return (
@@ -56,16 +51,53 @@ export async function FeaturedProducts(
   );
 }
 
-// Helper: Fetch products from database (commented for Phase 3)
-// TODO: Uncomment when ready to use database instead of mock data
-// async function getProducts(content: FeaturedProductsContent) {
-//   const { getSectionProducts } = await import('@/lib/db-sections');
-//   return getSectionProducts({
-//     productSelection: content.productSelection,
-//     productIds: content.productIds,
-//     category: content.category,
-//     tag: content.tag,
-//     sortBy: content.sortBy,
-//     limit: content.limit || 8,
-//   });
-// }
+// Helper: Fetch products from database
+async function getProducts(content: FeaturedProductsContent) {
+  try {
+    const { getSectionProducts } = await import('@/lib/db-sections');
+    return getSectionProducts({
+      productSelection: content.productSelection,
+      productIds: content.productIds,
+      category: content.category,
+      tag: content.tag,
+      sortBy: content.sortBy,
+      limit: content.limit || 8,
+    });
+  } catch (error) {
+    console.error('Error fetching products for FeaturedProducts:', error);
+    return [];
+  }
+}
+
+// Helper: Transform database product to Product type
+function transformDbProductToProduct(dbProduct: any): Product {
+  const { _id, ...productData } = dbProduct;
+  
+  // Ensure images array exists
+  const images = Array.isArray(productData.images) 
+    ? productData.images 
+    : productData.image 
+    ? [productData.image]
+    : [];
+  
+  // Ensure variants array exists
+  const variants = Array.isArray(productData.variants) ? productData.variants : [];
+  
+  return {
+    id: productData.id || _id.toString(),
+    name: productData.name,
+    slug: productData.slug,
+    description: productData.description || '',
+    category: productData.category || '',
+    tags: Array.isArray(productData.tags) ? productData.tags : [],
+    basePrice: productData.minPrice || 0,
+    maxPrice: productData.maxPrice,
+    images: images,
+    variants: variants,
+    isHot: productData.isHot || false,
+    // Pass through additional fields that ProductCard might use
+    rating: productData.rating,
+    material: productData.material,
+    ageRange: productData.ageRange,
+  } as Product;
+}

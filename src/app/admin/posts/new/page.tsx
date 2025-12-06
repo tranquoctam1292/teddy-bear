@@ -39,10 +39,15 @@ export default function AdminPostNewPage() {
       const result = await response.json();
       const post = result.data?.post || result.post;
 
-      // Return response for PostEditor to extract ID and save analysis
-      // Note: SEO analysis will be saved by PostEditor component
-      // Redirect after analysis save is initiated (non-blocking)
-      router.push('/admin/posts');
+      // Only redirect if this is a new post being published
+      // If it's just a draft, stay on the page for further editing
+      if (data.status === 'published') {
+        // Redirect to edit page after publishing new post
+        // This allows user to continue editing if needed
+        router.push(`/admin/posts/${post.id}/edit`);
+      }
+      // If draft, stay on the page (no redirect)
+      
       return { post };
     } catch (error) {
       console.error('Error creating post:', error);

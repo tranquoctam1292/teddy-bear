@@ -1,11 +1,11 @@
 // Product Grid Component - Phase 3: Product Sections Redesign
 // Responsive grid layout for product display
-import type { HomepageProduct } from '@/lib/mock-data';
-import { ProductCard } from './product-card';
+import type { Product } from '@/types';
+import ProductCard from '@/components/product/ProductCard';
 import { cn } from '@/lib/utils';
 
 interface ProductGridProps {
-  products: HomepageProduct[];
+  products: Product[];
   columns?: 2 | 3 | 4 | 5 | 6;
   showQuickView?: boolean;
   showWishlist?: boolean;
@@ -29,24 +29,20 @@ export function ProductGrid({
 
   // Grid classes based on columns
   const gridClasses = cn(
-    'grid gap-4 md:gap-6',
-    columns === 2 && 'grid-cols-2',
-    columns === 3 && 'grid-cols-2 md:grid-cols-3',
-    columns === 4 && 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4',
-    columns === 5 && 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5',
-    columns === 6 && 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6',
+    'grid gap-3 md:gap-6',
+    // Mobile: Always 2 columns, Desktop: Based on columns prop
+    columns === 2 && 'grid-cols-2 md:grid-cols-2',
+    columns === 3 && 'grid-cols-2 md:grid-cols-2 lg:grid-cols-3',
+    columns === 4 && 'grid-cols-2 md:grid-cols-2 lg:grid-cols-4',
+    columns === 5 && 'grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5',
+    columns === 6 && 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6',
     className
   );
 
   return (
     <div className={gridClasses}>
       {products.map((product) => (
-        <ProductCard
-          key={product.id}
-          product={product}
-          showQuickView={showQuickView}
-          showWishlist={showWishlist}
-        />
+        <ProductCard key={product.id} product={product} />
       ))}
     </div>
   );

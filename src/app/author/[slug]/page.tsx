@@ -198,6 +198,7 @@ export default async function AuthorPage({
                               width={120}
                               height={80}
                               className="rounded-lg object-cover"
+                              unoptimized={post.featuredImage.includes('blob.vercel-storage.com')}
                             />
                           </Link>
                         )}

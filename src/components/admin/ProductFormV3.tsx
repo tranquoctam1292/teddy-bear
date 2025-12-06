@@ -1,22 +1,35 @@
 'use client';
 
 // WordPress-Style Product Form V3 - Enhanced with New Sections
-import { useForm, FormProvider, Controller } from 'react-hook-form';
+import {
+  useForm,
+  FormProvider,
+  Controller,
+  type SubmitHandler,
+  type Resolver,
+} from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState, useEffect } from 'react';
 import { Code } from 'lucide-react';
 import type { Product } from '@/lib/schemas/product';
 import { productSchema, type ProductFormData } from '@/lib/schemas/product';
 import { CATEGORIES } from '@/lib/constants';
-import { analyzeSEO } from '@/lib/seo/analysis-client';
 import { generateSlug } from '@/lib/utils/slug';
 import EditorLayout from './EditorLayout';
 import RichTextEditor from './RichTextEditor';
 import SchemaBuilder from './seo/SchemaBuilder';
-import { PublishBox, FeaturedImageBox, GalleryBox, CategoryBox, TagBox, SEOScoreBox, AttributesBox } from './sidebar';
+import {
+  PublishBox,
+  FeaturedImageBox,
+  GalleryBox,
+  CategoryBox,
+  TagBox,
+  SEOScoreBox,
+  AttributesBox,
+} from './sidebar';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Card, CardContent } from './ui/card';
 import {
   Accordion,
   AccordionContent,
@@ -44,7 +57,6 @@ export default function ProductFormV3({
   onCancel,
   isLoading = false,
 }: ProductFormV3Props) {
-  const [seoScore, setSeoScore] = useState(0);
   const [showSchemaBuilder, setShowSchemaBuilder] = useState(false);
   const [schemaData, setSchemaData] = useState<unknown>(null);
   const [images, setImages] = useState<string[]>(product?.images || []);
@@ -55,7 +67,7 @@ export default function ProductFormV3({
   };
 
   const methods = useForm<ProductFormData>({
-    resolver: zodResolver(productSchema),
+    resolver: zodResolver(productSchema) as Resolver<ProductFormData>,
     defaultValues: product
       ? {
           name: product.name,
@@ -154,6 +166,8 @@ export default function ProductFormV3({
 
   const watchedValues = watch();
 
+  const submitForm = handleSubmit(handleFormSubmit as SubmitHandler<ProductFormData>);
+
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const name = e.target.value;
     setValue('name', name);
@@ -169,11 +183,7 @@ export default function ProductFormV3({
 
   // Extract unique sizes and colors from variants
   const uniqueSizes = Array.from(
-    new Set(
-      watchedValues.variants
-        ?.map((v) => v?.size)
-        .filter(Boolean) as string[]
-    )
+    new Set(watchedValues.variants?.map((v) => v?.size).filter(Boolean) as string[])
   );
   const uniqueColors = Array.from(
     new Set(
@@ -195,9 +205,7 @@ export default function ProductFormV3({
         <Accordion type="multiple" defaultValue={['basic', 'description']} className="w-full">
           {/* Basic Info */}
           <AccordionItem value="basic">
-            <AccordionTrigger className="text-lg font-semibold">
-              Thông tin cơ bản
-            </AccordionTrigger>
+            <AccordionTrigger className="text-lg font-semibold">Thông tin cơ bản</AccordionTrigger>
             <AccordionContent>
               <Card>
                 <CardContent className="pt-6 space-y-4">
@@ -220,10 +228,7 @@ export default function ProductFormV3({
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Slug (URL) <span className="text-red-500">*</span>
                     </label>
-                    <Input
-                      {...register('slug')}
-                      placeholder="gau-bong-teddy-co-dien"
-                    />
+                    <Input {...register('slug')} placeholder="gau-bong-teddy-co-dien" />
                     {errors.slug && (
                       <p className="text-sm text-red-600 mt-1">{errors.slug.message}</p>
                     )}
@@ -235,9 +240,7 @@ export default function ProductFormV3({
 
           {/* Description */}
           <AccordionItem value="description">
-            <AccordionTrigger className="text-lg font-semibold">
-              Mô tả sản phẩm
-            </AccordionTrigger>
+            <AccordionTrigger className="text-lg font-semibold">Mô tả sản phẩm</AccordionTrigger>
             <AccordionContent>
               <Card>
                 <CardContent className="pt-6 p-0">
@@ -254,9 +257,7 @@ export default function ProductFormV3({
                     )}
                   />
                   {errors.description && (
-                    <p className="text-sm text-red-600 px-4 pb-4">
-                      {errors.description.message}
-                    </p>
+                    <p className="text-sm text-red-600 px-4 pb-4">{errors.description.message}</p>
                   )}
                 </CardContent>
               </Card>
@@ -265,9 +266,7 @@ export default function ProductFormV3({
 
           {/* Product Details */}
           <AccordionItem value="details">
-            <AccordionTrigger className="text-lg font-semibold">
-              Chi tiết sản phẩm
-            </AccordionTrigger>
+            <AccordionTrigger className="text-lg font-semibold">Chi tiết sản phẩm</AccordionTrigger>
             <AccordionContent>
               <ProductDetailsSection />
             </AccordionContent>
@@ -275,9 +274,7 @@ export default function ProductFormV3({
 
           {/* Variants & Stock */}
           <AccordionItem value="variants">
-            <AccordionTrigger className="text-lg font-semibold">
-              Biến thể & Kho
-            </AccordionTrigger>
+            <AccordionTrigger className="text-lg font-semibold">Biến thể & Kho</AccordionTrigger>
             <AccordionContent>
               <VariantFormEnhanced />
             </AccordionContent>
@@ -285,9 +282,7 @@ export default function ProductFormV3({
 
           {/* Media Extended */}
           <AccordionItem value="media">
-            <AccordionTrigger className="text-lg font-semibold">
-              Media mở rộng
-            </AccordionTrigger>
+            <AccordionTrigger className="text-lg font-semibold">Media mở rộng</AccordionTrigger>
             <AccordionContent>
               <MediaExtendedSection />
             </AccordionContent>
@@ -305,9 +300,7 @@ export default function ProductFormV3({
 
           {/* Collection & Combo */}
           <AccordionItem value="collection">
-            <AccordionTrigger className="text-lg font-semibold">
-              SEO & Collection
-            </AccordionTrigger>
+            <AccordionTrigger className="text-lg font-semibold">SEO & Collection</AccordionTrigger>
             <AccordionContent className="space-y-4">
               <CollectionComboSection />
 
@@ -366,8 +359,8 @@ export default function ProductFormV3({
         onStatusChange={(s) => setValue('isActive', s === 'published')}
         publishDate=""
         onDateChange={() => {}}
-        onSave={handleSubmit(handleFormSubmit)}
-        onPublish={handleSubmit(handleFormSubmit)}
+        onSave={submitForm}
+        onPublish={submitForm}
         onPreview={() => window.open(`/products/${watchedValues.slug}`, '_blank')}
         isLoading={isLoading}
         isDirty={isDirty}
@@ -426,7 +419,7 @@ export default function ProductFormV3({
           slug: watchedValues.slug,
           featuredImage: images[0],
         }}
-        onScoreChange={setSeoScore}
+        onScoreChange={() => {}}
       />
     </>
   );
@@ -437,12 +430,7 @@ export default function ProductFormV3({
       <Button type="button" onClick={onCancel} variant="outline" className="flex-1">
         Hủy
       </Button>
-      <Button
-        type="button"
-        onClick={handleSubmit(handleFormSubmit)}
-        className="flex-1"
-        disabled={isLoading}
-      >
+      <Button type="button" onClick={submitForm} className="flex-1" disabled={isLoading}>
         Lưu
       </Button>
     </div>

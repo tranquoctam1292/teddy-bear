@@ -131,3 +131,19 @@ export function formatPercentage(value: number, decimals: number = 1): string {
   return `${value.toFixed(decimals).replace('.', ',')}%`;
 }
 
+/**
+ * Format price range (min - max)
+ * 
+ * @param minPrice - Minimum price
+ * @param maxPrice - Maximum price
+ * @returns Formatted price range string
+ * 
+ * @example
+ * formatPriceRange(100000, 500000) // => '100.000 ₫ - 500.000 ₫'
+ */
+export function formatPriceRange(minPrice: number, maxPrice: number): string {
+  const formattedMin = formatCurrency(minPrice);
+  const formattedMax = formatCurrency(maxPrice);
+  return `${formattedMin} - ${formattedMax}`;
+}
+

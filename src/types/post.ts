@@ -18,6 +18,8 @@ export type PostFormData = {
   publishedAt?: Date; // Publish date
   seo?: SEOConfig; // Advanced SEO configuration
   authorInfo?: PostAuthorInfo; // Author & Reviewer info (E-E-A-T SEO)
+  template?: 'default' | 'gift-guide' | 'review' | 'care-guide' | 'story'; // Post template type
+  templateData?: Record<string, unknown>; // Template-specific data
 };
 
 

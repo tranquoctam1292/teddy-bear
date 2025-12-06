@@ -1,9 +1,9 @@
 # 🐻 Teddy Shop - Project Context & Architecture
 
-**Last Updated:** December 5, 2025  
+**Last Updated:** December 6, 2025  
 **Status:** Production Ready (Phase 15 Complete - Blog System & Comment System)  
 **Build:** ✅ Passing | **Security:** ✅ CVEs Patched | **Performance:** ⚡ Highly Optimized (-44% bundle)  
-**Recent Updates:** Blog System (Templates, Product Linking, Reading Time) | Comment System (Spam Detection, CAPTCHA, Moderation) | Pre-Deploy Checks
+**Recent Updates:** Tiptap Editor Keyboard Shortcuts (Ctrl+K, Ctrl+U) | WordPress Toolbar enhancements | Link Modal improvements | Blog Social Share (Facebook/Zalo/Copy link) | PLP QA sync | Comment Flow hardening (spam + Turnstile) | Form decomposition standard
 
 ---
 
@@ -337,6 +337,32 @@ interface Order {
 
 ---
 
+#### `stockReservations` Collection (Checkout Locking - NEW)
+
+```typescript
+interface StockReservation {
+  _id: ObjectId;
+  orderId: string; // ORD-{timestamp}-{random}
+  items: Array<{
+    productId: string;
+    variantId: string;
+    quantity: number;
+    reservedStock: number;
+  }>;
+  status: 'active' | 'consumed' | 'released' | 'expired';
+  expiresAt: Date; // 15-minute TTL
+  createdAt: Date;
+}
+```
+
+**Indexes:**
+
+- `orderId` - truy vết nhanh theo đơn
+- `expiresAt` - TTL auto-expire sau 15 phút
+- `items.variantId` - hỗ trợ truy vấn variant khi giải phóng tồn
+
+---
+
 #### `homepage_configs` Collection (NEW)
 
 ```typescript
@@ -523,6 +549,42 @@ User submits comment
 
 **Features:**
 
+---
+
+### ⌨️ Tiptap Editor Keyboard Shortcuts (NEW - Dec 2025)
+
+```
+Editor Keyboard Shortcuts:
+   ↓
+1. Ctrl+K / Cmd+K → Open Link Modal
+   ├─ If text selected → Pre-fill text
+   ├─ If link selected → Pre-fill URL for editing
+   └─ Modal handles URL normalization (https://, mailto:, tel:)
+   ↓
+2. Ctrl+U / Cmd+U → Toggle Underline
+   └─ Only works when editor is focused
+   ↓
+3. Default shortcuts (from StarterKit):
+   ├─ Ctrl+B / Cmd+B → Bold
+   ├─ Ctrl+I / Cmd+I → Italic
+   ├─ Ctrl+Z / Cmd+Z → Undo
+   ├─ Ctrl+Y / Cmd+Y → Redo
+   └─ Ctrl+Shift+Z / Cmd+Shift+Z → Redo (alternative)
+```
+
+**Implementation:**
+- Custom Extension: `src/components/editor/extensions/KeyboardShortcuts.ts`
+- Integration: `PostEditorModern.tsx`, `RichTextEditor.tsx`
+- Browser conflict prevention: `preventDefault()` for Ctrl+K and Ctrl+U
+- Editor storage pattern: `WordPressToolbar` sets `editor.__openLinkModal` function
+
+**Components:**
+- `KeyboardShortcuts` extension - Handles keymap registration
+- `WordPressToolbar` - Sets up link modal function
+- `LinkModal` - Modal for link insertion/editing
+
+**Features:**
+
 - ✅ Automatic spam detection (keywords, links, all caps, blacklisted emails)
 - ✅ CAPTCHA protection (Cloudflare Turnstile)
 - ✅ Admin moderation dashboard
@@ -537,6 +599,15 @@ User submits comment
 - All caps content → Spam indicator
 - Blacklisted email domains → Auto-spam
 - Spam score 0-100: <30 = approved, 30-79 = pending, ≥80 = auto-spam
+
+---
+
+### 🔎 Comment Moderation Flow (Dec 2025 refresh)
+
+- Submit → Zod validate → sanitize HTML → Verify Cloudflare Turnstile → chạy spam-detection util (keywords/links/all-caps/blacklist).
+- Status mapping: score <30 → approved, 30-79 → pending, ≥80 → auto-spam; admin có thể approve/mark spam/delete.
+- Data: MongoDB `comments` có `parentId` cho nested replies, trường `spamScore`, `spamReasons`, `ipAddress`, `userAgent` để audit.
+- UI: chỉ render `approved`, hỗ trợ reply lồng, like/dislike; pending/spam chỉ hiển thị trong bảng moderation.
 
 ---
 
@@ -614,6 +685,10 @@ teddy-shop/
 │   │   ├── admin/                    # Admin-specific widgets
 │   │   │   ├── AuthorBoxWidget.tsx   # Author selector
 │   │   │   ├── RowActions.tsx        # Table actions
+│   │   │   ├── WordPressToolbar.tsx  # 🆕 Tiptap editor toolbar (WordPress-style)
+│   │   │   ├── LinkModal.tsx         # 🆕 Link insertion/editing modal
+│   │   │   ├── PostEditorModern.tsx  # 🆕 Modern post editor with Tiptap
+│   │   │   ├── RichTextEditor.tsx    # 🆕 Reusable rich text editor
 │   │   │   ├── homepage/             # 🆕 Homepage builder (16 components)
 │   │   │   │   ├── HomepageToolbar.tsx          # WordPress-style toolbar
 │   │   │   │   ├── HomepageToolbarWrapper.tsx   # Toolbar wrapper
@@ -627,7 +702,7 @@ teddy-shop/
 │   │   │   ├── ReviewerBox.tsx       # Reviewer display
 │   │   │   ├── blog-filters.tsx      # Filter & search
 │   │   │   ├── table-of-contents.tsx  # TOC sidebar
-│   │   │   ├── social-share-buttons.tsx # Share buttons
+│   │   │   ├── social-share-buttons.tsx # Share buttons (Facebook/Zalo/Copy link)
 │   │   │   ├── reading-time-badge.tsx # Reading time
 │   │   │   ├── product-link-card.tsx  # Product cards
 │   │   │   ├── product-comparison-view.tsx # Comparison table
@@ -644,6 +719,14 @@ teddy-shop/
 │   │   │   └── sections/             # 15 section components + metadata
 │   │   │       ├── metadata.ts      # Section metadata (server-safe)
 │   │   │       └── ... (15 section components)
+│   │   │
+│   │   ├── editor/                   # 🆕 Tiptap Editor Components
+│   │   │   ├── extensions/           # Custom Tiptap extensions
+│   │   │   │   ├── CustomImage.ts    # Enhanced image extension (width, height, align, href)
+│   │   │   │   └── KeyboardShortcuts.ts # 🆕 Keyboard shortcuts (Ctrl+K, Ctrl+U)
+│   │   │   └── components/           # Editor UI components
+│   │   │       ├── ImageBubbleMenu.tsx # Image editing bubble menu
+│   │   │       └── ImageEditDialog.tsx  # Image editing modal
 │   │   │
 │   │   └── ui/                       # Reusable UI atoms
 │   │       ├── button.tsx            # Buttons
@@ -670,7 +753,8 @@ teddy-shop/
 │   │   ├── utils/                    # 🆕 Centralized utilities
 │   │   │   ├── slug.ts               # Slug generation
 │   │   │   ├── format.ts             # Date/currency formatting
-│   │   │   └── spam-detection.ts     # 🆕 Spam detection logic
+│   │   │   ├── spam-detection.ts     # 🆕 Spam detection logic
+│   │   │   └── clipboard.ts          # Copy link helpers (social share)
 │   │   ├── payment/                  # Payment gateways
 │   │   ├── stock/                    # Stock management
 │   │   └── email/                    # Email service
@@ -688,6 +772,9 @@ teddy-shop/
 └── docs/                             # 📚 Documentation (Cleaned Dec 5, 2025)
     ├── guides/                       # User & developer guides (8 files)
     ├── reports/                      # Technical reports (16 files)
+    │   ├── PLP_TEST_RESULTS.md       # 🆕 PLP QA results (Dec 2025)
+    │   ├── PRODUCT_LISTING_PAGE_AUDIT.md # 🆕 PLP audit
+    │   ├── BLOG_READABILITY_OPTIMIZATION_PLAN.md # 🆕 Blog readability plan
     │   └── performance/              # Performance reports (7 files)
     └── archive/                      # Historical documentation (20 files)
         ├── phase-reports/            # Phase audit reports (9 files)

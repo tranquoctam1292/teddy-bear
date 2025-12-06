@@ -2,15 +2,16 @@
 
 // Component bộ lọc
 // Filter by: Price Range, Character, Size, Occasion
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CATEGORIES, SIZES, OCCASIONS, PRICE_RANGES } from '@/lib/constants';
-import { formatPriceRange } from '@/lib/utils';
+import { formatPriceRange, cn } from '@/lib/utils';
 import { X, Filter } from 'lucide-react';
 
 interface FilterSidebarProps {
   isOpen: boolean;
   onClose: () => void;
   onApplyFilters: (filters: FilterState) => void;
+  initialFilters?: FilterState;
 }
 
 export interface FilterState {
@@ -24,13 +25,23 @@ export default function FilterSidebar({
   isOpen,
   onClose,
   onApplyFilters,
+  initialFilters,
 }: FilterSidebarProps) {
-  const [filters, setFilters] = useState<FilterState>({
-    priceRange: [],
-    categories: [],
-    sizes: [],
-    occasions: [],
-  });
+  const [filters, setFilters] = useState<FilterState>(
+    initialFilters || {
+      priceRange: [],
+      categories: [],
+      sizes: [],
+      occasions: [],
+    }
+  );
+
+  // Sync with initialFilters when they change (from URL)
+  useEffect(() => {
+    if (initialFilters) {
+      setFilters(initialFilters);
+    }
+  }, [initialFilters]);
 
   const toggleFilter = (
     type: keyof FilterState,
@@ -67,19 +78,26 @@ export default function FilterSidebar({
     filters.sizes.length > 0 ||
     filters.occasions.length > 0;
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 lg:relative lg:z-auto">
-      {/* Overlay */}
-      <div
-        className="fixed inset-0 bg-black/50 lg:hidden"
-        onClick={onClose}
-      />
+    <div className={cn('fixed inset-0 z-50 lg:relative lg:z-auto lg:pointer-events-auto', !isOpen && 'pointer-events-none lg:pointer-events-auto')}>
+      {/* Overlay - Only on mobile */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 lg:hidden transition-opacity duration-300 opacity-100"
+          onClick={onClose}
+        />
+      )}
 
       {/* Sidebar */}
-      <div className="fixed right-0 top-0 h-full w-80 bg-white shadow-xl overflow-y-auto lg:relative lg:shadow-none lg:w-full">
-        <div className="p-6 space-y-6">
+      <div
+        className={cn(
+          'fixed right-0 top-0 h-full w-80 bg-white shadow-xl overflow-y-auto lg:relative lg:shadow-none lg:w-full',
+          'transition-transform duration-300 ease-in-out',
+          isOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'
+        )}
+      >
+        <div className="flex flex-col h-full">
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* Header */}
           <div className="flex items-center justify-between border-b pb-4">
             <div className="flex items-center gap-2">
@@ -222,8 +240,10 @@ export default function FilterSidebar({
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="pt-4 border-t space-y-2">
+          </div>
+
+          {/* Actions - Sticky on Mobile */}
+          <div className="pt-4 border-t space-y-2 bg-white sticky bottom-0 lg:static pb-6 px-6">
             <button
               onClick={handleApply}
               className="w-full bg-pink-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-pink-700 transition-colors"

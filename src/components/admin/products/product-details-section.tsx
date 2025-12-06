@@ -17,11 +17,8 @@ export default function ProductDetailsSection() {
   const {
     register,
     control,
-    watch,
     formState: { errors },
   } = useFormContext<ProductFormData>();
-
-  const dimensions = watch('dimensions');
 
   return (
     <Card>
@@ -29,6 +26,10 @@ export default function ProductDetailsSection() {
         <CardTitle>Chi tiết sản phẩm</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
+        <p className="text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-md p-3">
+          Phần này không bắt buộc khi đăng nhanh. Bạn có thể bổ sung sau để tăng độ tin cậy sản
+          phẩm.
+        </p>
         {/* Material */}
         <div className="space-y-2">
           <Label htmlFor="material">Chất liệu</Label>
@@ -37,9 +38,7 @@ export default function ProductDetailsSection() {
             {...register('material')}
             placeholder="VD: Bông gòn cao cấp, vải lông mềm"
           />
-          {errors.material && (
-            <p className="text-sm text-red-600">{errors.material.message}</p>
-          )}
+          {errors.material && <p className="text-sm text-red-600">{errors.material.message}</p>}
         </div>
 
         {/* Dimensions */}
@@ -61,9 +60,7 @@ export default function ProductDetailsSection() {
                 })}
               />
               {errors.dimensions?.length && (
-                <p className="text-xs text-red-600 mt-1">
-                  {errors.dimensions.length.message}
-                </p>
+                <p className="text-xs text-red-600 mt-1">{errors.dimensions.length.message}</p>
               )}
             </div>
             <div>
@@ -81,9 +78,7 @@ export default function ProductDetailsSection() {
                 })}
               />
               {errors.dimensions?.width && (
-                <p className="text-xs text-red-600 mt-1">
-                  {errors.dimensions.width.message}
-                </p>
+                <p className="text-xs text-red-600 mt-1">{errors.dimensions.width.message}</p>
               )}
             </div>
             <div>
@@ -101,9 +96,7 @@ export default function ProductDetailsSection() {
                 })}
               />
               {errors.dimensions?.height && (
-                <p className="text-xs text-red-600 mt-1">
-                  {errors.dimensions.height.message}
-                </p>
+                <p className="text-xs text-red-600 mt-1">{errors.dimensions.height.message}</p>
               )}
             </div>
           </div>
@@ -128,9 +121,7 @@ export default function ProductDetailsSection() {
               gram
             </span>
           </div>
-          {errors.weight && (
-            <p className="text-sm text-red-600">{errors.weight.message}</p>
-          )}
+          {errors.weight && <p className="text-sm text-red-600">{errors.weight.message}</p>}
         </div>
 
         {/* Age Range */}
@@ -141,9 +132,7 @@ export default function ProductDetailsSection() {
             {...register('ageRange')}
             placeholder="VD: 3+, 0-12 tháng, Tất cả lứa tuổi"
           />
-          {errors.ageRange && (
-            <p className="text-sm text-red-600">{errors.ageRange.message}</p>
-          )}
+          {errors.ageRange && <p className="text-sm text-red-600">{errors.ageRange.message}</p>}
         </div>
 
         {/* Care Instructions */}
@@ -162,9 +151,7 @@ export default function ProductDetailsSection() {
             )}
           />
           {errors.careInstructions && (
-            <p className="text-sm text-red-600">
-              {errors.careInstructions.message}
-            </p>
+            <p className="text-sm text-red-600">{errors.careInstructions.message}</p>
           )}
         </div>
 
@@ -183,9 +170,7 @@ export default function ProductDetailsSection() {
               />
             )}
           />
-          {errors.safetyInfo && (
-            <p className="text-sm text-red-600">{errors.safetyInfo.message}</p>
-          )}
+          {errors.safetyInfo && <p className="text-sm text-red-600">{errors.safetyInfo.message}</p>}
         </div>
 
         {/* Warranty */}
@@ -196,12 +181,9 @@ export default function ProductDetailsSection() {
             {...register('warranty')}
             placeholder="VD: 6 tháng, 1 năm, Không bảo hành"
           />
-          {errors.warranty && (
-            <p className="text-sm text-red-600">{errors.warranty.message}</p>
-          )}
+          {errors.warranty && <p className="text-sm text-red-600">{errors.warranty.message}</p>}
         </div>
       </CardContent>
     </Card>
   );
 }
-

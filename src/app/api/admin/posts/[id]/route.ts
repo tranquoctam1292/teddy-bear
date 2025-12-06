@@ -160,6 +160,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (validatedData.tags !== undefined) updateData.tags = validatedData.tags;
     if (validatedData.views !== undefined) updateData.views = validatedData.views;
     if (validatedData.likes !== undefined) updateData.likes = validatedData.likes;
+    if (validatedData.authorInfo !== undefined) updateData.authorInfo = validatedData.authorInfo;
+    if (validatedData.author !== undefined) updateData.author = validatedData.author;
 
     // 🆕 New fields (Phase 1)
     if (validatedData.linkedProducts !== undefined)
@@ -193,12 +195,30 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       updateData.seo = cleanSeo && Object.keys(cleanSeo).length > 0 ? cleanSeo : undefined;
     }
 
-    // Status and publishedAt
+    // Status and publishedAt - CRITICAL: Always update if provided
     if (validatedData.status !== undefined) {
       updateData.status = validatedData.status;
-      if (validatedData.status === 'published' && !post.publishedAt) {
-        updateData.publishedAt = validatedData.publishedAt || new Date();
+      
+      // If publishing, ensure publishedAt is set
+      if (validatedData.status === 'published') {
+        // Priority: provided publishedAt > existing publishedAt > current date
+        if (validatedData.publishedAt) {
+          updateData.publishedAt = new Date(validatedData.publishedAt);
+        } else if (post.publishedAt) {
+          // Keep existing publishedAt if already published
+          updateData.publishedAt = new Date(post.publishedAt);
+        } else {
+          // Set to current date if never published before
+          updateData.publishedAt = new Date();
+        }
       }
+      // If changing to draft, keep publishedAt for history (don't remove)
+    }
+    
+    // Handle publishedAt separately if explicitly provided (for scheduled publishing or date changes)
+    // This allows updating publishedAt even when status is already published
+    if (validatedData.publishedAt !== undefined && validatedData.publishedAt !== null) {
+      updateData.publishedAt = new Date(validatedData.publishedAt);
     }
 
     // Update by id field first, fallback to _id
@@ -259,6 +279,23 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         console.error('Failed to trigger sitemap regeneration:', err);
       });
     });
+
+    // Revalidate blog pages to clear cache
+    // This ensures frontend shows updated content immediately
+    try {
+      const { revalidatePath } = await import('next/cache');
+      if (formattedPost.slug) {
+        // Revalidate the specific blog post page
+        revalidatePath(`/blog/${formattedPost.slug}`);
+        // Also revalidate blog listing page
+        revalidatePath('/blog');
+        // Revalidate homepage (if it shows blog posts)
+        revalidatePath('/');
+      }
+    } catch (revalidateError) {
+      // Revalidation is best-effort, don't fail the request
+      console.warn('Failed to revalidate paths:', revalidateError);
+    }
 
     return NextResponse.json({
       success: true,

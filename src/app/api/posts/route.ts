@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCollections } from '@/lib/db';
 import type { Post } from '@/lib/schemas/post';
 
+// Disable caching for blog posts API to ensure fresh data
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 /**
  * GET /api/posts
  * 
@@ -107,6 +111,8 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+
 
 
 

@@ -65,11 +65,12 @@ export async function ProductGrid({ content }: SectionComponentProps<ProductGrid
         <>
           <div
             className={cn(
-              'grid gap-6 mb-8',
-              columns === 2 && 'grid-cols-1 md:grid-cols-2',
-              columns === 3 && 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
-              columns === 4 && 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4',
-              columns === 5 && 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5',
+              'grid gap-3 md:gap-6 mb-8',
+              // Mobile: Always 2 columns, Desktop: Based on columns prop
+              columns === 2 && 'grid-cols-2 md:grid-cols-2',
+              columns === 3 && 'grid-cols-2 md:grid-cols-2 lg:grid-cols-3',
+              columns === 4 && 'grid-cols-2 md:grid-cols-2 lg:grid-cols-4',
+              columns === 5 && 'grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5',
               columns === 6 && 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6'
             )}
           >

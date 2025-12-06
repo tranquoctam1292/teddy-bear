@@ -271,7 +271,7 @@ export function ProductCard({
           {product.ageRecommendation && (
             <div
               className={cn(
-                'absolute bottom-3 left-3 z-10 flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold text-white shadow-md',
+                'absolute bottom-3 left-3 z-10 items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold text-white shadow-md',
                 product.ageRecommendation === '0-3' && 'bg-blue-500',
                 product.ageRecommendation === '3-6' && 'bg-green-500',
                 product.ageRecommendation === '6+' && 'bg-purple-500',
@@ -305,8 +305,8 @@ export function ProductCard({
             </div>
           )}
 
-          {/* Quick Actions Overlay (Hover) */}
-          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2 z-20">
+          {/* Quick Actions Overlay (Hover) - Desktop only */}
+          <div className="hidden md:flex absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 items-center justify-center gap-2 z-20">
             {showQuickView && (
               <Button
                 size="sm"
@@ -331,13 +331,13 @@ export function ProductCard({
             </Button>
           </div>
 
-          {/* Wishlist Button */}
+          {/* Wishlist Button - Hidden on mobile */}
           {showWishlist && (
             <button
               onClick={handleWishlist}
               className={cn(
-                'absolute top-3 right-3 z-30 p-2 rounded-full bg-white/90 hover:bg-white transition-all',
-                'opacity-100 md:opacity-0 md:group-hover:opacity-100',
+                'hidden md:block absolute top-3 right-3 z-30 p-2 rounded-full bg-white/90 hover:bg-white transition-all',
+                'opacity-0 group-hover:opacity-100',
                 isWishlisted && 'text-red-500'
               )}
               aria-label={isWishlisted ? 'Bỏ yêu thích' : 'Thêm vào yêu thích'}
@@ -348,13 +348,11 @@ export function ProductCard({
         </Link>
 
         {/* Product Info */}
-        <div className="p-4 space-y-2">
+        <div className="p-3 md:p-4 space-y-2">
           {/* Product Name */}
-          <Link href={`/products/${product.slug}`}>
-            <h3 className="font-semibold text-gray-900 line-clamp-2 min-h-[3rem] group-hover:text-pink-600 transition-colors">
-              {product.name}
-            </h3>
-          </Link>
+          <h3 className="font-semibold text-gray-900 line-clamp-2 text-sm md:text-base min-h-[2.5rem] md:min-h-[3rem] group-hover:text-pink-600 transition-colors">
+            {product.name}
+          </h3>
 
           {/* Material Info */}
           {product.material && (
@@ -421,19 +419,11 @@ export function ProductCard({
             </div>
           )}
 
-          {/* Add to Cart Button (Mobile - Always visible) */}
-          <Button
-            className="w-full bg-pink-600 hover:bg-pink-700 text-white md:hidden"
-            onClick={handleAddToCart}
-            disabled={isAdding || variants.length === 0}
-          >
-            <ShoppingCart className="w-4 h-4 mr-2" />
-            {isAdding ? 'Đang thêm...' : 'Thêm vào giỏ'}
-          </Button>
+          {/* Không hiển thị nút hành động ở cuối thẻ trên desktop/mobile */}
         </div>
       </div>
 
-      {/* Quick View Modal */}
+      {/* Quick View Modal - Desktop */}
       {showQuickView && (
         <QuickViewModal
           product={productForModal}

@@ -232,3 +232,6 @@ async function createProductIndexes() {
 // Run the script
 createProductIndexes().catch(console.error);
 
+
+
+

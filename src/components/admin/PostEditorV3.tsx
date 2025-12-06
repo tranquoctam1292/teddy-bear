@@ -257,7 +257,7 @@ export default function PostEditorV3({
     return () => clearTimeout(timer);
   }, [watchedValues, images]);
 
-  // Form submit
+  // Form submit - Save as draft
   const handleFormSubmit = async (data: PostFormInput) => {
     const keywordsArray = data.keywords
       ? data.keywords.split(',').map((k) => k.trim()).filter(k => k.length > 0)
@@ -265,8 +265,34 @@ export default function PostEditorV3({
 
     const submitData: PostFormData = {
       ...data,
+      status: 'draft', // Always save as draft when using handleFormSubmit
       keywords: keywordsArray,
       publishedAt: data.publishDate ? new Date(data.publishDate) : undefined,
+      authorInfo, // Add author information (E-E-A-T SEO)
+    };
+
+    const result = await onSubmit(submitData);
+
+    // Save SEO analysis
+    if (seoAnalysis && data.slug) {
+      const postId = post?.id || (result as any)?.post?.id;
+      if (postId) {
+        await saveAnalysisToDatabase(seoAnalysis, 'post', postId, data.slug).catch(console.error);
+      }
+    }
+  };
+
+  // Form submit - Publish
+  const handlePublishSubmit = async (data: PostFormInput) => {
+    const keywordsArray = data.keywords
+      ? data.keywords.split(',').map((k) => k.trim()).filter(k => k.length > 0)
+      : [];
+
+    const submitData: PostFormData = {
+      ...data,
+      status: 'published', // Set status to published when clicking "Xuất bản"
+      keywords: keywordsArray,
+      publishedAt: data.publishDate ? new Date(data.publishDate) : new Date(), // Set publishedAt if not set
       authorInfo, // Add author information (E-E-A-T SEO)
     };
 
@@ -449,18 +475,23 @@ export default function PostEditorV3({
         publishDate={watchedValues.publishDate}
         onDateChange={(d) => setValue('publishDate', d)}
         onSave={handleSubmit(handleFormSubmit)}
-        onPublish={handleSubmit(handleFormSubmit)}
+        onPublish={handleSubmit(handlePublishSubmit)}
         onPreview={() => {
-          if (!watchedValues.slug) {
+          // Preview với draft mode - cần có post ID và slug
+          if (!post?.id) {
+            alert('Vui lòng lưu bài viết trước khi xem trước');
+            return;
+          }
+          
+          // Use slug if available, otherwise use post ID
+          const previewSlug = watchedValues.slug || post.slug || post.id;
+          if (!previewSlug) {
             alert('Vui lòng nhập slug trước khi xem trước');
             return;
           }
-          // Preview với draft mode - chỉ preview nếu đã có post ID (đã lưu)
-          if (post?.id) {
-            window.open(`/blog/${watchedValues.slug}?preview=true`, '_blank');
-          } else {
-            alert('Vui lòng lưu bài viết trước khi xem trước');
-          }
+          
+          // Open preview with post ID in query param for better reliability
+          window.open(`/blog/${previewSlug}?preview=true&id=${post.id}`, '_blank');
         }}
         isLoading={isLoading}
         isDirty={isDirty}

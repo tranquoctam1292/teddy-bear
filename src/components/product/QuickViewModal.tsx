@@ -15,42 +15,38 @@ interface QuickViewModalProps {
   onClose: () => void;
 }
 
-export default function QuickViewModal({
-  product,
-  isOpen,
-  onClose,
-}: QuickViewModalProps) {
+export default function QuickViewModal({ product, isOpen, onClose }: QuickViewModalProps) {
   const { addItem } = useCartStore();
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(
-    product.variants[0] || null
+    product?.variants?.[0] || null
   );
   const [isAdding, setIsAdding] = useState(false);
   const [currentImage, setCurrentImage] = useState(
-    selectedVariant?.image || product.images[0] || ''
+    selectedVariant?.image || product?.images?.[0] || ''
   );
 
   // Reset selected variant when modal opens
   useEffect(() => {
-    if (isOpen && product.variants.length > 0) {
+    if (isOpen && product?.variants && product.variants.length > 0) {
       const firstVariant = product.variants[0];
       setSelectedVariant(firstVariant);
-      setCurrentImage(firstVariant.image || product.images[0] || '');
+      setCurrentImage(firstVariant.image || product?.images?.[0] || '');
     }
   }, [isOpen, product]);
 
   // Update image when variant changes
   useEffect(() => {
     if (selectedVariant) {
-      setCurrentImage(selectedVariant.image || product.images[0] || '');
+      setCurrentImage(selectedVariant.image || product?.images?.[0] || '');
     }
-  }, [selectedVariant, product.images]);
+  }, [selectedVariant, product?.images]);
 
   const handleVariantChange = (variant: Variant) => {
     setSelectedVariant(variant);
   };
 
   const handleAddToCart = () => {
-    if (!selectedVariant || selectedVariant.stock === 0) return;
+    if (!selectedVariant || selectedVariant.stock === 0 || !product) return;
 
     setIsAdding(true);
     addItem({
@@ -60,7 +56,7 @@ export default function QuickViewModal({
       size: selectedVariant.size,
       price: selectedVariant.price,
       quantity: 1,
-      image: selectedVariant.image || product.images[0] || '',
+      image: selectedVariant.image || product?.images?.[0] || '',
     });
 
     // Show success feedback
@@ -71,13 +67,10 @@ export default function QuickViewModal({
     }, 500);
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !product) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      onClick={onClose}
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
 
@@ -102,7 +95,7 @@ export default function QuickViewModal({
               {currentImage ? (
                 <Image
                   src={currentImage}
-                  alt={product.name}
+                  alt={product?.name || 'Sản phẩm'}
                   fill
                   className="object-cover"
                   sizes="(max-width: 768px) 100vw, 50vw"
@@ -116,7 +109,7 @@ export default function QuickViewModal({
             </div>
 
             {/* Thumbnail Gallery */}
-            {product.images.length > 1 && (
+            {product?.images && product.images.length > 1 && (
               <div className="flex gap-2 overflow-x-auto pb-2">
                 {product.images.map((img, idx) => (
                   <button
@@ -145,15 +138,15 @@ export default function QuickViewModal({
           {/* Right: Product Info */}
           <div className="flex flex-col space-y-4">
             {/* Category */}
-            <p className="text-sm text-pink-600 font-medium uppercase">
-              {product.category}
-            </p>
+            {product?.category && (
+              <p className="text-sm text-pink-600 font-medium uppercase">{product.category}</p>
+            )}
 
             {/* Product Name */}
-            <h2 className="text-2xl font-bold text-gray-900">{product.name}</h2>
+            <h2 className="text-2xl font-bold text-gray-900">{product?.name || 'Sản phẩm'}</h2>
 
             {/* Tags */}
-            {product.tags.length > 0 && (
+            {product?.tags && product.tags.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {product.tags.map((tag) => (
                   <span
@@ -167,7 +160,7 @@ export default function QuickViewModal({
             )}
 
             {/* Variant Selector */}
-            {product.variants.length > 0 ? (
+            {product?.variants && product.variants.length > 0 ? (
               <div className="pt-4 border-t border-gray-200">
                 <VariantSelector
                   product={product}
@@ -184,9 +177,7 @@ export default function QuickViewModal({
             {/* Description */}
             {product.description && (
               <div className="pt-4 border-t border-gray-200">
-                <p className="text-sm text-gray-600 line-clamp-3">
-                  {product.description}
-                </p>
+                <p className="text-sm text-gray-600 line-clamp-3">{product.description}</p>
               </div>
             )}
 
@@ -194,11 +185,7 @@ export default function QuickViewModal({
             <div className="flex flex-col gap-3 pt-4 border-t border-gray-200">
               <button
                 onClick={handleAddToCart}
-                disabled={
-                  isAdding ||
-                  !selectedVariant ||
-                  selectedVariant.stock === 0
-                }
+                disabled={isAdding || !selectedVariant || selectedVariant.stock === 0}
                 className="w-full bg-pink-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-pink-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
               >
                 <ShoppingCart className="w-5 h-5" />
@@ -209,14 +196,16 @@ export default function QuickViewModal({
                   : 'Thêm vào giỏ hàng'}
               </button>
 
-              <Link
-                href={`/products/${product.slug}`}
-                onClick={onClose}
-                className="w-full bg-white border-2 border-pink-600 text-pink-600 py-3 px-6 rounded-lg font-semibold hover:bg-pink-50 transition-colors flex items-center justify-center gap-2"
-              >
-                <Eye className="w-5 h-5" />
-                Xem chi tiết
-              </Link>
+              {product?.slug && (
+                <Link
+                  href={`/products/${product.slug}`}
+                  onClick={onClose}
+                  className="w-full bg-white border-2 border-pink-600 text-pink-600 py-3 px-6 rounded-lg font-semibold hover:bg-pink-50 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Eye className="w-5 h-5" />
+                  Xem chi tiết
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -224,8 +213,3 @@ export default function QuickViewModal({
     </div>
   );
 }
-
-
-
-
-

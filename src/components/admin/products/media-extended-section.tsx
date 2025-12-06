@@ -91,12 +91,7 @@ function ImageUploader({ images, onAdd, onRemove, label, maxImages = 10 }: Image
         {images.map((url, index) => (
           <div key={index} className="relative group">
             <div className="aspect-square relative rounded-lg overflow-hidden border border-gray-200">
-              <Image
-                src={url}
-                alt={`${label} ${index + 1}`}
-                fill
-                className="object-cover"
-              />
+              <Image src={url} alt={`${label} ${index + 1}`} fill className="object-cover" />
             </div>
             <button
               type="button"
@@ -111,9 +106,7 @@ function ImageUploader({ images, onAdd, onRemove, label, maxImages = 10 }: Image
         {images.length < maxImages && (
           <label className="aspect-square border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-pink-500 hover:bg-pink-50 transition-colors">
             <Upload className="w-6 h-6 text-gray-400 mb-2" />
-            <span className="text-xs text-gray-500 text-center px-2">
-              Thêm ảnh
-            </span>
+            <span className="text-xs text-gray-500 text-center px-2">Thêm ảnh</span>
             <input
               type="file"
               multiple
@@ -125,9 +118,7 @@ function ImageUploader({ images, onAdd, onRemove, label, maxImages = 10 }: Image
           </label>
         )}
       </div>
-      {isUploading && (
-        <p className="text-sm text-gray-500">Đang tải ảnh lên...</p>
-      )}
+      {isUploading && <p className="text-sm text-gray-500">Đang tải ảnh lên...</p>}
       <p className="text-xs text-gray-500">
         Đã upload {images.length}/{maxImages} ảnh
       </p>
@@ -208,12 +199,8 @@ export default function MediaExtendedSection() {
             {...register('videoUrl')}
             placeholder="https://www.youtube.com/watch?v=... hoặc https://vimeo.com/..."
           />
-          <p className="text-xs text-gray-500">
-            Nhập URL video từ YouTube hoặc Vimeo
-          </p>
-          {errors.videoUrl && (
-            <p className="text-sm text-red-600">{errors.videoUrl.message}</p>
-          )}
+          <p className="text-xs text-gray-500">Nhập URL video từ YouTube hoặc Vimeo</p>
+          {errors.videoUrl && <p className="text-sm text-red-600">{errors.videoUrl.message}</p>}
         </div>
 
         {/* Video Thumbnail */}
@@ -222,12 +209,7 @@ export default function MediaExtendedSection() {
           {videoThumbnail ? (
             <div className="relative w-full max-w-md">
               <div className="aspect-video relative rounded-lg overflow-hidden border border-gray-200">
-                <Image
-                  src={videoThumbnail}
-                  alt="Video thumbnail"
-                  fill
-                  className="object-cover"
-                />
+                <Image src={videoThumbnail} alt="Video thumbnail" fill className="object-cover" />
               </div>
               <button
                 type="button"
@@ -251,13 +233,9 @@ export default function MediaExtendedSection() {
               />
             </label>
           )}
-          {isUploadingThumbnail && (
-            <p className="text-sm text-gray-500">Đang tải ảnh lên...</p>
-          )}
+          {isUploadingThumbnail && <p className="text-sm text-gray-500">Đang tải ảnh lên...</p>}
           {errors.videoThumbnail && (
-            <p className="text-sm text-red-600">
-              {errors.videoThumbnail.message}
-            </p>
+            <p className="text-sm text-red-600">{errors.videoThumbnail.message}</p>
           )}
         </div>
 
@@ -289,9 +267,7 @@ export default function MediaExtendedSection() {
               />
             )}
           />
-          {errors.images360 && (
-            <p className="text-sm text-red-600">{errors.images360.message}</p>
-          )}
+          {errors.images360 && <p className="text-sm text-red-600">{errors.images360.message}</p>}
         </div>
 
         {/* Lifestyle Images */}
@@ -323,13 +299,10 @@ export default function MediaExtendedSection() {
             )}
           />
           {errors.lifestyleImages && (
-            <p className="text-sm text-red-600">
-              {errors.lifestyleImages.message}
-            </p>
+            <p className="text-sm text-red-600">{errors.lifestyleImages.message}</p>
           )}
         </div>
       </CardContent>
     </Card>
   );
 }
-

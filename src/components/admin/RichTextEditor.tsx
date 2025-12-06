@@ -3,7 +3,7 @@
 // Universal Rich Text Editor Component
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import Image from '@tiptap/extension-image';
+import CustomImage from '@/components/editor/extensions/CustomImage';
 import Link from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
 import TextAlign from '@tiptap/extension-text-align';
@@ -18,9 +18,11 @@ import { TableHeader } from '@tiptap/extension-table-header';
 import { FontFamily } from '@tiptap/extension-font-family';
 import { FontSize } from '@/lib/tiptap-extensions/fontSize';
 import Youtube from '@tiptap/extension-youtube';
+import { KeyboardShortcuts } from '@/components/editor/extensions/KeyboardShortcuts';
 import { useState } from 'react';
 import WordPressToolbar from './WordPressToolbar';
 import MediaLibrary from './MediaLibrary';
+import ImageBubbleMenu from '@/components/editor/components/ImageBubbleMenu';
 
 interface RichTextEditorProps {
   content: string;
@@ -48,7 +50,7 @@ export default function RichTextEditor({
           levels: [1, 2, 3],
         },
       }),
-      Image.configure({
+      CustomImage.configure({
         inline: true,
         allowBase64: true,
       }),
@@ -89,6 +91,10 @@ export default function RichTextEditor({
       TableRow,
       TableHeader,
       TableCell,
+      // Add keyboard shortcuts (Underline only, no Link modal in this component)
+      KeyboardShortcuts.configure({
+        onOpenLinkModal: undefined, // No link modal in RichTextEditor
+      }),
     ],
     content,
     immediatelyRender: false,
@@ -112,14 +118,20 @@ export default function RichTextEditor({
   }
 
   return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
+    <div className="border border-gray-200 rounded-lg bg-white">
       <WordPressToolbar
         editor={editor}
         onAddMedia={showMediaLibrary ? () => setMediaLibraryOpen(true) : undefined}
       />
-      
-      <div className="border-t border-gray-200">
+
+      <div className="border-t border-gray-200 relative overflow-hidden rounded-b-lg">
         <EditorContent editor={editor} />
+        {editor && (
+          <ImageBubbleMenu
+            editor={editor}
+            onReplaceImage={showMediaLibrary ? () => setMediaLibraryOpen(true) : undefined}
+          />
+        )}
       </div>
 
       {/* Media Library Modal */}
@@ -128,10 +140,14 @@ export default function RichTextEditor({
           isOpen={mediaLibraryOpen}
           onClose={() => setMediaLibraryOpen(false)}
           onSelect={(file) => {
-            editor.chain().focus().setImage({ 
-              src: file.url,
-              alt: file.alt || file.filename,
-            }).run();
+            editor
+              .chain()
+              .focus()
+              .setImage({
+                src: file.url,
+                alt: file.alt || file.filename,
+              })
+              .run();
             setMediaLibraryOpen(false);
           }}
         />
@@ -139,4 +155,3 @@ export default function RichTextEditor({
     </div>
   );
 }
-

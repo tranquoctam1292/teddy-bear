@@ -11,11 +11,15 @@
  * 
  * @example
  * generateSlug('Gấu Bông Teddy') // => 'gau-bong-teddy'
+ * generateSlug('Đẹp Quá') // => 'dep-qua'
  * generateSlug('Hello World!') // => 'hello-world'
  */
 export function generateSlug(text: string): string {
   return text
     .toLowerCase()
+    // Handle special Vietnamese characters first (before normalize)
+    .replace(/đ/g, 'd') // Đ, đ → d
+    .replace(/Đ/g, 'd') // Uppercase Đ → d
     .normalize('NFD') // Normalize Vietnamese characters
     .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
     .replace(/[^a-z0-9]+/g, '-') // Replace non-alphanumeric with dash

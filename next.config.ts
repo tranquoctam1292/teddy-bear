@@ -13,6 +13,15 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'images.unsplash.com',
       },
+      // Vercel Blob Storage
+      // Note: Each Vercel project has a unique blob storage hostname
+      // If you get an error about unconfigured hostname, add your specific hostname here
+      {
+        protocol: 'https',
+        hostname: 'vvreidfmtxgixu0w.public.blob.vercel-storage.com',
+      },
+      // Add more Vercel Blob storage hostnames as needed
+      // You can find your hostname in the error message or Vercel dashboard
     ],
     // Allow SVG images from placehold.co (they return SVG format)
     dangerouslyAllowSVG: true,

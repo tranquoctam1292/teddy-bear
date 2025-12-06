@@ -73,6 +73,7 @@ export async function BlogPosts({ content, layout, isPreview }: BlogPostsProps) 
                     fill
                     className="object-cover transition-transform hover:scale-105"
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    unoptimized={post.featuredImage.includes('blob.vercel-storage.com')}
                   />
                 </div>
               )}

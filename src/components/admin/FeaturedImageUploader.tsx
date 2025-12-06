@@ -6,13 +6,7 @@ import Image from 'next/image';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { 
-  Upload, 
-  Image as ImageIcon, 
-  X, 
-  Link as LinkIcon,
-  Loader2 
-} from 'lucide-react';
+import { Upload, Image as ImageIcon, X, Link as LinkIcon, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface FeaturedImageUploaderProps {
@@ -60,19 +54,59 @@ export default function FeaturedImageUploader({
         body: formData,
       });
 
+      // Check response status first
       if (!response.ok) {
-        throw new Error('Tải lên thất bại');
+        // Try to get error message from response
+        let errorMessage = 'Tải lên thất bại';
+        try {
+          // Clone response to read body without consuming it
+          const errorData = await response.clone().json();
+          if (errorData.error) {
+            errorMessage = errorData.error;
+          } else if (errorData.message) {
+            errorMessage = errorData.message;
+          }
+        } catch (parseError) {
+          // If response is not JSON, use status-based message
+          if (response.status === 401) {
+            errorMessage = 'Bạn cần đăng nhập với quyền admin để tải ảnh lên';
+          } else if (response.status === 400) {
+            errorMessage =
+              'File không hợp lệ. Vui lòng kiểm tra định dạng và kích thước (tối đa 5MB)';
+          } else if (response.status === 500) {
+            errorMessage =
+              'Lỗi server. Vui lòng kiểm tra cấu hình BLOB_READ_WRITE_TOKEN trong .env.local';
+          } else {
+            errorMessage = `Tải lên thất bại (HTTP ${response.status})`;
+          }
+        }
+        // Set error and return early instead of throwing
+        setError(errorMessage);
+        setIsUploading(false);
+        return;
       }
 
-      const data = await response.json();
+      // Parse successful response
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        setError('Không thể đọc phản hồi từ server');
+        setIsUploading(false);
+        return;
+      }
       if (data.url) {
         onChange(data.url);
+        setError(null); // Clear any previous errors
       } else {
-        throw new Error('Không nhận được URL');
+        throw new Error('Không nhận được URL từ server');
       }
     } catch (err) {
       console.error('Upload error:', err);
-      setError('Tải ảnh lên thất bại');
+      // Set error message (this will only be used if error wasn't already set above)
+      const errorMessage =
+        err instanceof Error ? err.message : 'Tải ảnh lên thất bại. Vui lòng thử lại.';
+      setError(errorMessage);
     } finally {
       setIsUploading(false);
     }
@@ -139,22 +173,16 @@ export default function FeaturedImageUploader({
                 fill
                 className="object-cover"
                 sizes="(max-width: 768px) 100vw, 400px"
+                unoptimized={value.includes('blob.vercel-storage.com')}
               />
               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  onClick={handleRemove}
-                >
+                <Button type="button" variant="destructive" size="sm" onClick={handleRemove}>
                   <X className="h-4 w-4 mr-2" />
                   Xóa
                 </Button>
               </div>
             </div>
-            <p className="text-xs text-gray-500 mt-2 truncate">
-              {value}
-            </p>
+            <p className="text-xs text-gray-500 mt-2 truncate">{value}</p>
           </CardContent>
         </Card>
       ) : (
@@ -192,9 +220,7 @@ export default function FeaturedImageUploader({
                       <p className="text-sm font-medium text-gray-700 mb-1">
                         Nhấp để tải lên hoặc kéo thả
                       </p>
-                      <p className="text-xs text-gray-500">
-                        PNG, JPG, GIF tối đa 5MB
-                      </p>
+                      <p className="text-xs text-gray-500">PNG, JPG, GIF tối đa 5MB</p>
                     </>
                   )}
                   <input
@@ -233,7 +259,40 @@ export default function FeaturedImageUploader({
             </Tabs>
 
             {error && (
-              <p className="text-sm text-red-600 mt-2">{error}</p>
+              <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+                <p className="font-medium">⚠️ Lỗi tải lên:</p>
+                <p>{error}</p>
+                {error.includes('BLOB_READ_WRITE_TOKEN') && (
+                  <div className="text-xs mt-2 space-y-1">
+                    <p className="font-medium">💡 Hướng dẫn:</p>
+                    <ol className="list-decimal list-inside space-y-1 ml-2">
+                      <li>Vào Vercel Dashboard: https://vercel.com/dashboard</li>
+                      <li>Chọn project → Settings → Storage → Blob</li>
+                      <li>Tạo Blob store mới (nếu chưa có)</li>
+                      <li>Copy BLOB_READ_WRITE_TOKEN</li>
+                      <li>Thêm vào file .env.local: BLOB_READ_WRITE_TOKEN=your_token_here</li>
+                    </ol>
+                  </div>
+                )}
+                {(error.includes('store does not exist') ||
+                  error.includes('store chưa được tạo')) && (
+                  <div className="text-xs mt-2 space-y-1">
+                    <p className="font-medium">💡 Giải pháp:</p>
+                    <ol className="list-decimal list-inside space-y-1 ml-2">
+                      <li>Vào Vercel Dashboard: https://vercel.com/dashboard</li>
+                      <li>Chọn project → Storage → Blob</li>
+                      <li>Click "Create Store" để tạo Blob store mới</li>
+                      <li>Sau khi tạo, copy BLOB_READ_WRITE_TOKEN</li>
+                      <li>Thêm vào .env.local và restart dev server</li>
+                    </ol>
+                  </div>
+                )}
+                {(error.includes('Unauthorized') || error.includes('đăng nhập')) && (
+                  <p className="text-xs mt-1 text-red-600">
+                    💡 Vui lòng đăng nhập lại với tài khoản admin
+                  </p>
+                )}
+              </div>
             )}
           </CardContent>
         </Card>
@@ -241,4 +300,3 @@ export default function FeaturedImageUploader({
     </div>
   );
 }
-

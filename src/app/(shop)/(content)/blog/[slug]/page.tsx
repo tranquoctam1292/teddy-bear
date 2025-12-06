@@ -4,6 +4,7 @@
 import { useState, useEffect, use } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Calendar, User, ArrowLeft, Share2 } from 'lucide-react';
 import JsonLd from '@/components/seo/JsonLd';
 import { generateBlogPostingSchema } from '@/lib/seo/schemas';
@@ -16,6 +17,10 @@ import { BlogPostRenderer } from '@/components/blog/blog-post-renderer';
 import { SocialShareButtons } from '@/components/blog/social-share-buttons';
 import { ReadingTimeBadge } from '@/components/blog/reading-time-badge';
 import { CommentSection } from '@/components/blog/comments/comment-section';
+import { BlogSidebar } from '@/components/blog/blog-sidebar';
+import { TOCFloatingButton } from '@/components/blog/toc-floating-button';
+import { ProductLinkCard } from '@/components/blog/product-link-card';
+import { generateTableOfContents, injectHeadingIds } from '@/lib/utils/toc-generator';
 import type { Post } from '@/lib/schemas/post';
 import type { Author } from '@/lib/types/author';
 
@@ -31,6 +36,7 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
   const [reviewer, setReviewer] = useState<Author | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [tocItems, setTocItems] = useState<Post['tableOfContents']>([]);
 
   useEffect(() => {
     async function fetchPost() {
@@ -39,16 +45,26 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
         
         // Check if preview mode (for draft posts)
         const isPreview = searchParams.get('preview') === 'true';
+        const postId = searchParams.get('id'); // Post ID from query param (for preview)
         
         // Try to fetch from API
         let apiUrl = `/api/posts?slug=${slug}`; // Default: public API (only published)
         
         if (isPreview) {
           // For preview, try admin API first (requires auth)
-          apiUrl = `/api/admin/posts?slug=${slug}`;
+          // Use post ID if available (more reliable), otherwise use slug
+          if (postId) {
+            apiUrl = `/api/admin/posts/${postId}`;
+          } else {
+            apiUrl = `/api/admin/posts?slug=${slug}`;
+          }
         }
           
-        const response = await fetch(apiUrl);
+        // Add cache busting for published posts to ensure fresh data
+        const cacheBuster = isPreview ? '' : `&_t=${Date.now()}`;
+        const response = await fetch(`${apiUrl}${cacheBuster}`, {
+          cache: 'no-store', // Disable caching to get fresh data
+        });
         
         // If admin API fails (401), fallback to public API
         if (!response.ok && response.status === 401 && isPreview) {
@@ -60,9 +76,33 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
         
         if (response.ok) {
           const data = await response.json();
-          const postData = data.data?.post || data.post;
+          // Handle different response formats
+          let postData;
+          if (isPreview && postId) {
+            // Admin API with ID returns { post: {...} }
+            postData = data.post || data.data?.post;
+          } else {
+            // Admin API with slug or public API returns { data: { post: {...} } } or { post: {...} }
+            postData = data.data?.post || data.post;
+          }
+          
           if (postData) {
+            // Generate Table of Contents from content if not present
+            let toc: Post['tableOfContents'] = postData.tableOfContents || [];
+            
+            // If no TOC exists but content exists, generate it on client side
+            if (toc.length === 0 && postData.content && typeof window !== 'undefined') {
+              try {
+                toc = generateTableOfContents(postData.content);
+                // Inject heading IDs into content for smooth scrolling
+                postData.content = injectHeadingIds(postData.content);
+              } catch (err) {
+                console.error('Error generating TOC:', err);
+              }
+            }
+            
             setPost(postData);
+            setTocItems(toc);
             
             // Fetch author data if exists
             if (postData.authorInfo?.authorId) {
@@ -171,12 +211,12 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
       );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-pink-50 to-white">
+    <div className="min-h-screen bg-white">
       {/* JSON-LD Structured Data */}
       <JsonLd data={blogPostingSchema} />
 
       {/* Breadcrumb Navigation */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
         <Breadcrumb
           items={[
             { label: 'Blog', href: '/blog' },
@@ -186,10 +226,13 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
         />
       </div>
 
-      {/* Article */}
-      <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-        {/* Header */}
-        <header className="mb-8">
+      {/* Article - Two-column layout with sidebar */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+          {/* Main Content */}
+          <article className="lg:col-span-8">
+            {/* Header */}
+            <header className="mb-8">
           <Link
             href="/blog"
             className="inline-flex items-center gap-2 text-pink-600 hover:text-pink-700 mb-6 transition-colors"
@@ -204,12 +247,12 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
             </span>
           )}
 
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight tracking-tight max-w-none w-full">
             {post.title}
           </h1>
 
           {post.excerpt && (
-            <p className="text-xl text-gray-600 mb-6 leading-relaxed">
+            <p className="text-xl md:text-2xl text-gray-600 mb-8 leading-relaxed font-light">
               {post.excerpt}
             </p>
           )}
@@ -282,13 +325,18 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
           </div>
         </header>
 
-        {/* Featured Image */}
+        {/* Featured Image - Enhanced display with Next.js Image */}
         {post.featuredImage && (
-          <div className="mb-8 rounded-2xl overflow-hidden">
-            <img
+          <div className="mb-12 rounded-2xl overflow-hidden shadow-2xl">
+            <Image
               src={post.featuredImage}
               alt={post.title}
+              width={1200}
+              height={675}
               className="w-full h-auto object-cover"
+              priority
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1200px"
+              unoptimized={post.featuredImage.includes('blob.vercel-storage.com')}
             />
           </div>
         )}
@@ -296,22 +344,37 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
         {/* Blog Post Renderer (Template-based) */}
         <BlogPostRenderer post={post} />
 
-        {/* Tags */}
-        {post.tags && post.tags.length > 0 && (
-          <div className="mt-12 pt-8 border-t border-gray-200">
-            <h3 className="text-sm font-semibold text-gray-900 mb-4">Tags:</h3>
-            <div className="flex flex-wrap gap-2">
-              {post.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="px-3 py-1 bg-pink-50 text-pink-700 rounded-full text-sm"
-                >
-                  #{tag}
-                </span>
-              ))}
+        {/* Tags & Social Share - Combined section */}
+        <div className="mt-16 pt-10 border-t-2 border-gray-200">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+            {/* Tags */}
+            {post.tags && post.tags.length > 0 && (
+              <div className="flex-1">
+                <div className="flex flex-wrap gap-3">
+                  {post.tags.map((tag) => (
+                    <Link
+                      key={tag}
+                      href={`/blog?tag=${encodeURIComponent(tag)}`}
+                      className="px-4 py-2 bg-pink-50 hover:bg-pink-100 text-pink-700 rounded-full text-sm font-medium transition-colors"
+                    >
+                      {tag}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Social Share Buttons */}
+            <div className="flex-shrink-0">
+              <SocialShareButtons
+                url={`/blog/${post.slug}`}
+                title={post.title}
+                description={post.excerpt}
+                variant="default"
+              />
             </div>
           </div>
-        )}
+        </div>
 
         {/* Author Box (E-E-A-T SEO) */}
         {(author || post.authorInfo?.guestAuthor) && (
@@ -335,10 +398,37 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
             />
           </div>
         )}
-      </article>
+          </article>
 
-      {/* Related Products */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Sidebar - Sticky on desktop */}
+          <aside className="lg:col-span-4">
+            <div className="lg:sticky lg:top-24 lg:h-fit space-y-6">
+              {/* Sidebar Products */}
+              {post.linkedProducts?.filter((lp) => lp.position === 'sidebar').length > 0 && (
+                <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm space-y-4">
+                  <h3 className="text-lg font-bold text-gray-900 mb-4">Sản phẩm liên quan</h3>
+                  {post.linkedProducts
+                    ?.filter((lp) => lp.position === 'sidebar')
+                    .map((linkedProduct, index) => (
+                      <ProductLinkCard
+                        key={index}
+                        productId={linkedProduct.productId}
+                        displayType={linkedProduct.displayType}
+                        customMessage={linkedProduct.customMessage}
+                      />
+                    ))}
+                </div>
+              )}
+
+              {/* Recent Posts Sidebar */}
+              <BlogSidebar excludeSlug={slug} />
+            </div>
+          </aside>
+        </div>
+      </div>
+
+      {/* Related Products - Enhanced section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16">
         <RelatedProducts
           tags={post.tags || []}
           category={post.category}
@@ -352,6 +442,11 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
             typeof post._id === 'string' ? post._id : post._id.toString()
           }
         />
+      )}
+
+      {/* Floating TOC Button */}
+      {tocItems && tocItems.length > 0 && (
+        <TOCFloatingButton items={tocItems} />
       )}
     </div>
   );

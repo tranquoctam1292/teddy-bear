@@ -92,16 +92,8 @@ export function ImageUploadField({
       {/* Current Image Preview */}
       {value && (
         <div className="relative rounded-lg border overflow-hidden bg-gray-50">
-          <div
-            className="relative w-full"
-            style={{ aspectRatio: aspectRatio }}
-          >
-            <Image
-              src={value}
-              alt={label}
-              fill
-              className="object-cover"
-            />
+          <div className="relative w-full" style={{ aspectRatio: aspectRatio }}>
+            <Image src={value} alt={label} fill className="object-cover" />
           </div>
           <Button
             variant="destructive"
@@ -137,9 +129,7 @@ export function ImageUploadField({
                   <p className="mt-2 text-sm text-muted-foreground">
                     Click to upload or drag and drop
                   </p>
-                  <p className="text-xs text-muted-foreground">
-                    PNG, JPG, WebP up to 5MB
-                  </p>
+                  <p className="text-xs text-muted-foreground">PNG, JPG, WebP up to 5MB</p>
                 </>
               )}
             </label>
@@ -186,13 +176,7 @@ export function ImageUploadField({
       {value && (
         <div className="flex gap-2">
           <label htmlFor={`file-change-${label}`} className="flex-1">
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              disabled={uploading}
-              asChild
-            >
+            <Button type="button" variant="outline" className="w-full" disabled={uploading} asChild>
               <span>
                 {uploading ? (
                   <>
@@ -221,4 +205,3 @@ export function ImageUploadField({
     </div>
   );
 }
-
