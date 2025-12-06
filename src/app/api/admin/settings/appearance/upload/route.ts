@@ -61,6 +61,15 @@ export async function POST(request: NextRequest) {
 
     // Get existing config to delete old file if exists
     const { appearanceConfig } = await getCollections();
+    
+    // Check if collection is available
+    if (!appearanceConfig) {
+      return NextResponse.json(
+        { error: 'Database connection unavailable' },
+        { status: 503 }
+      );
+    }
+    
     const existing = await appearanceConfig.findOne({});
     
     // Delete old file if exists and is a blob URL

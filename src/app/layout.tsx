@@ -19,6 +19,13 @@ const geistMono = Geist_Mono({
 async function getAppearanceConfig() {
   try {
     const { appearanceConfig } = await getCollections();
+    
+    // Check if collection is available (null during build phase or connection failures)
+    if (!appearanceConfig) {
+      console.warn('Appearance config collection not available. Using defaults.');
+      return null;
+    }
+    
     const config = await appearanceConfig.findOne({});
     return config;
   } catch (error) {

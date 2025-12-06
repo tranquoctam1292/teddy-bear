@@ -18,6 +18,23 @@ export async function GET(request: NextRequest) {
     }
 
     const { appearanceConfig } = await getCollections();
+    
+    // Check if collection is available (null during build phase or connection failures)
+    if (!appearanceConfig) {
+      console.warn('Appearance config collection not available. Returning default config.');
+      return NextResponse.json({
+        config: {
+          id: generateId(),
+          theme: 'light',
+          primaryColor: '#3B82F6',
+          secondaryColor: '#8B5CF6',
+          borderRadius: 'md',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      });
+    }
+    
     const config = await appearanceConfig.findOne({});
 
     if (!config) {
@@ -94,6 +111,14 @@ export async function PUT(request: NextRequest) {
     }
 
     const { appearanceConfig } = await getCollections();
+    
+    // Check if collection is available
+    if (!appearanceConfig) {
+      return NextResponse.json(
+        { error: 'Database connection unavailable' },
+        { status: 503 }
+      );
+    }
 
     const existing = await appearanceConfig.findOne({});
 
@@ -128,6 +153,14 @@ export async function PUT(request: NextRequest) {
     }
 
     const updated = await appearanceConfig.findOne({});
+    
+    if (!updated) {
+      return NextResponse.json(
+        { error: 'Failed to retrieve updated config' },
+        { status: 500 }
+      );
+    }
+    
     const { _id, ...configData } = updated as any;
 
     return NextResponse.json({

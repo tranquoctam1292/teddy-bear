@@ -21,6 +21,13 @@ export async function GET(request: NextRequest) {
 
   try {
     const { appearanceConfig } = await getCollections();
+    
+    // Check if collection is available (null during build phase or connection failures)
+    if (!appearanceConfig) {
+      console.warn('Appearance config collection not available. Returning default config.');
+      return NextResponse.json({ config: defaultConfig }, { status: 200 });
+    }
+    
     const config = await appearanceConfig.findOne({});
 
     if (!config) {

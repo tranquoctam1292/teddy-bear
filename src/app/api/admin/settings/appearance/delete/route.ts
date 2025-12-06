@@ -26,6 +26,15 @@ export async function DELETE(request: NextRequest) {
     }
 
     const { appearanceConfig } = await getCollections();
+    
+    // Check if collection is available
+    if (!appearanceConfig) {
+      return NextResponse.json(
+        { error: 'Database connection unavailable' },
+        { status: 503 }
+      );
+    }
+    
     const config = await appearanceConfig.findOne({});
 
     if (!config) {
