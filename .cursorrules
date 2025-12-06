@@ -305,6 +305,323 @@ export function ClientComponent() {
 
 ---
 
+#### MongoDB Connection During Build Phase (CRITICAL - Dec 2025)
+
+**Problem:** Next.js static generation tries to prerender pages that fetch data from MongoDB. MongoDB is not available during build phase in CI/CD, causing `MongoNetworkError: ECONNREFUSED`.
+
+**Rule:** MongoDB connections MUST be handled gracefully during build phase. Return empty data structures instead of throwing errors.
+
+**Build Phase Detection:**
+
+```typescript
+// src/lib/db.ts
+function isBuildPhase(): boolean {
+  return (
+    process.env.NEXT_PHASE === 'phase-production-build' ||
+    process.env.VERCEL === '1' ||
+    process.env.CI === 'true' ||
+    (process.env.NODE_ENV === 'production' && !process.env.MONGODB_URI)
+  );
+}
+```
+
+**Pattern for Database Functions:**
+
+```typescript
+// ✅ CORRECT: Handle build phase gracefully
+// src/lib/db.ts
+export async function getCollections() {
+  try {
+    const db = await getDatabase();
+    return {
+      products: db.collection('products'),
+      // ... other collections
+    };
+  } catch (error) {
+    // During build phase, MongoDB may not be available
+    if (isBuildPhase()) {
+      console.warn('MongoDB not available during build phase. Returning empty collections structure.');
+      return {
+        products: null as any,
+        // ... return null for all collections
+      };
+    }
+    // In runtime, re-throw the error
+    throw error;
+  }
+}
+
+// ✅ CORRECT: Return empty arrays in data fetching functions
+// src/lib/db-sections.ts
+export async function getSectionProducts(query: {...}) {
+  try {
+    const { products } = await getCollections();
+    
+    // Handle build phase where MongoDB is not available
+    if (!products) {
+      console.warn('MongoDB not available during build phase. Returning empty products array.');
+      return [];
+    }
+
+    const productsList = await products.find(mongoQuery).toArray();
+    return productsList;
+  } catch (error) {
+    // During build phase, MongoDB connection may fail
+    // Return empty array to allow static generation to continue
+    console.warn('Error fetching products during build phase:', error);
+    return [];
+  }
+}
+```
+
+**Rules:**
+
+- ✅ ALWAYS check `isBuildPhase()` before connecting to MongoDB
+- ✅ Return empty/null structures instead of throwing errors during build
+- ✅ Log warnings for build phase MongoDB unavailability (don't throw)
+- ✅ Re-throw errors in runtime (not build phase)
+- ✅ Components MUST handle empty data gracefully
+
+**When to Apply:**
+
+- ✅ Functions called during static generation (prerender)
+- ✅ Server Components that fetch data at build time
+- ✅ Database helper functions used in page components
+- ✅ Any function using `getCollections()` in Server Components
+
+**Benefits:**
+
+- ✅ Static generation completes without MongoDB
+- ✅ No build failures in CI/CD
+- ✅ Pages render with empty state gracefully
+- ✅ Data loads at runtime when MongoDB is available
+
+---
+
+#### useSearchParams Suspense Boundary (CRITICAL - Dec 2025)
+
+**Problem:** `useSearchParams()` hook in Next.js requires Suspense boundary for static generation. Without it, build fails with: "useSearchParams() should be wrapped in a suspense boundary".
+
+**Rule:** ALL pages using `useSearchParams()` MUST wrap the component in Suspense boundary.
+
+**Pattern:**
+
+```typescript
+// ❌ WRONG: useSearchParams without Suspense
+'use client';
+
+import { useSearchParams } from 'next/navigation';
+
+export default function ProductsPage() {
+  const searchParams = useSearchParams(); // ❌ Fails during build!
+  // ...
+}
+
+// ✅ CORRECT: Wrap in Suspense
+'use client';
+
+import { useState, useEffect, useMemo, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Skeleton } from '@/components/ui/skeleton';
+
+function ProductsPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams(); // ✅ Safe inside Suspense
+  
+  // Component logic...
+  return <div>...</div>;
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div>
+          {/* Loading skeleton matching page structure */}
+          <Skeleton className="h-64 w-full" />
+        </div>
+      }
+    >
+      <ProductsPageContent />
+    </Suspense>
+  );
+}
+```
+
+**Rules:**
+
+- ✅ ALWAYS wrap `useSearchParams()` usage in `<Suspense>` boundary
+- ✅ Create separate content component for the logic
+- ✅ Provide meaningful fallback UI (skeleton matching page structure)
+- ✅ Apply to ALL pages/routes using `useSearchParams()`
+
+**When to Apply:**
+
+- ✅ Any page using `useSearchParams()` hook
+- ✅ Any component directly using `useSearchParams()` at top level
+- ✅ Dynamic routes with query parameters
+
+**Benefits:**
+
+- ✅ Build succeeds during static generation
+- ✅ Proper loading states for users
+- ✅ Better UX with skeleton loading
+
+---
+
+#### Tailwind CSS Config Simplification (CRITICAL - Dec 2025)
+
+**Problem:** Complex nested CSS rules in `tailwind.config.ts` (especially typography plugin) can cause CSS syntax errors during build: `CssSyntaxError: static/css/xxx.css:5160:1: Unexpected }`.
+
+**Rule:** Move complex nested CSS rules from Tailwind config to separate CSS files.
+
+**Pattern:**
+
+```typescript
+// ❌ WRONG: Complex nested CSS in Tailwind config
+// tailwind.config.ts
+typography: {
+  DEFAULT: {
+    css: {
+      p: {
+        marginTop: '0',
+        marginBottom: '1.5em',
+        '@media (max-width: 768px)': {
+          fontSize: '1rem'
+        }
+      },
+      h1: { /* ... */ },
+      h2: { /* ... */ },
+      // ... many nested rules
+    }
+  }
+}
+
+// ✅ CORRECT: Simple config with CSS variables only
+// tailwind.config.ts
+typography: {
+  DEFAULT: {
+    css: {
+      maxWidth: 'none',
+      '--tw-prose-body': '#374151',
+      '--tw-prose-headings': '#111827',
+      // Only CSS variables, no nested rules
+    }
+  }
+}
+
+// ✅ CORRECT: Move nested rules to CSS file
+// src/styles/typography.css
+.prose p {
+  margin-top: 0;
+  margin-bottom: 1.5em;
+}
+
+@media (max-width: 768px) {
+  .prose p {
+    font-size: 1rem;
+  }
+}
+
+.prose h1 {
+  font-size: 2.5em;
+  /* ... */
+}
+
+// Import in globals.css
+@import './typography.css';
+```
+
+**Rules:**
+
+- ✅ Keep Tailwind config minimal: only CSS variables and simple properties
+- ✅ Move complex nested rules (media queries, pseudo-selectors) to CSS files
+- ✅ Use `@import` in `globals.css` to include custom CSS
+- ✅ Keep typography plugin config simple (CSS variables only)
+
+**When to Apply:**
+
+- ✅ When Tailwind config has >50 lines of nested CSS rules
+- ✅ When using complex media queries in config
+- ✅ When using pseudo-selectors (`&:hover`, `&:focus`) in config
+- ✅ When experiencing CSS syntax errors during build
+
+**Benefits:**
+
+- ✅ Reduces CSS generation complexity
+- ✅ Fixes CSS syntax errors during build
+- ✅ Easier to maintain and debug
+- ✅ Better separation of concerns
+
+---
+
+#### Missing Component Exports (CRITICAL - Dec 2025)
+
+**Problem:** UI components not properly exported cause "Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined" during build.
+
+**Rule:** ALL UI components MUST be properly defined and exported.
+
+**Pattern:**
+
+```typescript
+// ❌ WRONG: Empty component file
+// src/components/admin/ui/dialog.tsx
+// (empty file - causes undefined component error)
+
+// ✅ CORRECT: Properly export all components
+// src/components/admin/ui/dialog.tsx
+'use client';
+
+import * as React from 'react';
+import * as DialogPrimitive from '@radix-ui/react-dialog';
+import { X } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+const Dialog = DialogPrimitive.Root;
+const DialogTrigger = DialogPrimitive.Trigger;
+const DialogPortal = DialogPrimitive.Portal;
+const DialogClose = DialogPrimitive.Close;
+
+const DialogOverlay = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Overlay>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Overlay
+    ref={ref}
+    className={cn('fixed inset-0 z-50 bg-black/80', className)}
+    {...props}
+  />
+));
+DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
+
+// ... other components
+
+export { Dialog, DialogPortal, DialogOverlay, DialogClose, DialogTrigger, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription };
+```
+
+**Pre-commit Checklist:**
+
+1. ✅ Verify all imported components are exported
+2. ✅ Check component files are not empty
+3. ✅ Verify component files have proper default/named exports
+4. ✅ Test build to catch undefined component errors
+
+**Rules:**
+
+- ✅ ALL component files MUST have valid exports
+- ✅ Verify imports match exports (case-sensitive)
+- ✅ Never leave component files empty
+- ✅ Use proper React.forwardRef for ref forwarding
+- ✅ Set displayName for debugging
+
+**Benefits:**
+
+- ✅ Prevents build failures from undefined components
+- ✅ Better error messages during development
+- ✅ Easier debugging with component names
+
+---
+
 #### Environment Variables in Build Phase (CRITICAL - Dec 2025)
 
 **Problem:** Next.js build phase (especially on Vercel) may not have access to environment variables. Code that validates env vars at module import time will fail during build.
@@ -640,6 +957,45 @@ const doc = await collection.findOne({
   _id: new ObjectId(id),
 });
 ```
+
+#### 🏗️ MongoDB Build Phase Handling (NEW - Dec 2025)
+
+**CRITICAL:** Functions that fetch data during static generation MUST handle MongoDB unavailability gracefully.
+
+```typescript
+// ✅ CORRECT: Handle build phase in database functions
+// src/lib/db-sections.ts
+export async function getSectionProducts(query: {...}) {
+  try {
+    const { products } = await getCollections();
+    
+    // Check for build phase (MongoDB not available)
+    if (!products) {
+      console.warn('MongoDB not available during build phase. Returning empty array.');
+      return [];
+    }
+
+    const productsList = await products.find(mongoQuery).toArray();
+    return productsList;
+  } catch (error) {
+    // During build, return empty array instead of throwing
+    if (isBuildPhase()) {
+      console.warn('Error fetching products during build phase:', error);
+      return [];
+    }
+    // In runtime, re-throw error
+    throw error;
+  }
+}
+```
+
+**Rules:**
+
+- ✅ ALWAYS wrap MongoDB queries in try-catch
+- ✅ Return empty arrays/objects during build phase
+- ✅ Never throw errors during static generation
+- ✅ Log warnings (not errors) for build phase MongoDB unavailability
+- ✅ Components MUST handle empty data gracefully
 
 ---
 
@@ -1609,6 +1965,10 @@ describe('generateSlug', () => {
 - [ ] **Did I verify import paths match filenames (case-sensitive)?**
 - [ ] **Did I handle env vars at runtime, not import time?**
 - [ ] **Did I make components flexible if used in multiple contexts?**
+- [ ] **Did I wrap useSearchParams() in Suspense boundary?**
+- [ ] **Did I handle MongoDB connection gracefully during build phase?**
+- [ ] **Did I verify all component exports are valid (not empty/undefined)?**
+- [ ] **Did I keep Tailwind config simple (move complex CSS to files)?**
 
 **If any answer is NO → Fix it before submitting!**
 
@@ -1720,6 +2080,10 @@ Added comprehensive checkout flow diagram including:
 | **Component Props** | 🆕 Flexible props for multi-context components |
 | **Env Vars**        | 🆕 Validate at runtime, not import time        |
 | **Import Paths**    | 🆕 Verify case-sensitive import paths          |
+| **useSearchParams** | 🆕 Wrap in Suspense boundary                   |
+| **MongoDB Build**   | 🆕 Handle gracefully during static generation  |
+| **Tailwind Config** | 🆕 Keep simple, move complex CSS to files      |
+| **Component Exports** | 🆕 Verify all components are properly exported |
 
 ### Must Not ❌
 
@@ -1734,6 +2098,10 @@ Added comprehensive checkout flow diagram including:
 | **DB**          | No Mongoose/Prisma patterns       |
 | **Secrets**     | Never commit credentials          |
 | **File Naming** | 🆕 No PascalCase filenames        |
+| **useSearchParams** | 🆕 Never use without Suspense     |
+| **MongoDB Build** | 🆕 Never throw errors during build |
+| **Tailwind Config** | 🆕 No complex nested CSS rules    |
+| **Component Files** | 🆕 Never leave component files empty |
 
 ---
 
@@ -1758,12 +2126,19 @@ When coding, AI must:
 
 ---
 
-**Rules Version:** 3.7  
-**Last Updated:** December 6, 2025 (PLP QA, Social Share, Form Decomposition)  
+**Rules Version:** 3.8  
+**Last Updated:** December 2025 (MongoDB Build Phase, CSS Config, Suspense Boundaries)  
 **Status:** Active & Enforced  
 **Compliance:** Mandatory for all AI-generated code
 
-**Recent Updates (Version 3.7):**
+**Recent Updates (Version 3.8):**
+
+- ✅ **MongoDB Build Phase Handling** - CRITICAL: Handle MongoDB connection gracefully during static generation. Return empty data structures instead of throwing errors. Detect build phase and skip DB connections.
+- ✅ **useSearchParams Suspense** - CRITICAL: ALL pages using `useSearchParams()` MUST wrap in Suspense boundary to prevent build failures.
+- ✅ **Tailwind CSS Config Simplification** - CRITICAL: Move complex nested CSS rules from Tailwind config to separate CSS files. Keep config minimal (CSS variables only).
+- ✅ **Missing Component Exports** - CRITICAL: Verify all UI components are properly exported. Never leave component files empty. Check for undefined component errors.
+
+**Previous Updates (Version 3.7):**
 
 - ✅ **Form Decomposition Rule** - Bắt buộc tách nhỏ form phức tạp, dùng React Hook Form + Zod cho mọi validation.
 - ✅ **Social Share Buttons** - Blog hỗ trợ chia sẻ đa kênh (Facebook, Zalo, Copy link, Clipboard API).
