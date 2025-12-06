@@ -1,7 +1,7 @@
 'use client';
 
 // Trang danh sách sản phẩm - Liệt kê + Bộ lọc (Filter)
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Filter, Grid, List } from 'lucide-react';
 import ProductCard from '@/components/product/ProductCard';
@@ -34,7 +34,7 @@ interface ProductsResponse {
   error?: string;
 }
 
-export default function ProductsPage() {
+function ProductsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [products, setProducts] = useState<ProductListItem[]>([]);
@@ -518,5 +518,35 @@ export default function ProductsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gradient-to-b from-pink-50 to-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
+              {[...Array(12)].map((_, i) => (
+                <div
+                  key={i}
+                  className="bg-white rounded-lg border border-gray-200 overflow-hidden"
+                >
+                  <Skeleton className="w-full aspect-square" />
+                  <div className="p-3 md:p-4 space-y-2">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                    <Skeleton className="h-6 w-1/3" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <ProductsPageContent />
+    </Suspense>
   );
 }
