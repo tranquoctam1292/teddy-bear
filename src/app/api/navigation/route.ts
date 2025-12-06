@@ -16,6 +16,19 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Check if collection is available (null during build phase or connection failures)
+    if (!navigation) {
+      console.warn('Navigation collection not available. Returning empty menu.');
+      return NextResponse.json({
+        menu: {
+          location: location || 'header',
+          name: 'Main Menu',
+          items: [],
+          isActive: true,
+        },
+      });
+    }
+
     // Get menu by location (only active menus)
     const menu = await navigation.findOne({ location, isActive: true });
 

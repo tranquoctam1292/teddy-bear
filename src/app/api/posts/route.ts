@@ -21,6 +21,26 @@ export const revalidate = 0;
 export async function GET(request: NextRequest) {
   try {
     const { posts } = await getCollections();
+    
+    // Check if collection is available (null during build phase or connection failures)
+    if (!posts) {
+      console.warn('Posts collection not available. Returning empty posts list.');
+      return NextResponse.json({
+        success: true,
+        data: {
+          posts: [],
+          pagination: {
+            page: 1,
+            limit: 12,
+            total: 0,
+            totalPages: 0,
+            hasNext: false,
+            hasPrev: false,
+          },
+        },
+      });
+    }
+    
     const searchParams = request.nextUrl.searchParams;
     
     // Check if requesting single post by slug

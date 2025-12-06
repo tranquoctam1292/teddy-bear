@@ -23,6 +23,15 @@ export async function GET(request: NextRequest) {
 
     const { authors, posts } = await getCollections();
 
+    // Check if collections are available (null during build phase or connection failures)
+    if (!authors || !posts) {
+      console.warn('Authors or posts collection not available. Returning empty authors list.');
+      return NextResponse.json({
+        authors: [],
+        total: 0,
+      });
+    }
+
     // Build query
     const query: any = {
       status: 'active', // Only return active authors

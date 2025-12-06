@@ -10,14 +10,13 @@ let clientPromise: Promise<MongoClient> | undefined;
 
 /**
  * Check if we're in build phase (Next.js static generation)
+ * NOTE: VERCEL === '1' is ALWAYS true on Vercel runtime, so we should NOT use it
+ * Only check NEXT_PHASE which is specifically set during build
  */
 function isBuildPhase(): boolean {
-  return (
-    process.env.NEXT_PHASE === 'phase-production-build' ||
-    process.env.VERCEL === '1' ||
-    process.env.CI === 'true' ||
-    process.env.NODE_ENV === 'production' && !process.env.MONGODB_URI
-  );
+  // Only check NEXT_PHASE - this is the reliable way to detect build phase
+  // VERCEL === '1' is true both during build AND runtime, so we can't use it
+  return process.env.NEXT_PHASE === 'phase-production-build';
 }
 
 /**
@@ -80,6 +79,12 @@ export async function getDatabase(dbName: string = 'teddy-shop'): Promise<Db> {
 export async function getCollections() {
   try {
     const db = await getDatabase();
+    
+    // Double-check: if db is null/undefined, collections won't work
+    if (!db) {
+      throw new Error('Database instance is null');
+    }
+    
     return {
     db, // Add db instance to the return object
     products: db.collection('products'),
@@ -207,7 +212,15 @@ export async function getCollections() {
         aiUsageLogs: null as any,
       };
     }
-    // In runtime, re-throw the error
+    // In runtime, check if it's a connection error
+    // If MONGODB_URI is not set, provide helpful error message
+    if (!process.env.MONGODB_URI) {
+      console.error('❌ MONGODB_URI is not configured on Vercel.');
+      console.error('   Please add MONGODB_URI to your Vercel environment variables.');
+      console.error('   Settings → Environment Variables → Add MONGODB_URI');
+    }
+    
+    // Re-throw the error so calling code can handle it
     throw error;
   }
 }

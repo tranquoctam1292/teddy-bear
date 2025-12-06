@@ -14,6 +14,35 @@ import type { ProductListItem } from '@/lib/schemas/product';
 export async function GET(request: NextRequest) {
   try {
     const { products } = await getCollections();
+    
+    // Check if collection is available (null during build phase or connection failures)
+    if (!products) {
+      console.warn('Products collection not available. Returning empty products list.');
+      return NextResponse.json({
+        success: true,
+        data: {
+          products: [],
+          pagination: {
+            page: 1,
+            limit: 12,
+            total: 0,
+            totalPages: 0,
+            hasNext: false,
+            hasPrev: false,
+          },
+          filters: {
+            applied: {},
+            available: {
+              categories: [],
+              priceRange: { min: 0, max: 0 },
+              sizes: [],
+              tags: [],
+            },
+          },
+        },
+      });
+    }
+    
     const searchParams = request.nextUrl.searchParams;
     
     // Check if requesting single product by slug

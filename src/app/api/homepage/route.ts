@@ -9,11 +9,22 @@ import { getCollections } from '@/lib/db';
  */
 export async function GET(request: NextRequest) {
   try {
-    const { db } = await getCollections();
-    const homepageConfigs = db.collection('homepage_configs');
+    const { db, homepage_configs } = await getCollections();
+    
+    // Check if collection is available (null during build phase or connection failures)
+    if (!homepage_configs) {
+      console.warn('Homepage configs collection not available. Returning null config.');
+      return NextResponse.json(
+        {
+          config: null,
+          message: 'No active homepage configuration',
+        },
+        { status: 200 }
+      );
+    }
 
     // Find published config
-    const config = await homepageConfigs.findOne(
+    const config = await homepage_configs.findOne(
       { status: 'published' },
       {
         sort: { publishedAt: -1 }, // Get most recently published
@@ -77,10 +88,15 @@ export async function GET(request: NextRequest) {
  */
 export async function getActiveHomepageConfig() {
   try {
-    const { db } = await getCollections();
-    const homepageConfigs = db.collection('homepage_configs');
+    const { homepage_configs } = await getCollections();
+    
+    // Check if collection is available
+    if (!homepage_configs) {
+      console.warn('Homepage configs collection not available. Returning null.');
+      return null;
+    }
 
-    const config = await homepageConfigs.findOne(
+    const config = await homepage_configs.findOne(
       { status: 'published' },
       { sort: { publishedAt: -1 } }
     );
