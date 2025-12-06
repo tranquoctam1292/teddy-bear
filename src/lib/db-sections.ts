@@ -16,9 +16,16 @@ export async function getSectionProducts(query: {
   sortBy?: 'newest' | 'popular' | 'price-asc' | 'price-desc';
   limit?: number;
 }) {
-  const { products } = await getCollections();
+  try {
+    const { products } = await getCollections();
+    
+    // Handle build phase where MongoDB is not available
+    if (!products) {
+      console.warn('MongoDB not available during build phase. Returning empty products array.');
+      return [];
+    }
   
-  let mongoQuery: any = { isActive: true };
+    let mongoQuery: any = { isActive: true };
   let sort: any = {};
   const limit = query.limit || 8;
 
@@ -69,13 +76,19 @@ export async function getSectionProducts(query: {
       sort = { createdAt: -1 };
   }
 
-  const productsList = await products
-    .find(mongoQuery)
-    .sort(sort)
-    .limit(limit)
-    .toArray();
+    const productsList = await products
+      .find(mongoQuery)
+      .sort(sort)
+      .limit(limit)
+      .toArray();
 
-  return productsList;
+    return productsList;
+  } catch (error) {
+    // During build phase, MongoDB connection may fail
+    // Return empty array to allow static generation to continue
+    console.warn('Error fetching products during build phase:', error);
+    return [];
+  }
 }
 
 /**
@@ -87,9 +100,16 @@ export async function getSectionPosts(query: {
   postIds?: string[];
   limit?: number;
 }) {
-  const { posts } = await getCollections();
+  try {
+    const { posts } = await getCollections();
 
-  let mongoQuery: any = { status: 'published' };
+    // Handle build phase where MongoDB is not available
+    if (!posts) {
+      console.warn('MongoDB not available during build phase. Returning empty posts array.');
+      return [];
+    }
+
+    let mongoQuery: any = { status: 'published' };
   const limit = query.limit || 6;
 
   // Build query based on selection method
@@ -119,12 +139,18 @@ export async function getSectionPosts(query: {
       break;
   }
 
-  const postsList = await posts
-    .find(mongoQuery)
-    .sort({ publishedAt: -1 })
-    .limit(limit)
-    .toArray();
+    const postsList = await posts
+      .find(mongoQuery)
+      .sort({ publishedAt: -1 })
+      .limit(limit)
+      .toArray();
 
-  return postsList;
+    return postsList;
+  } catch (error) {
+    // During build phase, MongoDB connection may fail
+    // Return empty array to allow static generation to continue
+    console.warn('Error fetching posts during build phase:', error);
+    return [];
+  }
 }
 

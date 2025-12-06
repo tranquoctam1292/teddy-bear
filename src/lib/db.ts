@@ -9,6 +9,18 @@ let client: MongoClient | undefined;
 let clientPromise: Promise<MongoClient> | undefined;
 
 /**
+ * Check if we're in build phase (Next.js static generation)
+ */
+function isBuildPhase(): boolean {
+  return (
+    process.env.NEXT_PHASE === 'phase-production-build' ||
+    process.env.VERCEL === '1' ||
+    process.env.CI === 'true' ||
+    process.env.NODE_ENV === 'production' && !process.env.MONGODB_URI
+  );
+}
+
+/**
  * Get or create MongoDB client promise (lazy initialization)
  */
 function getClientPromise(): Promise<MongoClient> {
@@ -17,6 +29,16 @@ function getClientPromise(): Promise<MongoClient> {
   }
 
   const uri = process.env.MONGODB_URI || '';
+  
+  // During build phase, return a rejected promise with a clear error
+  // This allows pages to handle the error gracefully during static generation
+  if (isBuildPhase() && !uri) {
+    return Promise.reject(
+      new Error(
+        'MongoDB connection skipped during build phase. This is expected for static generation.'
+      )
+    );
+  }
   
   if (!uri) {
     throw new Error('MongoDB URI is not configured. Please add MONGODB_URI to your environment variables.');
@@ -53,10 +75,12 @@ export async function getDatabase(dbName: string = 'teddy-shop'): Promise<Db> {
 
 /**
  * Get MongoDB collections
+ * Returns empty collections structure if DB connection fails during build
  */
 export async function getCollections() {
-  const db = await getDatabase();
-  return {
+  try {
+    const db = await getDatabase();
+    return {
     db, // Add db instance to the return object
     products: db.collection('products'),
     orders: db.collection('orders'),
@@ -123,7 +147,69 @@ export async function getCollections() {
     homepage_configs: db.collection('homepage_configs'),
     // AI Usage Tracking collections
     aiUsageLogs: db.collection('aiUsageLogs'),
-  };
+    };
+  } catch (error) {
+    // During build phase, MongoDB may not be available
+    // Return a mock structure that allows components to handle gracefully
+    if (isBuildPhase()) {
+      console.warn('MongoDB not available during build phase. Returning empty collections structure.');
+      // Return empty collections structure to prevent build failures
+      // Components should handle empty results gracefully
+      return {
+        db: null as any,
+        products: null as any,
+        orders: null as any,
+        carts: null as any,
+        users: null as any,
+        contacts: null as any,
+        posts: null as any,
+        navigation: null as any,
+        stockReservations: null as any,
+        productCategories: null as any,
+        productTags: null as any,
+        productAttributes: null as any,
+        orderStatuses: null as any,
+        orderNotifications: null as any,
+        paymentMethods: null as any,
+        emailTemplates: null as any,
+        smtpConfig: null as any,
+        systemNotifications: null as any,
+        adminUsers: null as any,
+        securityConfig: null as any,
+        userActivityLogs: null as any,
+        apiKeys: null as any,
+        appearanceConfig: null as any,
+        seoAnalysis: null as any,
+        keywordTracking: null as any,
+        seoKeywords: null as any,
+        seoSettings: null as any,
+        redirectRules: null as any,
+        error404Log: null as any,
+        errorLogs: null as any,
+        scheduledReports: null as any,
+        competitors: null as any,
+        competitorKeywords: null as any,
+        competitorContent: null as any,
+        backlinks: null as any,
+        abTests: null as any,
+        media: null as any,
+        pages: null as any,
+        comments: null as any,
+        transactions: null as any,
+        paymentGateways: null as any,
+        coupons: null as any,
+        couponUsage: null as any,
+        emailCampaigns: null as any,
+        campaigns: null as any,
+        promotions: null as any,
+        authors: null as any,
+        homepage_configs: null as any,
+        aiUsageLogs: null as any,
+      };
+    }
+    // In runtime, re-throw the error
+    throw error;
+  }
 }
 
 /**
