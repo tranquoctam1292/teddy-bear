@@ -10,15 +10,17 @@ if grep -q "ignoreBuildErrors: true" next.config.ts; then
   echo ""
   
   # Only run build (lint already ran in pre-commit on staged files)
-  # Temporarily disabled due to CSS build issue - will be fixed in Vercel build
-  # echo "1️⃣  Production build..."
-  # npm run build || {
-  #   echo ""
-  #   echo "❌ Build failed!"
-  #   echo "🔧 Fix build errors before pushing."
-  #   exit 1
-  # }
-  echo "⚠️  Build check temporarily disabled - Vercel will handle build"
+  echo "1️⃣  Production build..."
+  
+  # Clean build artifacts before build
+  rm -rf .next static
+  
+  npm run build || {
+    echo ""
+    echo "❌ Build failed!"
+    echo "🔧 Fix build errors before pushing."
+    exit 1
+  }
   
 else
   # Full validation when ignoreBuildErrors is false
