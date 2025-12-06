@@ -1,6 +1,13 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  // Temporarily disable CSS optimization to fix CSS syntax error
+  // TODO: Investigate root cause and re-enable CSS optimization
+  // Error: CssSyntaxError: static/css/b7aa00f4355bd230.css:5160:1: Unexpected }
+  experimental: {
+    optimizeCss: false,
+  },
+  
   // Image Optimization Configuration
   // Phase 3: Allow external image domains for product images
   images: {
@@ -68,6 +75,14 @@ const nextConfig: NextConfig = {
 
   // Webpack config (for production build)
   webpack: (config, { isServer }) => {
+    // Temporarily disable CSS minification to fix CSS syntax error
+    // TODO: Investigate root cause
+    if (config.optimization) {
+      config.optimization.minimizer = config.optimization.minimizer?.filter(
+        (plugin: any) => plugin.constructor.name !== 'CssMinimizerPlugin'
+      );
+    }
+    
     // Exclude MongoDB and Node.js built-in modules from client bundle
     if (!isServer) {
       // Safely initialize resolve.fallback
