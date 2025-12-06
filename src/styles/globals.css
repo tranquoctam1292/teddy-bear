@@ -5,6 +5,7 @@
 
 @import './design-tokens.css';
 @import './admin-sidebar.css';
+@import './typography.css';
 
 /* "Emotional House" Theme - Pastel Colors */
 :root {
